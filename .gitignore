@@ -1,3 +1,7 @@
 build
 .idea
 .sconsign.dblite
+
+# Added by cargo
+
+/target
