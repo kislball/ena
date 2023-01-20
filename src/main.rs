@@ -14,9 +14,6 @@ fn main() {
         },
     };
 
-    tok::show_tokens(tokens);
-    println!("=======");
-
     let mut builder = ast::ASTBuilder::new();
     let nodes = match builder.parse(tokens) {
         Ok(vec) => vec,
