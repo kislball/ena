@@ -94,36 +94,37 @@ impl From<&str> for KeywordType {
     }
 }
 
-pub struct Tokenizer<'a> {
+pub struct Tokenizer {
     pub tokens: Vec<Token>,
-    pub str: &'a str,
+    pub str: String,
     at: usize
 }
 
-impl<'a> Default for Tokenizer<'a> {
+impl Default for Tokenizer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> Tokenizer<'a> {
+impl Tokenizer {
     pub fn new() -> Self {
         Tokenizer {
             tokens: vec![],
-            str: "",
+            str: String::from(""),
             at: 0,
         }
     }
 
     pub fn clean(&mut self) {
         self.at = 0;
-        self.str = "";
+        self.str = String::from("");
         self.tokens = vec![];
     }
 
-    pub fn parse(&mut self, str: &'a str) -> Result<&mut Vec<Token>, TokenizerError> {
+    pub fn parse(&mut self, str: String) -> Result<&mut Vec<Token>, TokenizerError> {
         self.clean();
-        self.str = str;
+        self.str = str.clone();
+        self.str.push(' '); // needs a whitespace for ids and numbers to work
         let en: Vec<char> = self.str.chars().enumerate().map(|x| x.1).collect();
 
         loop {
