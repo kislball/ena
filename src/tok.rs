@@ -8,9 +8,8 @@ pub const COMMENT_SYMBOL: char = '#';
 pub const STRING_ESCAPE_CHAR: char = '\\';
 
 fn is_id_beginning(ch: char) -> bool {
-   !ch.is_numeric() && !ch.is_whitespace() && ch != STRING_QUOTES && ch != ESCAPE_CHAR
+    !ch.is_numeric() && !ch.is_whitespace() && ch != STRING_QUOTES && ch != ESCAPE_CHAR
 }
-
 
 #[derive(Debug)]
 pub enum TokenizerErrorInner {
@@ -38,7 +37,7 @@ pub enum TokenInner {
     OnceClose,
     UniqueEscapedOpen,
     UniqueOpen,
-    UniqueClose
+    UniqueClose,
 }
 
 pub fn is_closer(open: &TokenInner, close: &TokenInner) -> Option<bool> {
@@ -73,6 +72,7 @@ pub enum KeywordType {
     Return,
     True,
     False,
+    Null,
     None,
 }
 
@@ -88,6 +88,8 @@ impl From<&str> for KeywordType {
             KeywordType::True
         } else if value == "false" {
             KeywordType::False
+        } else if value == "null" {
+            KeywordType::Null
         } else {
             KeywordType::None
         }
@@ -97,7 +99,7 @@ impl From<&str> for KeywordType {
 pub struct Tokenizer {
     pub tokens: Vec<Token>,
     pub str: String,
-    at: usize
+    at: usize,
 }
 
 impl Default for Tokenizer {
@@ -132,7 +134,7 @@ impl Tokenizer {
                 Some(ch) => *ch,
                 None => {
                     break;
-                },
+                }
             };
             if c == COMMENT_SYMBOL {
                 loop {
@@ -140,7 +142,7 @@ impl Tokenizer {
                         Some(ch) => *ch,
                         None => {
                             break;
-                        },
+                        }
                     };
                     if c == '\n' {
                         break;
@@ -169,34 +171,32 @@ impl Tokenizer {
                     Some(ch) => {
                         self.at += 1;
                         *ch
-                    },
+                    }
                     None => {
-                        return Err(
-                            TokenizerError(
-                                self.at,
-                                TokenizerErrorInner::UnexpectedEscapeChar
-                            )
-                        );
-                    },
+                        return Err(TokenizerError(
+                            self.at,
+                            TokenizerErrorInner::UnexpectedEscapeChar,
+                        ));
+                    }
                 };
 
                 if next == ONCE_OPEN {
-                    self.tokens.push(Token(self.at, TokenInner::OnceEscapedOpen));
+                    self.tokens
+                        .push(Token(self.at, TokenInner::OnceEscapedOpen));
                     self.at += 1;
                 } else if next == UNIQUE_OPEN {
-                    self.tokens.push(Token(self.at, TokenInner::UniqueEscapedOpen));
+                    self.tokens
+                        .push(Token(self.at, TokenInner::UniqueEscapedOpen));
                     self.at += 1;
                 } else if is_id_beginning(next) {
                     if let Some(err) = self.parse_id(&en, true) {
                         return Err(err);
                     }
                 } else {
-                    return Err(
-                        TokenizerError(
-                            self.at,
-                            TokenizerErrorInner::UnexpectedEscapeChar
-                        )
-                    );
+                    return Err(TokenizerError(
+                        self.at,
+                        TokenizerErrorInner::UnexpectedEscapeChar,
+                    ));
                 }
             } else if c.is_whitespace() {
                 self.at += 1;
@@ -207,9 +207,10 @@ impl Tokenizer {
                     return Err(err);
                 }
             } else {
-                return Err(
-                    TokenizerError(self.at, TokenizerErrorInner::UnknownToken(c))
-                );
+                return Err(TokenizerError(
+                    self.at,
+                    TokenizerErrorInner::UnknownToken(c),
+                ));
             }
         }
 
@@ -220,10 +221,8 @@ impl Tokenizer {
         let c = match en.get(self.at) {
             Some(ch) => *ch,
             None => {
-                return Some(
-                    TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF)
-                );
-            },
+                return Some(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+            }
         };
         let mut str = String::new();
         str.push(c);
@@ -235,22 +234,18 @@ impl Tokenizer {
             let c = match en.get(self.at) {
                 Some(ch) => *ch,
                 None => {
-                    return Some(
-                        TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF)
-                    );
-                },
+                    return Some(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+                }
             };
 
             if c == '_' {
                 self.at += 1;
             } else if c == '.' {
                 if had_dot {
-                    return Some(
-                        TokenizerError(
-                            self.at,
-                            TokenizerErrorInner::TooManyDotsInNumber,
-                        ),
-                    );
+                    return Some(TokenizerError(
+                        self.at,
+                        TokenizerErrorInner::TooManyDotsInNumber,
+                    ));
                 } else {
                     had_dot = true;
                     str.push('.');
@@ -260,21 +255,16 @@ impl Tokenizer {
                 str.push(c);
                 self.at += 1;
             } else if c.is_whitespace() {
-                break
+                break;
             } else {
-                return Some(
-                    TokenizerError(
-                        self.at,
-                        TokenizerErrorInner::UnknownToken(c),
-                    ),
-                );
+                return Some(TokenizerError(
+                    self.at,
+                    TokenizerErrorInner::UnknownToken(c),
+                ));
             }
         }
 
-        let token = Token(
-            begin,
-            TokenInner::Number(str.parse::<f64>().unwrap()),
-        );
+        let token = Token(begin, TokenInner::Number(str.parse::<f64>().unwrap()));
 
         self.tokens.push(token);
         self.at += 1;
@@ -285,10 +275,8 @@ impl Tokenizer {
         let c = match en.get(self.at) {
             Some(ch) => *ch,
             None => {
-                return Some(
-                    TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF)
-                );
-            },
+                return Some(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+            }
         };
         let mut str = String::new();
         str.push(c);
@@ -299,10 +287,8 @@ impl Tokenizer {
             let c = match en.get(self.at) {
                 Some(ch) => *ch,
                 None => {
-                    return Some(
-                        TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF)
-                    );
-                },
+                    return Some(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+                }
             };
 
             if !c.is_whitespace() {
@@ -310,7 +296,7 @@ impl Tokenizer {
                 self.at += 1;
             } else {
                 self.at += 1;
-                break
+                break;
             }
         }
 
@@ -320,24 +306,18 @@ impl Tokenizer {
                 if !escaped {
                     self.tokens.push(Token(begin, TokenInner::Identifier(str)))
                 } else {
-                    self.tokens.push(Token(begin, TokenInner::EscapedIdentifier(str)))
+                    self.tokens
+                        .push(Token(begin, TokenInner::EscapedIdentifier(str)))
                 }
-            },
+            }
             _ => {
                 if escaped {
-                    return Some(
-                        TokenizerError(
-                            self.at,
-                            TokenizerErrorInner::CannotEscapeKeyword
-                        )
-                    );
+                    return Some(TokenizerError(
+                        self.at,
+                        TokenizerErrorInner::CannotEscapeKeyword,
+                    ));
                 }
-                self.tokens.push(
-                    Token(
-                        begin,
-                        TokenInner::Keyword(into_kw)
-                    )
-                )
+                self.tokens.push(Token(begin, TokenInner::Keyword(into_kw)))
             }
         };
 
@@ -353,25 +333,24 @@ impl Tokenizer {
             let c = match en.get(self.at) {
                 Some(ch) => *ch,
                 None => {
-                    return Some(
-                        TokenizerError(self.at, TokenizerErrorInner::UnclosedString)
-                    );
-                },
+                    return Some(TokenizerError(self.at, TokenizerErrorInner::UnclosedString));
+                }
             };
 
             if c == STRING_QUOTES {
                 self.at += 1;
-                break
+                break;
             } else {
                 if c == STRING_ESCAPE_CHAR {
                     self.at += 1;
                     let next = match en.get(self.at) {
                         Some(ch) => *ch,
                         None => {
-                            return Some(
-                                TokenizerError(self.at, TokenizerErrorInner::InvalidEscape)
-                            );
-                        },
+                            return Some(TokenizerError(
+                                self.at,
+                                TokenizerErrorInner::InvalidEscape,
+                            ));
+                        }
                     };
 
                     if next == '\\' {
@@ -399,7 +378,6 @@ impl Tokenizer {
         None
     }
 }
-
 
 pub fn show_tokens(tokens: &Vec<Token>) {
     for c in tokens {

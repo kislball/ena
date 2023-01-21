@@ -1,6 +1,6 @@
 use crate::tok;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ASTNodeInner {
     Block(BlockType, Vec<ASTNode>),
     Identifier(String),
@@ -8,23 +8,23 @@ pub enum ASTNodeInner {
     Keyword(tok::KeywordType),
     Number(f64),
     String(String),
-    Closer
+    Closer,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum BlockType {
     Program,
     EscapedSingleEval,
     SingleEval,
     EscapedUniqueEval,
-    UniqueEval
+    UniqueEval,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ASTNode(pub usize, pub ASTNodeInner);
 
 pub struct ASTBuilder {
-    at: usize
+    at: usize,
 }
 
 #[derive(Debug)]
@@ -62,23 +62,23 @@ impl ASTBuilder {
         let current = match tokens.get(self.at) {
             Some(i) => i,
             None => {
-                return Err(
-                    ASTError(self.at, ASTErrorInner::UnexpectedEnd)
-                );
+                return Err(ASTError(self.at, ASTErrorInner::UnexpectedEnd));
             }
         };
 
         let r = match &current.1 {
-            tok::TokenInner::Identifier(str) => 
-                Ok(ASTNode(self.at, ASTNodeInner::Identifier(str.to_string()))),
-            tok::TokenInner::EscapedIdentifier(str) =>
-                Ok(ASTNode(self.at, ASTNodeInner::EscapedIdentifier(str.to_string()))),
-            tok::TokenInner::String(str) =>
-                Ok(ASTNode(self.at, ASTNodeInner::String(str.to_string()))),
-            tok::TokenInner::Number(num) =>
-                Ok(ASTNode(self.at, ASTNodeInner::Number(*num))),
-            tok::TokenInner::Keyword(kw) =>
-                Ok(ASTNode(self.at, ASTNodeInner::Keyword(*kw))),
+            tok::TokenInner::Identifier(str) => {
+                Ok(ASTNode(self.at, ASTNodeInner::Identifier(str.to_string())))
+            }
+            tok::TokenInner::EscapedIdentifier(str) => Ok(ASTNode(
+                self.at,
+                ASTNodeInner::EscapedIdentifier(str.to_string()),
+            )),
+            tok::TokenInner::String(str) => {
+                Ok(ASTNode(self.at, ASTNodeInner::String(str.to_string())))
+            }
+            tok::TokenInner::Number(num) => Ok(ASTNode(self.at, ASTNodeInner::Number(*num))),
+            tok::TokenInner::Keyword(kw) => Ok(ASTNode(self.at, ASTNodeInner::Keyword(*kw))),
             block => {
                 let typ = match block {
                     tok::TokenInner::OnceOpen => BlockType::SingleEval,
@@ -88,9 +88,10 @@ impl ASTBuilder {
                     _ => {
                         self.at += 1;
                         return Ok(ASTNode(self.at, ASTNodeInner::Closer));
-                    },
+                    }
                 };
                 let mut nodes: Vec<ASTNode> = vec![];
+                let begin = self.at;
 
                 self.at += 1;
 
@@ -98,9 +99,7 @@ impl ASTBuilder {
                     let current = match tokens.get(self.at) {
                         Some(i) => i,
                         None => {
-                            return Err(
-                                ASTError(self.at, ASTErrorInner::UnexpectedEnd)
-                            );
+                            return Err(ASTError(self.at, ASTErrorInner::UnexpectedEnd));
                         }
                     };
 
@@ -123,10 +122,9 @@ impl ASTBuilder {
                     self.at += 1;
                 }
 
-                Ok(ASTNode(self.at, ASTNodeInner::Block(typ, nodes)))
-            },
+                Ok(ASTNode(begin, ASTNodeInner::Block(typ, nodes)))
+            }
         };
-
 
         r
     }

@@ -1,1 +1,14 @@
-1 + 2
+random_unique {
+  ena.vm.random
+}
+
+random_once (
+  ena.vm.random
+)
+
+main {
+  random_unique ena.vm.debug
+  random_unique ena.vm.debug
+  random_once ena.vm.debug
+  random_once ena.vm.debug
+}

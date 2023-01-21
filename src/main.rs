@@ -1,27 +1,10 @@
-use std::{fs, process};
-use enalang::{ast,tok};
+use enalang;
 
 fn main() {
-    let mut tokenizer = tok::Tokenizer::new();
-    let file_content = fs::read_to_string("test.ena").expect("fuck you");
-    let tokens = tokenizer.parse(file_content);
-
-    let tokens = match tokens {
-        Ok(vec) => vec,
-        Err(e) => {
-            println!("{:?}", e);
-            process::exit(-1);
-        },
-    };
-
-    let mut builder = ast::ASTBuilder::new();
-    let nodes = match builder.parse(tokens) {
-        Ok(vec) => vec,
-        Err(e) => {
-            println!("{:?}", e);
-            process::exit(-1);
-        },
-    };
-
-    println!("{:#?}", nodes);
+    let vec: Vec<&'static str> = vec!["./test.ena"];
+    let err = enalang::run(&vec);
+    match err {
+        Err(e) => println!("{:?}", e),
+        _ => {}
+    }
 }
