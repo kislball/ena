@@ -15,7 +15,7 @@ pub struct IR<'a> {
     pub blocks: HashMap<&'a str, Block<'a>>,
 }
 
-fn ena_vm_debug(vm: &mut machine::VM) -> Result<(), machine::VMError> {
+fn ena_vm_debug(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let el = match vm.stack.pop() {
         Some(i) => i,
         None => Value::Null,
@@ -26,8 +26,18 @@ fn ena_vm_debug(vm: &mut machine::VM) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-fn ena_vm_get_random(vm: &mut machine::VM) -> Result<(), machine::VMError> {
+fn ena_vm_get_random(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     vm.stack.push(ir::Value::Number(rand::thread_rng().gen_range(1..=90000) as f64));
+    Ok(())
+}
+
+fn print(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+    if let Value::String(st) = vm.pop()? {
+        print!("{}", st);
+    } else {
+        return Err(machine::VMError::ExpectedString("print".to_string()));
+    }
+
     Ok(())
 }
 
@@ -39,6 +49,7 @@ impl<'a> IR<'a> {
 
         ir.add_native("ena.vm.debug", ena_vm_debug).unwrap();
         ir.add_native("ena.vm.random", ena_vm_get_random).unwrap();
+        ir.add_native("print", print).unwrap();
 
         ir
     }
@@ -60,7 +71,7 @@ impl<'a> IR<'a> {
     }
 }
 
-pub type NativeHandler<'a> = fn(&mut machine::VM<'a>) -> Result<(), machine::VMError>;
+pub type NativeHandler<'a> = fn(&mut machine::VM<'a>, &ir::IR) -> Result<(), machine::VMError>;
 
 #[derive(Debug)]
 pub enum BlockRunType {

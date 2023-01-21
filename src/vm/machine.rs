@@ -7,6 +7,7 @@ pub enum VMError {
     NoIR,
     StackEnded(String),
     ExpectedBoolean(String),
+    ExpectedString(String),
 }
 
 pub struct VM<'a> {
@@ -129,7 +130,7 @@ impl<'a> VM<'a> {
                 }
                 Ok(())
             }
-            ir::Block::Native(f) => f(self),
+            ir::Block::Native(f) => f(self, ir),
         }
     }
 }
