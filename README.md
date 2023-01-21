@@ -1,43 +1,38 @@
 # ena
 > exhaustingly notorious algorithms
 
-ena is a very bad language, implementation of which was initially written in c, but later rewritten in rust,
-because the main developer was tired of debugging segfaults.
-
-ena is always lowercase.
+Ena is a very bad language, whose implementation was originally written in C, but was later rewritten in Rust because the main developer was tired of debugging segfaults.
 
 ## Syntax
+Ena is a stack-based language. This means it works on the stack. Seems logical, doesn't it?
 
-ena is a stack-based language. It means, that it operates on stack. Seems logical, isn't it?
+It is much easier to show than to explain.
 
-It is much easier to show, than to explain.
-
-ena doesn't have functions, but it has *words*. The only difference is that words *do not* accept any kind of arguments.
-Instead, it takes arguments it needs from the stack.
+Ena doesn't have functions, it has words. The only difference is that words do not take arguments. Instead, it takes the arguments it needs from the stack.
 
 ```
-# comments are written python style
+# Comments are written in Python style.
 
-# lets implement our own println word based on top of ena.print word.
+# Let's implement our own println word based on the ena.io.print word.
 println {
-  # the stack currently has our "Hello, world!" string and the "\n" string.
+  # The stack currently has our "Hello, world!" string and the "\n" string.
   "\n" # "\n" "Hello, world!"
-  # since we need to append \n to our "Hello, world!", we need to swap them and concat them using concat_str word.
+  # Since we need to append \n to our "Hello, world!", we need to swap them and concat them using the concat_str word.
   swap # "Hello, world!" "\n"
   # concat_str takes the top word on the stack and appends the second string to the top word.
-  # both arguments are dropped.
-  concat_str # now the stack only contains "Hello, world!\n" string.
-  print # now we just print it
+  # Both arguments are dropped.
+  concat_str # Now the stack only contains the string "Hello, world!\n".
+  ena.io.print # now we just print it
 }
 
-# word "main" is the entry point of an ena program
+# The word "main" is the entry point of an ena program.
 main {
   "Hello, world!" println
-  "it can be any string by the way" println
+  "It can be any string, by the way" println
 }
 ```
 
-If remove all comments, the resulting code is pretty short and neat.
+With all the comments removed, the result is a very short and tidy piece of code.
 
 ```
 println {
@@ -46,6 +41,6 @@ println {
 
 main {
   "Hello, world!" println
-  "it can be any string by the way" println
+  "It can be any string, by the way" println
 }
 ```
