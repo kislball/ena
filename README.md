@@ -18,7 +18,7 @@ Instead, it takes arguments it needs from the stack.
 ```
 # comments are written python style
 
-# lets implement our own println function based on top of ena.print function.
+# lets implement our own println word based on top of ena.print word.
 println {
   # the stack currently has our "Hello, world!" string and the "\n" string.
   "\n" # "\n" "Hello, world!"
