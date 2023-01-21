@@ -6,30 +6,34 @@ pub mod util;
 pub mod vm;
 
 #[derive(Debug)]
-pub enum EnaError<'a> {
+pub enum EnaError {
     TokenizerError(tok::TokenizerError),
     ASTBuilderError(ast::ASTError),
     CompilerError(vm::compiler::CompilerError),
     VMError(vm::machine::VMError),
-    FileDoesNotExist(&'a str),
+    FileDoesNotExist(String),
     ExpectedAllNodesToBePrograms,
 }
 
 // Tokenizes, parses, compiles and runs given files.
-pub fn run<'a>(file_names: &[&'a str]) -> Result<(), EnaError<'a>> {
+pub fn run<'a>(file_names: Vec<String>) -> Result<(), EnaError> {
     let mut asts = Vec::<ASTNode>::new();
     for file_name in file_names {
-        asts.push(parse_file(file_name)?);
+        asts.push(parse_file(&file_name)?);
     }
     let ast = concat_programs(asts)?;
     let mut compiler = vm::compiler::Compiler::new();
 
-    let ir = match compiler.compile(&ast) {
+    let mut ir = match compiler.compile(&ast) {
         Ok(i) => i,
         Err(e) => return Err(EnaError::CompilerError(e)),
     };
 
-    println!("{:#?}", ir);
+    let io = vm::native::io::group();
+    let vm = vm::native::vm::group();
+
+    io.apply(&mut ir).unwrap();
+    vm.apply(&mut ir).unwrap();
 
     let mut vm = vm::machine::VM::new();
     match vm.run_main(&ir) {
@@ -40,7 +44,7 @@ pub fn run<'a>(file_names: &[&'a str]) -> Result<(), EnaError<'a>> {
     Ok(())
 }
 
-pub fn concat_programs<'a>(nodes: Vec<ASTNode>) -> Result<ASTNode, EnaError<'a>> {
+pub fn concat_programs<'a>(nodes: Vec<ASTNode>) -> Result<ASTNode, EnaError> {
     let mut final_nodes = Vec::<ASTNode>::new();
     let mut inc = 0;
 
@@ -64,11 +68,11 @@ pub fn concat_programs<'a>(nodes: Vec<ASTNode>) -> Result<ASTNode, EnaError<'a>>
     ))
 }
 
-pub fn parse_file<'a>(file_name: &'a str) -> Result<ASTNode, EnaError<'a>> {
+pub fn parse_file<'a>(file_name: &String) -> Result<ASTNode, EnaError> {
     let mut tokenizer = tok::Tokenizer::new();
     let content = match std::fs::read_to_string(file_name) {
         Ok(i) => i,
-        Err(_) => return Err(EnaError::FileDoesNotExist(file_name)),
+        Err(_) => return Err(EnaError::FileDoesNotExist(file_name.to_string())),
     };
     let tokens = tokenizer.parse(content);
     let tokens = match tokens {

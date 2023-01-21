@@ -1,0 +1,4 @@
+main {
+  ena.vm.random # for now only vm call
+  ena.vm.debug # no way to print numbers yet
+}

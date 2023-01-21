@@ -1,5 +1,5 @@
-use std::{collections::HashMap};
 use crate::vm::ir;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum VMError {
@@ -58,14 +58,14 @@ impl<'a> VM<'a> {
             None => return Err(VMError::UnknownBlock(block_name.to_string())),
         };
         let single_eval;
-        
+
         if let ir::Block::IR(ir::BlockRunType::Once, _) = block {
             match self.single_eval_blocks.get(block_name) {
                 Some(i) => {
                     self.stack.push(*i);
                     return Ok(());
-                },
-                None => {},
+                }
+                None => {}
             }
             single_eval = true;
         } else {
@@ -112,8 +112,8 @@ impl<'a> VM<'a> {
                                 match self.stack.last() {
                                     Some(i) => {
                                         self.single_eval_blocks.insert(block_name, *i);
-                                    },
-                                    None => {},
+                                    }
+                                    None => {}
                                 };
                             }
                             return Ok(());
@@ -124,8 +124,8 @@ impl<'a> VM<'a> {
                     match self.stack.last() {
                         Some(i) => {
                             self.single_eval_blocks.insert(block_name, *i);
-                        },
-                        None => {},
+                        }
+                        None => {}
                     };
                 }
                 Ok(())

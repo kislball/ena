@@ -47,14 +47,15 @@ impl<'a> Compiler {
                                 Err(e) => {
                                     return Err(e);
                                 }
-                                Ok(v) => {
-                                    match ir.add_block(id, v) {
-                                        Err(ir::IRError::WordAlreadyExists) => {
-                                            return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-                                        },
-                                        _ => {}, 
+                                Ok(v) => match ir.add_block(id, v) {
+                                    Err(ir::IRError::WordAlreadyExists) => {
+                                        return Err(CompilerError(
+                                            i,
+                                            CompilerErrorInner::WordAlreadyExists,
+                                        ));
                                     }
-                                }
+                                    _ => {}
+                                },
                             };
                         } else {
                             return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
@@ -183,9 +184,12 @@ impl<'a> Compiler {
                             _ => {
                                 match ir.add_block(nested_name, nested_ir) {
                                     Err(ir::IRError::WordAlreadyExists) => {
-                                        return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-                                    },
-                                    _ => {}, 
+                                        return Err(CompilerError(
+                                            i,
+                                            CompilerErrorInner::WordAlreadyExists,
+                                        ));
+                                    }
+                                    _ => {}
                                 }
                                 code.push(ir::IRCode::PutValue(ir::Value::Block(nested_name)));
                             }
@@ -215,8 +219,8 @@ impl<'a> Compiler {
                     match ir.add_block(nested_name, nested_ir) {
                         Err(ir::IRError::WordAlreadyExists) => {
                             return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-                        },
-                        _ => {}, 
+                        }
+                        _ => {}
                     }
                     code.push(ir::IRCode::If(nested_name));
                 }
@@ -243,8 +247,8 @@ impl<'a> Compiler {
                     match ir.add_block(nested_name, nested_ir) {
                         Err(ir::IRError::WordAlreadyExists) => {
                             return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-                        },
-                        _ => {}, 
+                        }
+                        _ => {}
                     }
                     code.push(ir::IRCode::While(nested_name));
                 }

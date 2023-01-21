@@ -1,8 +1,6 @@
-use crate::vm::machine;
 use crate::vm::ir;
+use crate::vm::machine;
 use core::fmt;
-use rand;
-use rand::Rng;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -15,43 +13,11 @@ pub struct IR<'a> {
     pub blocks: HashMap<&'a str, Block<'a>>,
 }
 
-fn ena_vm_debug(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
-    let el = match vm.stack.pop() {
-        Some(i) => i,
-        None => Value::Null,
-    };
-
-    println!("{:?}", el);
-
-    Ok(())
-}
-
-fn ena_vm_get_random(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
-    vm.stack.push(ir::Value::Number(rand::thread_rng().gen_range(1..=90000) as f64));
-    Ok(())
-}
-
-fn print(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
-    if let Value::String(st) = vm.pop()? {
-        print!("{}", st);
-    } else {
-        return Err(machine::VMError::ExpectedString("print".to_string()));
-    }
-
-    Ok(())
-}
-
 impl<'a> IR<'a> {
     pub fn new() -> Self {
-        let mut ir = IR {
+        IR {
             blocks: HashMap::new(),
-        };
-
-        ir.add_native("ena.vm.debug", ena_vm_debug).unwrap();
-        ir.add_native("ena.vm.random", ena_vm_get_random).unwrap();
-        ir.add_native("print", print).unwrap();
-
-        ir
+        }
     }
 
     pub fn get_block(&self, id: &'a str) -> Option<&Block<'a>> {
@@ -89,8 +55,8 @@ impl<'a> fmt::Debug for Block<'a> {
         match self {
             Block::IR(typ, vec) => {
                 write!(f, "IRBlock({:?}, {:?})", typ, vec)
-            },
-            Block::Native(_) => write!(f, "NativeHandler")
+            }
+            Block::Native(_) => write!(f, "NativeHandler"),
         }
     }
 }
@@ -112,4 +78,32 @@ pub enum IRCode<'a> {
     While(&'a str),
     If(&'a str),
     Return,
+}
+
+pub struct NativeGroup<'a> {
+    natives: HashMap<&'a str, NativeHandler<'a>>,
+}
+
+impl<'a> NativeGroup<'a> {
+    pub fn new() -> Self {
+        Self {
+            natives: HashMap::new(),
+        }
+    }
+
+    pub fn add_native(&mut self, name: &'a str, f: NativeHandler<'a>) -> Result<(), IRError> {
+        if self.natives.contains_key(name) {
+            return Err(IRError::WordAlreadyExists);
+        }
+        self.natives.insert(name, f);
+        Ok(())
+    }
+
+    pub fn apply(&self, ir: &mut IR<'a>) -> Result<(), IRError> {
+        for (k, v) in &self.natives {
+            ir.add_native(k, *v)?;
+        }
+
+        Ok(())
+    }
 }
