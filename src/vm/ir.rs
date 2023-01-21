@@ -82,12 +82,14 @@ pub enum IRCode<'a> {
 
 pub struct NativeGroup<'a> {
     natives: HashMap<&'a str, NativeHandler<'a>>,
+    prefix: &'a str,
 }
 
 impl<'a> NativeGroup<'a> {
-    pub fn new() -> Self {
+    pub fn new(prefix: &'a str) -> Self {
         Self {
             natives: HashMap::new(),
+            prefix,
         }
     }
 
@@ -101,7 +103,9 @@ impl<'a> NativeGroup<'a> {
 
     pub fn apply(&self, ir: &mut IR<'a>) -> Result<(), IRError> {
         for (k, v) in &self.natives {
-            ir.add_native(k, *v)?;
+            // not dangerous since this stuff should not be freed until the end of the program.
+            let leaky: &'static str = Box::leak(format!("{}.{}", self.prefix, k).into_boxed_str());
+            ir.add_native(leaky, *v)?;
         }
 
         Ok(())

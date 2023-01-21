@@ -20,10 +20,10 @@ pub fn vm_get_random(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VM
 }
 
 pub fn group<'a>() -> ir::NativeGroup<'a> {
-    let mut group = ir::NativeGroup::new();
+    let mut group = ir::NativeGroup::new("ena.vm");
 
-    group.add_native("ena.vm.debug", vm_debug).unwrap();
-    group.add_native("ena.vm.random", vm_get_random).unwrap();
+    group.add_native("debug", vm_debug).unwrap();
+    group.add_native("random", vm_get_random).unwrap();
 
     group
 }
