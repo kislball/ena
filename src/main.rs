@@ -2,7 +2,6 @@ use std::process;
 
 use enalang;
 
-
 fn main() {
     let vec: Vec<String> = std::env::args().skip(1).collect();
 
