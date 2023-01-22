@@ -1,0 +1,15 @@
+# todo: move to std
+try_call {
+  dup block_exists? if {
+    call
+  }
+}
+
+hello_world {
+  "hello, world!\n" ena.io.print
+}
+
+main {
+  'hello_world try_call
+  'nonexistent_block try_call
+}
