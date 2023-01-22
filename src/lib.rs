@@ -15,13 +15,32 @@ pub enum EnaError {
     ExpectedAllNodesToBePrograms,
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, clap::ValueEnum)]
+pub enum Stage {
+    Parse,
+    Compile,
+    Run
+}
+
+pub struct RunOptions {
+    pub stage: Stage,
+    pub file_names: Vec<String>,
+    pub main: String
+}
+
 // Tokenizes, parses, compiles and runs given files.
-pub fn run<'a>(file_names: Vec<String>) -> Result<(), EnaError> {
+pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
     let mut asts = Vec::<ASTNode>::new();
-    for file_name in file_names {
+    for file_name in &options.file_names {
         asts.push(parse_file(&file_name)?);
     }
     let ast = concat_programs(asts)?;
+
+    if options.stage == Stage::Parse {
+        println!("{:#?}", ast);
+        return Ok(());
+    }
+
     let mut compiler = vm::compiler::Compiler::new();
 
     let mut ir = match compiler.compile(&ast) {
@@ -29,14 +48,16 @@ pub fn run<'a>(file_names: Vec<String>) -> Result<(), EnaError> {
         Err(e) => return Err(EnaError::CompilerError(e)),
     };
 
-    let io = vm::native::io::group();
-    let vm = vm::native::vm::group();
+    if options.stage == Stage::Compile {
+        println!("{:#?}", ir);
+        return Ok(());
+    }
 
-    io.apply(&mut ir).unwrap();
-    vm.apply(&mut ir).unwrap();
+    let native = vm::native::group();
+    native.apply(&mut ir).unwrap(); // we should panic if stuff like this happens
 
     let mut vm = vm::machine::VM::new();
-    match vm.run_main(&ir) {
+    match vm.run(&ir, options.main.as_str()) {
         Ok(_) => (),
         Err(e) => return Err(EnaError::VMError(e)),
     }

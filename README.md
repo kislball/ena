@@ -3,6 +3,25 @@
 
 Ena is a very bad language, whose implementation was originally written in C, but was later rewritten in Rust because the main developer was tired of debugging segfaults.
 
+## Installing
+As of now, Ena does not provide prebuilt binaries, it is your task to build it yourself.
+
+Ena is written in Rust, so you should have `cargo` and `rustc` installed.
+
+Build and install command: 
+
+```sh
+$ cargo install --path .
+```
+
+Test if you have installed Ena:
+
+```sh
+$ enalang --version
+```
+
+If you see an error, check if your PATH variable is configured.
+
 ## Syntax
 Ena is a stack-based language. This means it works on the stack. Seems logical, doesn't it?
 

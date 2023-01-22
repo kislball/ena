@@ -95,7 +95,7 @@ impl<'a> NativeGroup<'a> {
 
     pub fn add_child(&mut self, group: &NativeGroup<'a>) -> Result<(), IRError> {
         for (k, v) in &group.natives {
-            self.add_native(k, *v)?;
+            self.add_native(Self::merge_prefix(group.prefix, k), *v)?;
         }
         Ok(())
     }
@@ -113,12 +113,20 @@ impl<'a> NativeGroup<'a> {
             if self.prefix.len() == 0 {
                 ir.add_native(k, *v)?;
             } else {
-                // not dangerous since this stuff should not be freed until the end of the program.
-                let leaky: &'static str = Box::leak(format!("{}.{}", self.prefix, k).into_boxed_str());
-                ir.add_native(leaky, *v)?;
+                ir.add_native(Self::merge_prefix(self.prefix, k), *v)?;
             }
         }
 
         Ok(())
+    }
+
+    fn merge_prefix(prefix: &'a str, name: &'a str) -> &'a str {
+        if prefix.len() == 0 {
+            name
+        } else {
+            // not dangerous since this stuff should not be freed until the end of the program.
+            let leaky: &'static str = Box::leak(format!("{}.{}", prefix, name).into_boxed_str());
+            leaky
+        }
     }
 }

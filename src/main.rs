@@ -1,16 +1,39 @@
-use std::process;
-
+use clap::{Parser, CommandFactory};
 use enalang;
 
-fn main() {
-    let vec: Vec<String> = std::env::args().skip(1).collect();
+#[derive(Parser)]
+#[command(about = "Interpreter for the Ena programming language", version)]
+struct Args {
+    /// Files to interpret
+    files: Vec<String>,
+    /// Word to start execution from
+    #[arg(short, long)]
+    main_word: Option<String>,
+    /// Stage to stop execution on.
+    #[arg(value_enum, short, long)]
+    stage: Option<enalang::Stage>
+}
 
-    if vec.len() < 1 {
-        eprintln!("err: specify files");
-        process::exit(1);
+fn main() {
+    let args = Args::parse();
+    let main = match args.main_word {
+        Some(i) => i,
+        None => "main".to_string(),
+    };
+
+    if args.files.len() < 1 {
+        Args::command()
+            .error(clap::error::ErrorKind::TooFewValues, "specify files")
+            .exit();
     }
 
-    let err = enalang::run(vec);
+    let options = enalang::RunOptions {
+        file_names: args.files,
+        stage: args.stage.unwrap_or(enalang::Stage::Run),
+        main: main,
+    };
+
+    let err = enalang::run(&options);
     match err {
         Err(e) => println!("{:?}", e),
         _ => {}

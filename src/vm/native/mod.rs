@@ -1,2 +1,13 @@
+use crate::vm::ir;
+
 pub mod io;
 pub mod vm;
+
+pub fn group<'a>() -> ir::NativeGroup<'a> {
+  let mut group = ir::NativeGroup::new("");
+
+  group.add_child(&vm::group()).unwrap();
+  group.add_child(&io::group()).unwrap();
+
+  group
+}
