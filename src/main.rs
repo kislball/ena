@@ -14,21 +14,44 @@ struct Args {
     stage: Option<enalang::Stage>
 }
 
+fn report_error(kind: clap::error::ErrorKind, message: impl std::fmt::Display) -> ! {
+    Args::command()
+        .error(kind, message)
+        .exit()
+}
+
 fn main() {
     let args = Args::parse();
     let main = match args.main_word {
         Some(i) => i,
         None => "main".to_string(),
     };
+    let mut files: Vec<String> = vec![];
 
-    if args.files.len() < 1 {
-        Args::command()
-            .error(clap::error::ErrorKind::TooFewValues, "specify files")
-            .exit();
+    for file in args.files {
+        let res = match glob::glob(&file) {
+            Ok(i) => i,
+            Err(e) => {
+                report_error(clap::error::ErrorKind::InvalidValue, e);
+            },
+        };
+
+        for pattern in res {
+            match pattern {
+                Ok(path) => files.push(path.display().to_string()),
+                Err(e) => {
+                    report_error(clap::error::ErrorKind::ValueValidation, e);
+                },
+            }
+        }
+    }
+
+    if files.len() < 1 {
+        report_error(clap::error::ErrorKind::TooFewValues, "specify files");
     }
 
     let options = enalang::RunOptions {
-        file_names: args.files,
+        file_names: files,
         stage: args.stage.unwrap_or(enalang::Stage::Run),
         main: main,
     };
