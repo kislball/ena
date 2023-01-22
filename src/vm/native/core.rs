@@ -95,6 +95,15 @@ pub fn equal(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     }
 }
 
+pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
+    if let ir::Value::Block(name) = vm.pop()? {
+        vm.stack.push(ir::Value::Boolean(ir.blocks.contains_key(name)));
+        Ok(())
+    } else {
+        Err(machine::VMError::ExpectedBlock("block_exists?".to_string()))
+    }
+}
+
 pub fn call<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
         vm.run_block(name, &ir)?;
@@ -131,6 +140,7 @@ pub fn group<'a>() -> ir::NativeGroup<'a> {
     group.add_native("root", root).unwrap();
     group.add_native("==", equal).unwrap();
     group.add_native("call", call).unwrap();
+    group.add_native("block_exists?", block_exists).unwrap();
 
     group
 }
