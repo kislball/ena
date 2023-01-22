@@ -8,10 +8,14 @@ pub enum VMError {
     StackEnded(String),
     ExpectedBoolean(String),
     ExpectedString(String),
+    ExpectedNumber(String),
+    CannotCompare(String),
+    ExpectedBlock(String),
 }
 
 pub struct VM<'a> {
     pub stack: Vec<ir::Value<'a>>,
+    pub debug_stack: bool,
     single_eval_blocks: HashMap<&'a str, ir::Value<'a>>,
     current_block: Option<&'a str>,
 }
@@ -22,6 +26,7 @@ impl<'a> VM<'a> {
             stack: vec![],
             current_block: None,
             single_eval_blocks: HashMap::new(),
+            debug_stack: false,
         }
     }
 
@@ -75,6 +80,9 @@ impl<'a> VM<'a> {
         match block {
             ir::Block::IR(_, code) => {
                 for c in code {
+                    if self.debug_stack {
+                        println!("\n\n=== stack debug ===\n\n{:?}", self.stack);
+                    }
                     match c {
                         ir::IRCode::PutValue(v) => {
                             self.stack.push(*v);
@@ -95,7 +103,7 @@ impl<'a> VM<'a> {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(bo) = top {
                                 if !bo {
-                                    break;
+                                    continue;
                                 } else {
                                     let v = self.run_block(b, ir);
                                     self.current_block = Some(block_name);

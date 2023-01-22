@@ -1,0 +1,7 @@
+print_hello {
+  "Hello, world!\n" ena.io.print
+}
+
+main {
+  'print_hello call
+}

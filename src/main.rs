@@ -1,4 +1,4 @@
-use clap::{Parser, CommandFactory};
+use clap::{CommandFactory, Parser};
 use enalang;
 
 #[derive(Parser)]
@@ -9,15 +9,16 @@ struct Args {
     /// Word to start execution from
     #[arg(short, long)]
     main_word: Option<String>,
-    /// Stage to stop execution on.
+    /// Stage to stop execution on
     #[arg(value_enum, short, long)]
-    stage: Option<enalang::Stage>
+    stage: Option<enalang::Stage>,
+    /// Enable stack debugging
+    #[arg(short, long)]
+    debug_stack: Option<bool>
 }
 
 fn report_error(kind: clap::error::ErrorKind, message: impl std::fmt::Display) -> ! {
-    Args::command()
-        .error(kind, message)
-        .exit()
+    Args::command().error(kind, message).exit()
 }
 
 fn main() {
@@ -33,7 +34,7 @@ fn main() {
             Ok(i) => i,
             Err(e) => {
                 report_error(clap::error::ErrorKind::InvalidValue, e);
-            },
+            }
         };
 
         for pattern in res {
@@ -41,7 +42,7 @@ fn main() {
                 Ok(path) => files.push(path.display().to_string()),
                 Err(e) => {
                     report_error(clap::error::ErrorKind::ValueValidation, e);
-                },
+                }
             }
         }
     }
@@ -54,6 +55,10 @@ fn main() {
         file_names: files,
         stage: args.stage.unwrap_or(enalang::Stage::Run),
         main: main,
+        debug_stack: match args.debug_stack {
+            Some(i) => i,
+            None => false,
+        },
     };
 
     let err = enalang::run(&options);

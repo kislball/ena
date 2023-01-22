@@ -8,7 +8,7 @@ pub enum IRError {
     WordAlreadyExists,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IR<'a> {
     pub blocks: HashMap<&'a str, Block<'a>>,
 }
@@ -37,14 +37,15 @@ impl<'a> IR<'a> {
     }
 }
 
-pub type NativeHandler<'a> = fn(&mut machine::VM<'a>, &ir::IR) -> Result<(), machine::VMError>;
+pub type NativeHandler<'a> = fn(&mut machine::VM<'a>, &ir::IR<'a>) -> Result<(), machine::VMError>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BlockRunType {
     Once,
     Unique,
 }
 
+#[derive(Clone)]
 pub enum Block<'a> {
     IR(BlockRunType, Vec<IRCode<'a>>),
     Native(NativeHandler<'a>),
@@ -71,7 +72,7 @@ pub enum Value<'a> {
     Null,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum IRCode<'a> {
     PutValue(Value<'a>),
     Call(&'a str),

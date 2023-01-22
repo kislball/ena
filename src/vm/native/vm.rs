@@ -19,10 +19,16 @@ pub fn vm_get_random(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VM
     Ok(())
 }
 
+pub fn vm_debug_stack(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+    println!("\n=== stack debug ===\n{:?}", vm.stack);
+    Ok(())
+}
+
 pub fn group<'a>() -> ir::NativeGroup<'a> {
     let mut group = ir::NativeGroup::new("ena.vm");
 
     group.add_native("debug", vm_debug).unwrap();
+    group.add_native("debug_stack", vm_debug_stack).unwrap();
     group.add_native("random", vm_get_random).unwrap();
 
     group

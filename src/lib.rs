@@ -19,13 +19,15 @@ pub enum EnaError {
 pub enum Stage {
     Parse,
     Compile,
-    Run
+    CompileExtended,
+    Run,
 }
 
 pub struct RunOptions {
     pub stage: Stage,
     pub file_names: Vec<String>,
-    pub main: String
+    pub main: String,
+    pub debug_stack: bool,
 }
 
 // Tokenizes, parses, compiles and runs given files.
@@ -56,7 +58,13 @@ pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
     let native = vm::native::group();
     native.apply(&mut ir).unwrap(); // we should panic if stuff like this happens
 
+    if options.stage == Stage::CompileExtended {
+        println!("{:#?}", ir);
+        return Ok(());
+    }
+
     let mut vm = vm::machine::VM::new();
+    vm.debug_stack = options.debug_stack;
     match vm.run(&ir, options.main.as_str()) {
         Ok(_) => (),
         Err(e) => return Err(EnaError::VMError(e)),
