@@ -20,6 +20,7 @@ pub enum Stage {
     Parse,
     Compile,
     CompileExtended,
+    PrintWords,
     Run,
 }
 
@@ -60,6 +61,17 @@ pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
 
     if options.stage == Stage::CompileExtended {
         println!("{:#?}", ir);
+        return Ok(());
+    }
+
+    if options.stage == Stage::PrintWords {
+        println!("all words in given files:");
+        let mut ve = ir.blocks.keys().collect::<Vec<&&str>>();
+        ve.sort();
+
+        for str in ve {
+            println!("{str}");
+        }
         return Ok(());
     }
 
