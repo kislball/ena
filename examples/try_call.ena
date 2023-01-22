@@ -5,6 +5,14 @@ try_call {
   }
 }
 
+try_call_or {
+  dup block_exists? if {
+    call
+    return
+  }
+  drop call
+}
+
 hello_world {
   "hello, world!\n" ena.io.print
 }
@@ -12,4 +20,5 @@ hello_world {
 main {
   'hello_world try_call
   'nonexistent_block try_call
+  'hello_world 'nonexistent_block try_call_or
 }
