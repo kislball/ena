@@ -16,15 +16,15 @@ pub enum VMError {
 pub struct VM<'a> {
     pub stack: Vec<ir::Value<'a>>,
     pub debug_stack: bool,
+    pub call_stack: Vec<&'a str>,
     single_eval_blocks: HashMap<&'a str, ir::Value<'a>>,
-    current_block: Option<&'a str>,
 }
 
 impl<'a> VM<'a> {
     pub fn new() -> Self {
         VM {
             stack: vec![],
-            current_block: None,
+            call_stack: vec![],
             single_eval_blocks: HashMap::new(),
             debug_stack: false,
         }
@@ -32,7 +32,7 @@ impl<'a> VM<'a> {
 
     pub fn clean(&mut self) {
         self.stack = vec![];
-        self.current_block = None;
+        self.call_stack = vec![];
         self.single_eval_blocks = HashMap::new();
     }
 
@@ -53,12 +53,16 @@ impl<'a> VM<'a> {
     }
 
     fn block_name(&self) -> &'a str {
-        &self.current_block.unwrap_or("unknown block")
+        self.call_stack.last().unwrap_or(&"unknown block")
+    }
+
+    pub fn print_call_stack(&self) {
+        println!("vm stack trace: {:#?}", self.call_stack);
     }
 
     pub fn run_block(&mut self, block_name: &'a str, ir: &ir::IR<'a>) -> Result<(), VMError> {
-        self.current_block = Some(block_name);
-        let block = match ir.get_block(block_name) {
+        self.call_stack.push(block_name);
+        let block= match ir.get_block(block_name) {
             Some(b) => b,
             None => return Err(VMError::UnknownBlock(block_name.to_string())),
         };
@@ -77,7 +81,7 @@ impl<'a> VM<'a> {
             single_eval = false;
         }
 
-        match block {
+        let v = match block {
             ir::Block::IR(_, code) => {
                 for c in code {
                     if self.debug_stack {
@@ -94,7 +98,6 @@ impl<'a> VM<'a> {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(true) = top {
                                 self.run_block(b, ir)?;
-                                self.current_block = Some(block_name);
                             } else {
                                 break;
                             }
@@ -106,7 +109,6 @@ impl<'a> VM<'a> {
                                     continue;
                                 } else {
                                     let v = self.run_block(b, ir);
-                                    self.current_block = Some(block_name);
                                     return v;
                                 }
                             } else {
@@ -139,6 +141,10 @@ impl<'a> VM<'a> {
                 Ok(())
             }
             ir::Block::Native(f) => f(self, ir),
-        }
+        };
+
+        self.call_stack.pop();
+
+        v
     }
 }

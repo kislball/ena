@@ -67,7 +67,10 @@ pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
     vm.debug_stack = options.debug_stack;
     match vm.run(&ir, options.main.as_str()) {
         Ok(_) => (),
-        Err(e) => return Err(EnaError::VMError(e)),
+        Err(e) => {
+            vm.print_call_stack();
+            return Err(EnaError::VMError(e))
+        },
     }
 
     Ok(())

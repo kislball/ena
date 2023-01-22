@@ -24,11 +24,18 @@ pub fn vm_debug_stack(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::V
     Ok(())
 }
 
+pub fn vm_debug_calls(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+    println!("\n=== call stack debug ===\n{:?}", vm.call_stack);
+    Ok(())
+}
+
+
 pub fn group<'a>() -> ir::NativeGroup<'a> {
     let mut group = ir::NativeGroup::new("ena.vm");
 
     group.add_native("debug", vm_debug).unwrap();
     group.add_native("debug_stack", vm_debug_stack).unwrap();
+    group.add_native("debug_calls", vm_debug_calls).unwrap();
     group.add_native("random", vm_get_random).unwrap();
 
     group

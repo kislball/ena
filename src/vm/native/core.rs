@@ -104,6 +104,19 @@ pub fn call<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine
     }
 }
 
+// pub fn run_thread<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
+//     if let ir::Value::Block(name) = vm.pop()? {
+//         let n_name = name.clone();
+//         thread::spawn(|| {
+//             let mut new_vm = machine::VM::new();
+//             new_vm.run_block(n_name, &ir.clone());
+//         });
+//         Ok(())
+//     } else {
+//         Err(machine::VMError::ExpectedBlock("run_thread".to_string()))
+//     }
+// }
+
 pub fn group<'a>() -> ir::NativeGroup<'a> {
     let mut group = ir::NativeGroup::new("");
 
