@@ -93,6 +93,13 @@ impl<'a> NativeGroup<'a> {
         }
     }
 
+    pub fn add_child(&mut self, group: &NativeGroup<'a>) -> Result<(), IRError> {
+        for (k, v) in &group.natives {
+            self.add_native(k, *v)?;
+        }
+        Ok(())
+    }
+
     pub fn add_native(&mut self, name: &'a str, f: NativeHandler<'a>) -> Result<(), IRError> {
         if self.natives.contains_key(name) {
             return Err(IRError::WordAlreadyExists);
@@ -103,9 +110,13 @@ impl<'a> NativeGroup<'a> {
 
     pub fn apply(&self, ir: &mut IR<'a>) -> Result<(), IRError> {
         for (k, v) in &self.natives {
-            // not dangerous since this stuff should not be freed until the end of the program.
-            let leaky: &'static str = Box::leak(format!("{}.{}", self.prefix, k).into_boxed_str());
-            ir.add_native(leaky, *v)?;
+            if self.prefix.len() == 0 {
+                ir.add_native(k, *v)?;
+            } else {
+                // not dangerous since this stuff should not be freed until the end of the program.
+                let leaky: &'static str = Box::leak(format!("{}.{}", self.prefix, k).into_boxed_str());
+                ir.add_native(leaky, *v)?;
+            }
         }
 
         Ok(())
