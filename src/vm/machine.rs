@@ -1,4 +1,4 @@
-use crate::vm::ir;
+use crate::vm::{heap, ir};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -9,24 +9,31 @@ pub enum VMError {
     ExpectedBoolean(String),
     ExpectedString(String),
     ExpectedNumber(String),
+    ExpectedInteger(String),
     CannotCompare(String),
     ExpectedBlock(String),
+    ExpectedPointer(String),
+    HeapError(heap::HeapError),
+    BadPointer(String),
+    ExpectedTwo(&'static str),
 }
 
 pub struct VM<'a> {
     pub stack: Vec<ir::Value<'a>>,
     pub debug_stack: bool,
     pub call_stack: Vec<&'a str>,
+    pub heap: heap::Heap<'a>,
     single_eval_blocks: HashMap<&'a str, ir::Value<'a>>,
 }
 
 impl<'a> VM<'a> {
-    pub fn new() -> Self {
+    pub fn new(gc: bool, debug_gc: bool) -> Self {
         VM {
             stack: vec![],
             call_stack: vec![],
             single_eval_blocks: HashMap::new(),
             debug_stack: false,
+            heap: heap::Heap::new(gc, debug_gc),
         }
     }
 
@@ -52,6 +59,21 @@ impl<'a> VM<'a> {
         }
     }
 
+    pub fn pop_usize(&mut self) -> Result<usize, VMError> {
+        let val = self.pop()?;
+        if let ir::Value::Number(num) = val {
+            let int = num as usize;
+
+            if int as f64 != num {
+                return Err(VMError::ExpectedInteger(self.block_name().to_string()));
+            }
+
+            Ok(int)
+        } else {
+            return Err(VMError::ExpectedInteger(self.block_name().to_string()));
+        }
+    }
+
     fn block_name(&self) -> &'a str {
         self.call_stack.last().unwrap_or(&"unknown block")
     }
@@ -62,7 +84,7 @@ impl<'a> VM<'a> {
 
     pub fn run_block(&mut self, block_name: &'a str, ir: &ir::IR<'a>) -> Result<(), VMError> {
         self.call_stack.push(block_name);
-        let block= match ir.get_block(block_name) {
+        let block = match ir.get_block(block_name) {
             Some(b) => b,
             None => return Err(VMError::UnknownBlock(block_name.to_string())),
         };

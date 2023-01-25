@@ -29,6 +29,8 @@ pub struct RunOptions {
     pub file_names: Vec<String>,
     pub main: String,
     pub debug_stack: bool,
+    pub enable_gc: bool,
+    pub debug_gc: bool,
 }
 
 // Tokenizes, parses, compiles and runs given files.
@@ -75,14 +77,15 @@ pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
         return Ok(());
     }
 
-    let mut vm = vm::machine::VM::new();
+    let mut vm = vm::machine::VM::new(options.enable_gc, options.debug_gc);
     vm.debug_stack = options.debug_stack;
     match vm.run(&ir, options.main.as_str()) {
         Ok(_) => (),
         Err(e) => {
+            println!("stack: {:#?}", vm.stack);
             vm.print_call_stack();
-            return Err(EnaError::VMError(e))
-        },
+            return Err(EnaError::VMError(e));
+        }
     }
 
     Ok(())

@@ -29,7 +29,6 @@ pub fn vm_debug_calls(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::V
     Ok(())
 }
 
-
 pub fn group<'a>() -> ir::NativeGroup<'a> {
     let mut group = ir::NativeGroup::new("ena.vm");
 

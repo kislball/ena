@@ -10,11 +10,17 @@ struct Args {
     #[arg(short, long)]
     main_word: Option<String>,
     /// Stage to stop execution on
-    #[arg(value_enum, short, long)]
-    stage: Option<enalang::Stage>,
+    #[arg(value_enum, short, long, default_value_t = enalang::Stage::Run)]
+    stage: enalang::Stage,
     /// Enable stack debugging
-    #[arg(short, long)]
-    debug_stack: Option<bool>
+    #[arg(long, default_value_t = false)]
+    debug_stack: bool,
+    /// Enable or disable GC
+    #[arg(long, default_value_t = true)]
+    gc: bool,
+    /// Whether to debug gc
+    #[arg(long, default_value_t = false)]
+    debug_gc: bool,
 }
 
 fn report_error(kind: clap::error::ErrorKind, message: impl std::fmt::Display) -> ! {
@@ -53,12 +59,11 @@ fn main() {
 
     let options = enalang::RunOptions {
         file_names: files,
-        stage: args.stage.unwrap_or(enalang::Stage::Run),
+        stage: args.stage,
         main: main,
-        debug_stack: match args.debug_stack {
-            Some(i) => i,
-            None => false,
-        },
+        debug_stack: args.debug_stack,
+        enable_gc: args.gc,
+        debug_gc: args.debug_gc,
     };
 
     let err = enalang::run(&options);
