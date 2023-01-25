@@ -125,7 +125,7 @@ impl Tokenizer {
 
     pub fn parse(&mut self, str: String) -> Result<&mut Vec<Token>, TokenizerError> {
         self.clean();
-        self.str = str.clone();
+        self.str = str;
         self.str.push(' '); // needs a whitespace for ids and numbers to work
         let en: Vec<char> = self.str.chars().enumerate().map(|x| x.1).collect();
 
@@ -217,7 +217,7 @@ impl Tokenizer {
         Ok(&mut self.tokens)
     }
 
-    fn parse_number(&mut self, en: &Vec<char>) -> Option<TokenizerError> {
+    fn parse_number(&mut self, en: &[char]) -> Option<TokenizerError> {
         let c = match en.get(self.at) {
             Some(ch) => *ch,
             None => {
@@ -271,7 +271,7 @@ impl Tokenizer {
         None
     }
 
-    fn parse_id(&mut self, en: &Vec<char>, escaped: bool) -> Option<TokenizerError> {
+    fn parse_id(&mut self, en: &[char], escaped: bool) -> Option<TokenizerError> {
         let c = match en.get(self.at) {
             Some(ch) => *ch,
             None => {

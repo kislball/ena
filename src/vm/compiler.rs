@@ -19,6 +19,12 @@ pub enum CompilerErrorInner {
 #[derive(Debug)]
 pub struct CompilerError(usize, CompilerErrorInner);
 
+impl Default for Compiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> Compiler {
     pub fn new() -> Self {
         Compiler {}
@@ -42,7 +48,7 @@ impl<'a> Compiler {
                             }
                         };
 
-                        if let ast::ASTNodeInner::Block(_, _) = (*next).1 {
+                        if let ast::ASTNodeInner::Block(_, _) = next.1 {
                             match self.compile_block(id.as_str(), next, &mut ir) {
                                 Err(e) => {
                                     return Err(e);
@@ -69,7 +75,7 @@ impl<'a> Compiler {
                             }
                         };
 
-                        if let ast::ASTNodeInner::Identifier(_) = (*prev).1 {
+                        if let ast::ASTNodeInner::Identifier(_) = prev.1 {
                         } else {
                             return Err(CompilerError(i, CompilerErrorInner::UnexpectedBlock));
                         }
@@ -115,7 +121,7 @@ impl<'a> Compiler {
         let mut code: Vec<ir::IRCode<'a>> = vec![];
         let t: ast::BlockType;
         let v: &Vec<ast::ASTNode>;
-        match &(*block).1 {
+        match &block.1 {
             ast::ASTNodeInner::Block(ty, ve) => {
                 t = *ty;
                 v = ve;
@@ -132,8 +138,8 @@ impl<'a> Compiler {
             _ => ir::BlockRunType::Once,
         };
 
-        for (i, node) in v.into_iter().enumerate() {
-            match &(*node).1 {
+        for (i, node) in v.iter().enumerate() {
+            match &node.1 {
                 ast::ASTNodeInner::Identifier(i) => {
                     code.push(ir::IRCode::Call(i.as_str()));
                 }
@@ -175,7 +181,7 @@ impl<'a> Compiler {
                         }
                     };
 
-                    if let ast::ASTNodeInner::Keyword(_) = (*prev).1 {
+                    if let ast::ASTNodeInner::Keyword(_) = prev.1 {
                     } else {
                         match typ {
                             ast::BlockType::SingleEval | ast::BlockType::UniqueEval => {
@@ -204,7 +210,7 @@ impl<'a> Compiler {
                         }
                     };
 
-                    match &(*next).1 {
+                    match &next.1 {
                         ast::ASTNodeInner::Block(ast::BlockType::UniqueEval, _) => {}
                         _ => {
                             return Err(CompilerError(
@@ -232,7 +238,7 @@ impl<'a> Compiler {
                         }
                     };
 
-                    match &(*next).1 {
+                    match &next.1 {
                         ast::ASTNodeInner::Block(ast::BlockType::UniqueEval, _) => {}
                         _ => {
                             return Err(CompilerError(

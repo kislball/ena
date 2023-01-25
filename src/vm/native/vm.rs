@@ -14,7 +14,7 @@ pub fn vm_debug(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError
 
 pub fn vm_get_random(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     vm.stack.push(ir::Value::Number(
-        rand::thread_rng().gen_range(0.0..=1.0) as f64
+        rand::thread_rng().gen_range(0.0..=1.0)
     ));
     Ok(())
 }

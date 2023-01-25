@@ -27,6 +27,12 @@ pub struct ASTBuilder {
     at: usize,
 }
 
+impl Default for ASTBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug)]
 pub enum ASTErrorInner {
     UnexpectedEnd,
@@ -103,10 +109,7 @@ impl ASTBuilder {
                         }
                     };
 
-                    let is_closer = match tok::is_closer(&block, &current.1) {
-                        Some(i) => i,
-                        None => false,
-                    };
+                    let is_closer = tok::is_closer(block, &current.1).unwrap_or(false);
 
                     if is_closer {
                         break;

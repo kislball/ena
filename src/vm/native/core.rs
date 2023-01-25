@@ -247,7 +247,7 @@ pub fn into_ptr<'a>(vm: &mut machine::VM<'a>, _: &ir::IR<'a>) -> Result<(), mach
 
 pub fn call<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
-        vm.run_block(name, &ir)?;
+        vm.run_block(name, ir)?;
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock("call".to_string()))

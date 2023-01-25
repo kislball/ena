@@ -10,7 +10,7 @@ pub enum HeapError {
 }
 
 pub fn heap_result_into_vm<T>(r: Result<T, HeapError>) -> Result<T, machine::VMError> {
-    r.map_err(|x| machine::VMError::HeapError(x))
+    r.map_err(machine::VMError::HeapError)
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -153,7 +153,13 @@ impl<'a> Heap<'a> {
         };
 
         if let Some(i) = &self.rc.get(&block.pointer) {
-            if **i <= 0 {
+            if self.debug_gc {
+                println!(
+                    "GC_DEBUG: checking pointer {} with RC: {}",
+                    block.pointer, i
+                );
+            }
+            if **i == 0 {
                 if self.debug_gc {
                     println!(
                         "GC_DEBUG: freeing {} with size {}",
@@ -195,6 +201,9 @@ impl<'a> Heap<'a> {
             };
         }
 
+        self.rc.insert(pointer, new_value);
+        let v = self.rc_check(pointer);
+
         if self.debug_gc {
             println!(
                 "GC_DEBUG: {}(in block {}) - RC:{}",
@@ -202,8 +211,7 @@ impl<'a> Heap<'a> {
             );
         }
 
-        self.rc.insert(pointer, new_value);
-        self.rc_check(pointer)
+        v
     }
 
     pub fn rc_reset(&mut self, pointer: usize) {

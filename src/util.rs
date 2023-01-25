@@ -1,6 +1,6 @@
 // Gets at which line character located at given index is.
 pub fn get_line(str: &str, at: usize) -> (usize, usize) {
-    let mut i = 0 as usize;
+    let mut i = 0_usize;
     let string = String::from(str);
     let mut line: usize = 1;
     let mut within_line: usize = 1;

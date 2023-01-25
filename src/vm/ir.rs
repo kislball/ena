@@ -13,6 +13,12 @@ pub struct IR<'a> {
     pub blocks: HashMap<&'a str, Block<'a>>,
 }
 
+impl<'a> Default for IR<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> IR<'a> {
     pub fn new() -> Self {
         IR {
@@ -111,7 +117,7 @@ impl<'a> NativeGroup<'a> {
 
     pub fn apply(&self, ir: &mut IR<'a>) -> Result<(), IRError> {
         for (k, v) in &self.natives {
-            if self.prefix.len() == 0 {
+            if self.prefix.is_empty() {
                 ir.add_native(k, *v)?;
             } else {
                 ir.add_native(Self::merge_prefix(self.prefix, k), *v)?;
@@ -122,7 +128,7 @@ impl<'a> NativeGroup<'a> {
     }
 
     fn merge_prefix(prefix: &'a str, name: &'a str) -> &'a str {
-        if prefix.len() == 0 {
+        if prefix.is_empty() {
             name
         } else {
             // not dangerous since this stuff should not be freed until the end of the program.

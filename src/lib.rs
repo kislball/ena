@@ -34,10 +34,10 @@ pub struct RunOptions {
 }
 
 // Tokenizes, parses, compiles and runs given files.
-pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
+pub fn run(options: &RunOptions) -> Result<(), EnaError> {
     let mut asts = Vec::<ASTNode>::new();
     for file_name in &options.file_names {
-        asts.push(parse_file(&file_name)?);
+        asts.push(parse_file(file_name)?);
     }
     let ast = concat_programs(asts)?;
 
@@ -91,7 +91,7 @@ pub fn run<'a>(options: &RunOptions) -> Result<(), EnaError> {
     Ok(())
 }
 
-pub fn concat_programs<'a>(nodes: Vec<ASTNode>) -> Result<ASTNode, EnaError> {
+pub fn concat_programs(nodes: Vec<ASTNode>) -> Result<ASTNode, EnaError> {
     let mut final_nodes = Vec::<ASTNode>::new();
     let mut inc = 0;
 
@@ -115,7 +115,7 @@ pub fn concat_programs<'a>(nodes: Vec<ASTNode>) -> Result<ASTNode, EnaError> {
     ))
 }
 
-pub fn parse_file<'a>(file_name: &String) -> Result<ASTNode, EnaError> {
+pub fn parse_file(file_name: &String) -> Result<ASTNode, EnaError> {
     let mut tokenizer = tok::Tokenizer::new();
     let content = match std::fs::read_to_string(file_name) {
         Ok(i) => i,

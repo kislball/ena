@@ -1,5 +1,5 @@
 use clap::{CommandFactory, Parser};
-use enalang;
+
 
 #[derive(Parser)]
 #[command(about = "Interpreter for the Ena programming language", version)]
@@ -53,14 +53,14 @@ fn main() {
         }
     }
 
-    if files.len() < 1 {
+    if files.is_empty() {
         report_error(clap::error::ErrorKind::TooFewValues, "specify files");
     }
 
     let options = enalang::RunOptions {
         file_names: files,
         stage: args.stage,
-        main: main,
+        main,
         debug_stack: args.debug_stack,
         enable_gc: args.gc,
         debug_gc: args.debug_gc,
