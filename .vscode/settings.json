@@ -1,4 +1,8 @@
 {
   "editor.indentSize": 4,
-  "editor.detectIndentation": false
+  "editor.detectIndentation": false,
+  "cSpell.words": [
+    "enair",
+    "enalang"
+  ]
 }

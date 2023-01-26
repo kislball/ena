@@ -1,18 +1,3 @@
-# todo: move to std
-try_call {
-  dup block_exists? if {
-    call
-  }
-}
-
-try_call_or {
-  dup block_exists? if {
-    call
-    return
-  }
-  drop call
-}
-
 hello_world {
   "hello, world!\n" ena.io.print
 }

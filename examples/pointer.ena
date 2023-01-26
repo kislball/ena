@@ -1,7 +1,3 @@
-# todo: move to std
-units { unsafe_alloc }
-unit { 1 units }
-
 main {
     5 units
     dup 1 swap +
