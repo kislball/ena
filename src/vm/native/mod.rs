@@ -1,5 +1,6 @@
 use crate::vm::ir;
 
+pub mod conv;
 pub mod core;
 pub mod io;
 pub mod vm;
