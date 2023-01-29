@@ -239,7 +239,7 @@ impl<'a> Heap<'a> {
         self.heap.get(&pointer).copied()
     }
 
-    pub fn set(&mut self, pointer: usize, value: ir::Value<'a>) {
+    pub fn set(&mut self, pointer: usize, value: ir::Value<'a>) -> Result<(), HeapError> {
         if self.gc_enabled && !self.is_used(pointer) {
             println!(
                 "GC_DEBUG: write to an unallocated area at pointer {}",
@@ -249,8 +249,9 @@ impl<'a> Heap<'a> {
         self.heap.insert(pointer, value);
 
         if let ir::Value::Pointer(val) = value {
-            self.rc_plus(val);
+            self.rc_plus(val)?;
         }
+        Ok(())
     }
 
     pub fn realloc(&mut self, pointer: usize, size: usize) -> Result<usize, HeapError> {

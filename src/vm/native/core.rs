@@ -117,7 +117,7 @@ pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
         Some(i) => i,
         None => {
             return Err(machine::VMError::StackEnded("dup".to_string()));
-        },
+        }
     };
 
     vm.push(*val)?;
@@ -126,13 +126,9 @@ pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
 }
 
 pub fn equal(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
-    match (vm.pop()?, vm.pop()?) {
-        (ir::Value::Number(a), ir::Value::Number(b)) => {
-            vm.push(ir::Value::Boolean(a == b))?;
-            Ok(())
-        }
-        _ => Err(machine::VMError::CannotCompare("==".to_string())),
-    }
+    let (a, b) = (vm.pop()?, vm.pop()?);
+    vm.push(ir::Value::Boolean(a == b))?;
+    Ok(())
 }
 
 pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
@@ -197,7 +193,9 @@ pub fn set_ref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError>
         return Err(machine::VMError::ExpectedTwo("expected pointer and value"));
     }
 
-    vm.heap.set(ptr, val);
+    vm.heap
+        .set(ptr, val)
+        .map_err(|x| machine::VMError::HeapError(x))?;
 
     Ok(())
 }
@@ -205,13 +203,17 @@ pub fn set_ref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError>
 pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let ptrval = match vm.stack.pop() {
         Some(i) => i,
-        None => { return Err(machine::VMError::StackEnded("deref".to_string())); },
+        None => {
+            return Err(machine::VMError::StackEnded("deref".to_string()));
+        }
     };
     let val: ir::Value;
 
     if let ir::Value::Pointer(value) = ptrval {
         val = vm.heap.get(value).unwrap_or(ir::Value::Null);
-        vm.heap.rc_minus(value).map_err(|err| machine::VMError::HeapError(err))?;
+        vm.heap
+            .rc_minus(value)
+            .map_err(|err| machine::VMError::HeapError(err))?;
     } else {
         return Err(machine::VMError::ExpectedPointer("@".to_string()));
     }

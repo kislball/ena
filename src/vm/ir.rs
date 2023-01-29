@@ -132,7 +132,7 @@ impl<'a> IRSerializable<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Value<'a> {
     Number(f64),
     String(&'a str),
