@@ -111,7 +111,7 @@ impl<'a> Heap<'a> {
 
     fn clear_memory(&mut self, pointer: usize, size: usize) -> Result<(), HeapError> {
         if self.debug_gc {
-            println!("GC_DEBUG: heap size before clening: {}", self.heap.len());
+            println!("GC_DEBUG: heap size before cleaning: {}", self.heap.len());
         }
 
         for i in 0..size {
@@ -145,7 +145,7 @@ impl<'a> Heap<'a> {
             return Ok(());
         }
 
-        let block = match self.get_pointer_owner_block(pointer) {
+        let block = match self.get_block(pointer) {
             Some(i) => i,
             None => {
                 return Err(HeapError::BlockNotAllocated(pointer));
@@ -159,6 +159,7 @@ impl<'a> Heap<'a> {
                     block.pointer, i
                 );
             }
+            println!("{}", i);
             if **i == 0 {
                 if self.debug_gc {
                     println!(
@@ -201,8 +202,7 @@ impl<'a> Heap<'a> {
             };
         }
 
-        self.rc.insert(pointer, new_value);
-        let v = self.rc_check(pointer);
+        self.rc.insert(block.pointer, new_value);
 
         if self.debug_gc {
             println!(
@@ -211,7 +211,7 @@ impl<'a> Heap<'a> {
             );
         }
 
-        v
+        self.rc_check(block.pointer)
     }
 
     pub fn rc_reset(&mut self, pointer: usize) {
@@ -247,6 +247,10 @@ impl<'a> Heap<'a> {
             );
         }
         self.heap.insert(pointer, value);
+
+        if let ir::Value::Pointer(val) = value {
+            self.rc_plus(val);
+        }
     }
 
     pub fn realloc(&mut self, pointer: usize, size: usize) -> Result<usize, HeapError> {

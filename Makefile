@@ -1,4 +1,4 @@
 .PHONY: std
 
 std:
-	enalang compile -o std.enair ./std/*.ena
+	enalang compile -o ./build/std.enair ./std/*.ena

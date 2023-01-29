@@ -2,8 +2,5 @@ main {
     5 units
     dup 1 swap +
     "hello" swap =
-    dup 1 swap +
-    @ ena.vm.debug
-    1 into_ptr
     @ ena.vm.debug
 }

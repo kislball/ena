@@ -1,8 +1,11 @@
+use clap::{Args, CommandFactory, Parser, Subcommand};
+use enalang::{
+    vm::{self, ir},
+    EnaError,
+};
+use glob::glob;
 use std::fs;
 use std::io::Write;
-use clap::{Args, CommandFactory, Parser, Subcommand};
-use enalang::{vm::{ir, self}, EnaError};
-use glob::glob;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -19,7 +22,7 @@ enum Commands {
     /// Runs IR files
     Run(Run),
     /// Combines several IR files into one
-    Link(Link)
+    Link(Link),
 }
 
 #[derive(Args)]
@@ -28,7 +31,7 @@ struct Link {
     files: Vec<String>,
     /// Output file
     #[arg(short, long)]
-    output: Option<String>
+    output: Option<String>,
 }
 
 #[derive(Args)]
@@ -37,7 +40,7 @@ struct Compile {
     files: Vec<String>,
     /// Output file
     #[arg(short, long)]
-    output: Option<String>
+    output: Option<String>,
 }
 
 #[derive(Args)]
@@ -61,7 +64,7 @@ struct Run {
 fn save_ir(output: &String, i: &ir::IR) {
     let v = match i.into_serializable().into_vec() {
         Ok(i) => i,
-        Err(_) => report_error(clap::error::ErrorKind::InvalidValue, "failed to serialize")
+        Err(_) => report_error(clap::error::ErrorKind::InvalidValue, "failed to serialize"),
     };
     let mut file = fs::OpenOptions::new()
         .write(true)
@@ -110,7 +113,10 @@ fn link(opts: Link) {
     for path in paths {
         match fs::read(&path) {
             Ok(i) => file_contents.push(i),
-            Err(_) => report_error(clap::error::ErrorKind::Io, format!("failed to read {}", path))
+            Err(_) => report_error(
+                clap::error::ErrorKind::Io,
+                format!("failed to read {}", path),
+            ),
         };
     }
     let mut irs: Vec<ir::IR> = Vec::new();
@@ -148,12 +154,11 @@ fn run(opts: Run) {
 
     for path in paths {
         match fs::read(&path) {
-            Ok(i) => {
-                file_contents.push(i)
-            },
-            Err(_) => {
-                report_error(clap::error::ErrorKind::Io, format!("failed to read {}", path))
-            }
+            Ok(i) => file_contents.push(i),
+            Err(_) => report_error(
+                clap::error::ErrorKind::Io,
+                format!("failed to read {}", path),
+            ),
         };
     }
     let mut irs: Vec<ir::IR> = Vec::new();
@@ -202,17 +207,15 @@ fn compile(opts: Compile) {
     for path in paths {
         let data = match fs::read_to_string(path) {
             Ok(i) => i,
-            Err(e) => report_error(clap::error::ErrorKind::Io, e)
+            Err(e) => report_error(clap::error::ErrorKind::Io, e),
         };
         file_contents.push(data);
     }
 
     let compiled = enalang::compile_many(&file_contents);
     match compiled {
-        Ok(i) => {
-            save_ir(&opts.output.unwrap_or("output.enair".to_string()), &i)
-        },
-        Err(_) => report_error(clap::error::ErrorKind::Io, "failed to write file")
+        Ok(i) => save_ir(&opts.output.unwrap_or("output.enair".to_string()), &i),
+        Err(_) => report_error(clap::error::ErrorKind::Io, "failed to write file"),
     };
 }
 

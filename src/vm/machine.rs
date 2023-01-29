@@ -52,9 +52,27 @@ impl<'a> VM<'a> {
         self.run(ir, "main")
     }
 
+    pub fn push(&mut self, value: ir::Value<'a>) -> Result<(), VMError> {
+        if let ir::Value::Pointer(pointer) = value {
+            self.heap
+                .rc_plus(pointer)
+                .map_err(|err| VMError::HeapError(err))?;
+        }
+
+        self.stack.push(value);
+        Ok(())
+    }
+
     pub fn pop(&mut self) -> Result<ir::Value<'a>, VMError> {
         match self.stack.pop() {
-            Some(i) => Ok(i),
+            Some(i) => {
+                if let ir::Value::Pointer(pointer) = i {
+                    self.heap
+                        .rc_minus(pointer)
+                        .map_err(|err| VMError::HeapError(err))?
+                }
+                Ok(i)
+            }
             None => Err(VMError::StackEnded(self.block_name().to_string())),
         }
     }
