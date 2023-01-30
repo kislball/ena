@@ -7,7 +7,7 @@ pub fn vm_debug(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError
         None => ir::Value::Null,
     };
 
-    println!("{:?}", el);
+    println!("{el:?}");
 
     Ok(())
 }

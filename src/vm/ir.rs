@@ -83,7 +83,7 @@ impl<'a> fmt::Debug for Block<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Block::IR(typ, vec) => {
-                write!(f, "IRBlock({:?}, {:?})", typ, vec)
+                write!(f, "IRBlock({typ:?}, {vec:?})")
             }
             Block::Native(_) => write!(f, "NativeHandler"),
         }
@@ -121,7 +121,7 @@ impl<'a> IRSerializable<'a> {
                 if let IRSerializable::Block(name, typ, data) = ser_block {
                     let block = Block::IR(typ, data.to_vec());
                     ir.add_block(name.to_local_str(), block)
-                        .map_err(|err| SerializationError::IRError(err))?;
+                        .map_err(SerializationError::IRError)?;
                 } else {
                     return Err(SerializationError::ExpectedBlock);
                 }
@@ -198,7 +198,7 @@ impl<'a> NativeGroup<'a> {
             name
         } else {
             // not dangerous since this stuff should not be freed until the end of the program.
-            let leaky: &'static str = Box::leak(format!("{}.{}", prefix, name).into_boxed_str());
+            let leaky: &'static str = Box::leak(format!("{prefix}.{name}").into_boxed_str());
             leaky
         }
     }

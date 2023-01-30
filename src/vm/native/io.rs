@@ -2,7 +2,7 @@ use crate::vm::{ir, machine};
 
 pub fn print(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = vm.pop()? {
-        print!("{}", st);
+        print!("{st}");
     } else {
         return Err(machine::VMError::ExpectedString("print".to_string()));
     }

@@ -99,13 +99,10 @@ impl Heap {
 
     fn move_memory(&mut self, src: usize, dest: usize, size: usize) {
         for i in 0..size {
-            match self.heap.get(&(src + i)) {
-                Some(val) => {
-                    self.heap.insert(dest + i, val.clone());
-                    self.heap.remove(&(src + i));
-                }
-                _ => {}
-            }
+            if let Some(val) = self.heap.get(&(src + i)) {
+                           self.heap.insert(dest + i, val.clone());
+                 self.heap.remove(&(src + i));
+               }
         }
     }
 
@@ -118,12 +115,9 @@ impl Heap {
             if self.debug_gc && self.heap.contains_key(&(pointer + i)) {
                 println!("GC_DEBUG: freeing pointer {}", pointer + i);
             }
-            match self.heap.remove(&(pointer + i)) {
-                Some(ir::Value::Pointer(i)) => {
-                    self.rc_minus(i)?;
-                }
-                _ => {}
-            };
+            if let Some(ir::Value::Pointer(i)) = self.heap.remove(&(pointer + i)) {
+                             self.rc_minus(i)?;
+                 }
         }
 
         if self.debug_gc {
@@ -159,7 +153,6 @@ impl Heap {
                     block.pointer, i
                 );
             }
-            println!("{}", i);
             if **i == 0 {
                 if self.debug_gc {
                     println!(
@@ -188,19 +181,17 @@ impl Heap {
             }
         };
 
-        let new_value: usize;
-
-        if plus {
-            new_value = match &self.rc.get(&block.pointer) {
+        let new_value: usize = if plus {
+            match &self.rc.get(&block.pointer) {
                 Some(i) => *i + 1,
                 None => 1,
-            };
+            }
         } else {
-            new_value = match &self.rc.get(&block.pointer) {
+            match &self.rc.get(&block.pointer) {
                 Some(i) => *i - 1,
                 None => 0,
-            };
-        }
+            }
+        };
 
         self.rc.insert(block.pointer, new_value);
 
@@ -232,8 +223,7 @@ impl Heap {
     pub fn get(&self, pointer: usize) -> Option<ir::Value> {
         if self.gc_enabled && !self.is_used(pointer) {
             println!(
-                "GC_DEBUG: read from an unallocated area at pointer {}",
-                pointer
+                "GC_DEBUG: read from an unallocated area at pointer {pointer}",
             );
         }
         self.heap.get(&pointer).cloned()
@@ -242,8 +232,7 @@ impl Heap {
     pub fn set(&mut self, pointer: usize, value: ir::Value) -> Result<(), HeapError> {
         if self.gc_enabled && !self.is_used(pointer) {
             println!(
-                "GC_DEBUG: write to an unallocated area at pointer {}",
-                pointer
+                "GC_DEBUG: write to an unallocated area at pointer {pointer}",
             );
         }
         self.heap.insert(pointer, value.clone());

@@ -106,7 +106,7 @@ fn link(opts: Link) {
     let paths = into_paths(&opts.files);
     let mut file_contents: Vec<Vec<u8>> = Vec::new();
 
-    if paths.len() == 0 {
+    if paths.is_empty() {
         report_error(clap::error::ErrorKind::Io, "no files were given")
     }
 
@@ -115,20 +115,20 @@ fn link(opts: Link) {
             Ok(i) => file_contents.push(i),
             Err(_) => report_error(
                 clap::error::ErrorKind::Io,
-                format!("failed to read {}", path),
+                format!("failed to read {path}"),
             ),
         };
     }
     let mut irs: Vec<ir::IR> = Vec::new();
 
-    for (i, _) in (&file_contents).into_iter().enumerate() {
-        let i = match ir::from_vec(&file_contents[i]).map_err(|x| EnaError::SerializationError(x)) {
+    for (i, _) in file_contents.iter().enumerate() {
+        let i = match ir::from_vec(&file_contents[i]).map_err(EnaError::SerializationError) {
             Ok(i) => i,
-            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e)),
+            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}")),
         };
         let i = match i.into_ir() {
             Ok(i) => i,
-            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e)),
+            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}")),
         };
         irs.push(i.clone());
     }
@@ -137,7 +137,7 @@ fn link(opts: Link) {
 
     for sub_ir in irs {
         if let Err(e) = ir.add(&sub_ir) {
-            report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e));
+            report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}"));
         }
     }
 
@@ -148,7 +148,7 @@ fn run(opts: Run) {
     let paths = into_paths(&opts.files);
     let mut file_contents: Vec<Vec<u8>> = Vec::new();
 
-    if paths.len() == 0 {
+    if paths.is_empty() {
         report_error(clap::error::ErrorKind::Io, "no files were given")
     }
 
@@ -157,20 +157,20 @@ fn run(opts: Run) {
             Ok(i) => file_contents.push(i),
             Err(_) => report_error(
                 clap::error::ErrorKind::Io,
-                format!("failed to read {}", path),
+                format!("failed to read {path}"),
             ),
         };
     }
     let mut irs: Vec<ir::IR> = Vec::new();
 
-    for (i, _) in (&file_contents).into_iter().enumerate() {
-        let i = match ir::from_vec(&file_contents[i]).map_err(|x| EnaError::SerializationError(x)) {
+    for (i, _) in file_contents.iter().enumerate() {
+        let i = match ir::from_vec(&file_contents[i]).map_err(EnaError::SerializationError) {
             Ok(i) => i,
-            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e)),
+            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}")),
         };
         let i = match i.into_ir() {
             Ok(i) => i,
-            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e)),
+            Err(e) => report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}")),
         };
         irs.push(i.clone());
     }
@@ -179,20 +179,20 @@ fn run(opts: Run) {
 
     for sub_ir in irs {
         if let Err(e) = ir.add(&sub_ir) {
-            report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e))
+            report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}"))
         }
     }
 
     let group = vm::native::group();
     if let Err(e) = group.apply(&mut ir) {
-        report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e))
+        report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}"))
     }
 
     let mut virt = vm::machine::VM::new(opts.gc, opts.debug_gc);
     virt.debug_stack = opts.debug_stack;
 
     if let Err(e) = virt.run(&ir, &opts.main_word.unwrap_or("main".to_string())) {
-        report_error(clap::error::ErrorKind::ValueValidation, format!("{:?}", e))
+        report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}"))
     }
 }
 
@@ -200,7 +200,7 @@ fn compile(opts: Compile) {
     let paths = into_paths(&opts.files);
     let mut file_contents: Vec<String> = Vec::new();
 
-    if paths.len() == 0 {
+    if paths.is_empty() {
         report_error(clap::error::ErrorKind::Io, "no files were given")
     }
 

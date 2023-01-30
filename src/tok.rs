@@ -324,7 +324,7 @@ impl Tokenizer {
         None
     }
 
-    fn parse_str(&mut self, en: &Vec<char>) -> Option<TokenizerError> {
+    fn parse_str(&mut self, en: &[char]) -> Option<TokenizerError> {
         let begin = self.at;
         let mut str = String::new();
         self.at += 1;
@@ -381,6 +381,6 @@ impl Tokenizer {
 
 pub fn show_tokens(tokens: &Vec<Token>) {
     for c in tokens {
-        println!("{:?}", c);
+        println!("{c:?}");
     }
 }

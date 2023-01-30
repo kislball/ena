@@ -195,7 +195,7 @@ pub fn set_ref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError>
 
     vm.heap
         .set(ptr, val)
-        .map_err(|x| machine::VMError::HeapError(x))?;
+        .map_err(machine::VMError::HeapError)?;
 
     Ok(())
 }
@@ -213,7 +213,7 @@ pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
         val = vm.heap.get(value).unwrap_or(ir::Value::Null);
         vm.heap
             .rc_minus(value)
-            .map_err(|err| machine::VMError::HeapError(err))?;
+            .map_err(machine::VMError::HeapError)?;
     } else {
         return Err(machine::VMError::ExpectedPointer("@".to_string()));
     }
@@ -223,28 +223,20 @@ pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn into_ptr<'a>(vm: &mut machine::VM, _: &ir::IR<'a>) -> Result<(), machine::VMError> {
-    if let ir::Value::Number(num) = vm.pop()? {
-        let ptr = num as usize;
-
-        if num != ptr as f64 {
-            return Err(machine::VMError::BadPointer("into_ptr".to_string()));
-        }
-
-        vm.push(ir::Value::Pointer(ptr))?;
-
-        Ok(())
-    } else {
-        Err(machine::VMError::ExpectedNumber("into_ptr".to_string()))
-    }
-}
-
-pub fn call<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
+pub fn call(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
         vm.run_block(name, ir)?;
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock("call".to_string()))
+    }
+}
+
+pub fn neg(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+    if let ir::Value::Boolean(b) = vm.pop()? {
+        vm.push(ir::Value::Boolean(!b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean("!".to_string()))
     }
 }
 
@@ -271,6 +263,7 @@ pub fn group<'a>() -> ir::NativeGroup<'a> {
     group.add_native("*", mul).unwrap();
     group.add_native("/", div).unwrap();
     group.add_native("-", subst).unwrap();
+    group.add_native("!", neg).unwrap();
     group.add_native("pow", pow).unwrap();
     group.add_native("root", root).unwrap();
     group.add_native("==", equal).unwrap();
@@ -278,7 +271,6 @@ pub fn group<'a>() -> ir::NativeGroup<'a> {
     group.add_native("block_exists?", block_exists).unwrap();
     group.add_native("@", deref).unwrap();
     group.add_native("=", set_ref).unwrap();
-    group.add_native("into_ptr", into_ptr).unwrap();
     group.add_native("unsafe_alloc", alloc).unwrap();
     group.add_native("unsafe_realloc", realloc).unwrap();
     group.add_native("unsafe_free", free).unwrap();

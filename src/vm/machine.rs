@@ -58,7 +58,7 @@ impl<'a> VM {
         if let ir::Value::Pointer(pointer) = value {
             self.heap
                 .rc_plus(pointer)
-                .map_err(|err| VMError::HeapError(err))?;
+                .map_err(VMError::HeapError)?;
         }
 
         self.stack.push(value);
@@ -71,7 +71,7 @@ impl<'a> VM {
                 if let ir::Value::Pointer(pointer) = i {
                     self.heap
                         .rc_minus(pointer)
-                        .map_err(|err| VMError::HeapError(err))?
+                        .map_err(VMError::HeapError)?
                 }
                 Ok(i)
             }
@@ -90,7 +90,7 @@ impl<'a> VM {
 
             Ok(int)
         } else {
-            return Err(VMError::ExpectedInteger(self.block_name().to_string()));
+            Err(VMError::ExpectedInteger(self.block_name().to_string()))
         }
     }
 
@@ -114,13 +114,10 @@ impl<'a> VM {
         let single_eval;
 
         if let ir::Block::IR(ir::BlockRunType::Once, _) = block {
-            match self.single_eval_blocks.get(&block_name) {
-                Some(i) => {
-                    self.stack.push(i.clone());
-                    return Ok(());
-                }
-                None => {}
-            }
+            if let Some(i) = self.single_eval_blocks.get(&block_name) {
+                              self.stack.push(i.clone());
+                             return Ok(());
+                          }
             single_eval = true;
         } else {
             single_eval = false;
@@ -164,24 +161,18 @@ impl<'a> VM {
                         }
                         ir::IRCode::Return => {
                             if single_eval {
-                                match self.stack.last() {
-                                    Some(i) => {
-                                        self.single_eval_blocks.insert(block_name, i.clone());
-                                    }
-                                    None => {}
-                                };
+                                if let Some(i) = self.stack.last() {
+                                                                       self.single_eval_blocks.insert(block_name, i.clone());
+                                                                  };
                             }
                             return Ok(());
                         }
                     }
                 }
                 if single_eval {
-                    match self.stack.last() {
-                        Some(i) => {
-                            self.single_eval_blocks.insert(block_name, i.clone());
-                        }
-                        None => {}
-                    };
+                    if let Some(i) = self.stack.last() {
+                                              self.single_eval_blocks.insert(block_name, i.clone());
+                                };
                 }
                 Ok(())
             }

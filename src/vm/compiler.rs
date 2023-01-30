@@ -54,14 +54,13 @@ impl<'a> Compiler {
                                 Err(e) => {
                                     return Err(e);
                                 }
-                                Ok(v) => match ir.add_block(id.to_local_str(), v) {
-                                    Err(ir::IRError::WordAlreadyExists) => {
+                                Ok(v) => {
+                                    if let Err(ir::IRError::WordAlreadyExists) = ir.add_block(id.to_local_str(), v) {
                                         return Err(CompilerError(
                                             i,
                                             CompilerErrorInner::WordAlreadyExists,
                                         ));
                                     }
-                                    _ => {}
                                 },
                             };
                         } else {
@@ -110,7 +109,7 @@ impl<'a> Compiler {
         let rand = Alphanumeric
             .sample_string(&mut rand::thread_rng(), 12)
             .into_boxed_str();
-        Box::leak(format!("{}_{}", name, rand).into_boxed_str())
+        Box::leak(format!("{name}_{rand}").into_boxed_str())
     }
 
     fn compile_block(
@@ -189,14 +188,11 @@ impl<'a> Compiler {
                                 return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
                             }
                             _ => {
-                                match ir.add_block(nested_name.to_local_str(), nested_ir) {
-                                    Err(ir::IRError::WordAlreadyExists) => {
+                                if let Err(ir::IRError::WordAlreadyExists) =  ir.add_block(nested_name.to_local_str(), nested_ir) {
                                         return Err(CompilerError(
                                             i,
                                             CompilerErrorInner::WordAlreadyExists,
                                         ));
-                                    }
-                                    _ => {}
                                 }
                                 code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(
                                     nested_name,
@@ -225,11 +221,8 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    match ir.add_block(nested_name.to_local_str(), nested_ir) {
-                        Err(ir::IRError::WordAlreadyExists) => {
-                            return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-                        }
-                        _ => {}
+                    if let Err(ir::IRError::WordAlreadyExists) = ir.add_block(nested_name.to_local_str(), nested_ir) {
+                        return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
                     }
                     code.push(ir::IRCode::If(nested_name));
                 }
@@ -253,12 +246,9 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    match ir.add_block(nested_name.to_local_str(), nested_ir) {
-                        Err(ir::IRError::WordAlreadyExists) => {
-                            return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-                        }
-                        _ => {}
-                    }
+                    if let Err(ir::IRError::WordAlreadyExists) = ir.add_block(nested_name.to_local_str(), nested_ir) {
+return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
+              }
                     code.push(ir::IRCode::While(nested_name));
                 }
             }
