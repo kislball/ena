@@ -1,3 +1,5 @@
+use flexstr::{local_str, LocalStr, ToLocalStr};
+
 use crate::vm::{heap, ir};
 use std::collections::HashMap;
 
@@ -18,15 +20,15 @@ pub enum VMError {
     ExpectedTwo(&'static str),
 }
 
-pub struct VM<'a> {
-    pub stack: Vec<ir::Value<'a>>,
+pub struct VM {
+    pub stack: Vec<ir::Value>,
     pub debug_stack: bool,
-    pub call_stack: Vec<&'a str>,
-    pub heap: heap::Heap<'a>,
-    single_eval_blocks: HashMap<&'a str, ir::Value<'a>>,
+    pub call_stack: Vec<LocalStr>,
+    pub heap: heap::Heap,
+    single_eval_blocks: HashMap<LocalStr, ir::Value>,
 }
 
-impl<'a> VM<'a> {
+impl<'a> VM {
     pub fn new(gc: bool, debug_gc: bool) -> Self {
         VM {
             stack: vec![],
@@ -45,14 +47,14 @@ impl<'a> VM<'a> {
 
     pub fn run(&mut self, ir: &ir::IR<'a>, main: &'a str) -> Result<(), VMError> {
         self.clean();
-        self.run_block(main, ir)
+        self.run_block(main.to_local_str(), ir)
     }
 
     pub fn run_main(&mut self, ir: &ir::IR<'a>) -> Result<(), VMError> {
         self.run(ir, "main")
     }
 
-    pub fn push(&mut self, value: ir::Value<'a>) -> Result<(), VMError> {
+    pub fn push(&mut self, value: ir::Value) -> Result<(), VMError> {
         if let ir::Value::Pointer(pointer) = value {
             self.heap
                 .rc_plus(pointer)
@@ -63,7 +65,7 @@ impl<'a> VM<'a> {
         Ok(())
     }
 
-    pub fn pop(&mut self) -> Result<ir::Value<'a>, VMError> {
+    pub fn pop(&mut self) -> Result<ir::Value, VMError> {
         match self.stack.pop() {
             Some(i) => {
                 if let ir::Value::Pointer(pointer) = i {
@@ -92,26 +94,29 @@ impl<'a> VM<'a> {
         }
     }
 
-    fn block_name(&self) -> &'a str {
-        self.call_stack.last().unwrap_or(&"unknown block")
+    fn block_name(&self) -> LocalStr {
+        match self.call_stack.last() {
+            Some(i) => i.clone(),
+            None => local_str!("unknown block"),
+        }
     }
 
     pub fn print_call_stack(&self) {
         println!("vm stack trace: {:#?}", self.call_stack);
     }
 
-    pub fn run_block(&mut self, block_name: &'a str, ir: &ir::IR<'a>) -> Result<(), VMError> {
-        self.call_stack.push(block_name);
-        let block = match ir.get_block(block_name) {
+    pub fn run_block(&mut self, block_name: LocalStr, ir: &ir::IR<'a>) -> Result<(), VMError> {
+        self.call_stack.push(block_name.clone());
+        let block = match ir.get_block(block_name.clone()) {
             Some(b) => b,
             None => return Err(VMError::UnknownBlock(block_name.to_string())),
         };
         let single_eval;
 
         if let ir::Block::IR(ir::BlockRunType::Once, _) = block {
-            match self.single_eval_blocks.get(block_name) {
+            match self.single_eval_blocks.get(&block_name) {
                 Some(i) => {
-                    self.stack.push(*i);
+                    self.stack.push(i.clone());
                     return Ok(());
                 }
                 None => {}
@@ -129,15 +134,15 @@ impl<'a> VM<'a> {
                     }
                     match c {
                         ir::IRCode::PutValue(v) => {
-                            self.stack.push(*v);
+                            self.stack.push(v.clone());
                         }
                         ir::IRCode::Call(b) => {
-                            self.run_block(b, ir)?;
+                            self.run_block(b.to_local_str(), ir)?;
                         }
                         ir::IRCode::While(b) => loop {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(true) = top {
-                                self.run_block(b, ir)?;
+                                self.run_block(b.to_local_str(), ir)?;
                             } else {
                                 break;
                             }
@@ -148,7 +153,7 @@ impl<'a> VM<'a> {
                                 if !bo {
                                     continue;
                                 } else {
-                                    let v = self.run_block(b, ir);
+                                    let v = self.run_block(b.to_local_str(), ir);
                                     return v;
                                 }
                             } else {
@@ -161,7 +166,7 @@ impl<'a> VM<'a> {
                             if single_eval {
                                 match self.stack.last() {
                                     Some(i) => {
-                                        self.single_eval_blocks.insert(block_name, *i);
+                                        self.single_eval_blocks.insert(block_name, i.clone());
                                     }
                                     None => {}
                                 };
@@ -173,7 +178,7 @@ impl<'a> VM<'a> {
                 if single_eval {
                     match self.stack.last() {
                         Some(i) => {
-                            self.single_eval_blocks.insert(block_name, *i);
+                            self.single_eval_blocks.insert(block_name, i.clone());
                         }
                         None => {}
                     };

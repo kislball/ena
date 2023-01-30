@@ -19,15 +19,15 @@ pub struct MemoryBlock {
     pub size: usize,
 }
 
-pub struct Heap<'a> {
+pub struct Heap {
     pub gc_enabled: bool,
     pub debug_gc: bool,
-    heap: HashMap<usize, ir::Value<'a>>,
+    heap: HashMap<usize, ir::Value>,
     blocks: Vec<MemoryBlock>,
     rc: HashMap<usize, usize>,
 }
 
-impl<'a> Heap<'a> {
+impl Heap {
     pub fn new(gc_enabled: bool, debug_gc: bool) -> Self {
         Self {
             heap: HashMap::new(),
@@ -101,7 +101,7 @@ impl<'a> Heap<'a> {
         for i in 0..size {
             match self.heap.get(&(src + i)) {
                 Some(val) => {
-                    self.heap.insert(dest + i, *val);
+                    self.heap.insert(dest + i, val.clone());
                     self.heap.remove(&(src + i));
                 }
                 _ => {}
@@ -229,24 +229,24 @@ impl<'a> Heap<'a> {
         self.rc_change(pointer, true)
     }
 
-    pub fn get(&self, pointer: usize) -> Option<ir::Value<'a>> {
+    pub fn get(&self, pointer: usize) -> Option<ir::Value> {
         if self.gc_enabled && !self.is_used(pointer) {
             println!(
                 "GC_DEBUG: read from an unallocated area at pointer {}",
                 pointer
             );
         }
-        self.heap.get(&pointer).copied()
+        self.heap.get(&pointer).cloned()
     }
 
-    pub fn set(&mut self, pointer: usize, value: ir::Value<'a>) -> Result<(), HeapError> {
+    pub fn set(&mut self, pointer: usize, value: ir::Value) -> Result<(), HeapError> {
         if self.gc_enabled && !self.is_used(pointer) {
             println!(
                 "GC_DEBUG: write to an unallocated area at pointer {}",
                 pointer
             );
         }
-        self.heap.insert(pointer, value);
+        self.heap.insert(pointer, value.clone());
 
         if let ir::Value::Pointer(val) = value {
             self.rc_plus(val)?;

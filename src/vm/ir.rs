@@ -1,6 +1,8 @@
 use crate::vm::ir;
 use crate::vm::machine;
 use core::fmt;
+use flexstr::LocalStr;
+use flexstr::ToLocalStr;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -11,7 +13,7 @@ pub enum IRError {
 
 #[derive(Debug, Clone)]
 pub struct IR<'a> {
-    pub blocks: HashMap<&'a str, Block<'a>>,
+    pub blocks: HashMap<LocalStr, Block<'a>>,
 }
 
 impl<'a> Default for IR<'a> {
@@ -27,7 +29,7 @@ impl<'a> IR<'a> {
         }
     }
 
-    pub fn into_serializable(&self) -> IRSerializable<'a> {
+    pub fn into_serializable(&'a self) -> IRSerializable<'a> {
         let mut blocks: Vec<IRSerializable<'a>> = Vec::new();
 
         for (name, block) in &self.blocks {
@@ -41,21 +43,21 @@ impl<'a> IR<'a> {
 
     pub fn add(&mut self, another: &ir::IR<'a>) -> Result<(), IRError> {
         for (name, block) in &another.blocks {
-            self.add_block(name, block.clone())?;
+            self.add_block(name.clone(), block.clone())?;
         }
         Ok(())
     }
 
-    pub fn get_block(&self, id: &'a str) -> Option<&Block<'a>> {
-        self.blocks.get(id)
+    pub fn get_block(&self, id: LocalStr) -> Option<&Block<'a>> {
+        self.blocks.get(&id)
     }
 
-    pub fn add_native(&mut self, name: &'a str, f: NativeHandler<'a>) -> Result<(), IRError> {
+    pub fn add_native(&mut self, name: LocalStr, f: NativeHandler<'a>) -> Result<(), IRError> {
         self.add_block(name, Block::Native(f))
     }
 
-    pub fn add_block(&mut self, name: &'a str, block: Block<'a>) -> Result<(), IRError> {
-        if self.blocks.contains_key(name) {
+    pub fn add_block(&mut self, name: LocalStr, block: Block<'a>) -> Result<(), IRError> {
+        if self.blocks.contains_key(&name) {
             return Err(IRError::WordAlreadyExists);
         }
         self.blocks.insert(name, block);
@@ -63,7 +65,7 @@ impl<'a> IR<'a> {
     }
 }
 
-pub type NativeHandler<'a> = fn(&mut machine::VM<'a>, &ir::IR<'a>) -> Result<(), machine::VMError>;
+pub type NativeHandler<'a> = fn(&mut machine::VM, &ir::IR<'a>) -> Result<(), machine::VMError>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum BlockRunType {
@@ -111,14 +113,14 @@ impl<'a> IRSerializable<'a> {
         bincode::serialize(self).map_err(|err| SerializationError::BincodeErr(*err))
     }
 
-    pub fn into_ir(&self) -> Result<IR<'a>, SerializationError> {
+    pub fn into_ir(self) -> Result<IR<'a>, SerializationError> {
         let mut ir = IR::new();
 
         if let IRSerializable::Root(data) = self {
             for ser_block in data {
                 if let IRSerializable::Block(name, typ, data) = ser_block {
-                    let block = Block::IR(*typ, data.to_vec());
-                    ir.add_block(name, block)
+                    let block = Block::IR(typ, data.to_vec());
+                    ir.add_block(name.to_local_str(), block)
                         .map_err(|err| SerializationError::IRError(err))?;
                 } else {
                     return Err(SerializationError::ExpectedBlock);
@@ -132,19 +134,19 @@ impl<'a> IRSerializable<'a> {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub enum Value<'a> {
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum Value {
     Number(f64),
-    String(&'a str),
+    String(LocalStr),
     Boolean(bool),
     Pointer(usize),
-    Block(&'a str),
+    Block(LocalStr),
     Null,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IRCode<'a> {
-    PutValue(Value<'a>),
+    PutValue(Value),
     Call(&'a str),
     While(&'a str),
     If(&'a str),
@@ -182,9 +184,9 @@ impl<'a> NativeGroup<'a> {
     pub fn apply(&self, ir: &mut IR<'a>) -> Result<(), IRError> {
         for (k, v) in &self.natives {
             if self.prefix.is_empty() {
-                ir.add_native(k, *v)?;
+                ir.add_native(k.to_local_str(), *v)?;
             } else {
-                ir.add_native(Self::merge_prefix(self.prefix, k), *v)?;
+                ir.add_native(Self::merge_prefix(self.prefix, k).to_local_str(), *v)?;
             }
         }
 

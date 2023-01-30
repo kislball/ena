@@ -120,7 +120,7 @@ pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
         }
     };
 
-    vm.push(*val)?;
+    vm.push(val.clone())?;
 
     Ok(())
 }
@@ -134,7 +134,7 @@ pub fn equal(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
 pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
         vm.stack
-            .push(ir::Value::Boolean(ir.blocks.contains_key(name)));
+            .push(ir::Value::Boolean(ir.blocks.contains_key(&name)));
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock("block_exists?".to_string()))
@@ -223,7 +223,7 @@ pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn into_ptr<'a>(vm: &mut machine::VM<'a>, _: &ir::IR<'a>) -> Result<(), machine::VMError> {
+pub fn into_ptr<'a>(vm: &mut machine::VM, _: &ir::IR<'a>) -> Result<(), machine::VMError> {
     if let ir::Value::Number(num) = vm.pop()? {
         let ptr = num as usize;
 
@@ -239,7 +239,7 @@ pub fn into_ptr<'a>(vm: &mut machine::VM<'a>, _: &ir::IR<'a>) -> Result<(), mach
     }
 }
 
-pub fn call<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
+pub fn call<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
         vm.run_block(name, ir)?;
         Ok(())
@@ -248,7 +248,7 @@ pub fn call<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine
     }
 }
 
-// pub fn run_thread<'a>(vm: &mut machine::VM<'a>, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
+// pub fn run_thread<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
 //     if let ir::Value::Block(name) = vm.pop()? {
 //         let n_name = name.clone();
 //         thread::spawn(|| {

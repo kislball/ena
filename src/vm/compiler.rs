@@ -1,5 +1,6 @@
 use crate::vm::ir;
 use crate::{ast, tok};
+use flexstr::ToLocalStr;
 use rand::distributions::{Alphanumeric, DistString};
 
 pub struct Compiler {}
@@ -53,7 +54,7 @@ impl<'a> Compiler {
                                 Err(e) => {
                                     return Err(e);
                                 }
-                                Ok(v) => match ir.add_block(id, v) {
+                                Ok(v) => match ir.add_block(id.to_local_str(), v) {
                                     Err(ir::IRError::WordAlreadyExists) => {
                                         return Err(CompilerError(
                                             i,
@@ -144,7 +145,7 @@ impl<'a> Compiler {
                     code.push(ir::IRCode::Call(i.as_str()));
                 }
                 ast::ASTNodeInner::EscapedIdentifier(i) => {
-                    code.push(ir::IRCode::PutValue(ir::Value::Block(i.as_str())));
+                    code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(i))));
                 }
                 ast::ASTNodeInner::Closer => {
                     continue;
@@ -165,7 +166,7 @@ impl<'a> Compiler {
                     panic!("KeywordType::None is not supposed to be in the final ast.")
                 }
                 ast::ASTNodeInner::String(str) => {
-                    code.push(ir::IRCode::PutValue(ir::Value::String(str)))
+                    code.push(ir::IRCode::PutValue(ir::Value::String(Into::into(str))))
                 }
                 ast::ASTNodeInner::Number(num) => {
                     code.push(ir::IRCode::PutValue(ir::Value::Number(*num)));
@@ -188,7 +189,7 @@ impl<'a> Compiler {
                                 return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
                             }
                             _ => {
-                                match ir.add_block(nested_name, nested_ir) {
+                                match ir.add_block(nested_name.to_local_str(), nested_ir) {
                                     Err(ir::IRError::WordAlreadyExists) => {
                                         return Err(CompilerError(
                                             i,
@@ -197,7 +198,9 @@ impl<'a> Compiler {
                                     }
                                     _ => {}
                                 }
-                                code.push(ir::IRCode::PutValue(ir::Value::Block(nested_name)));
+                                code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(
+                                    nested_name,
+                                ))));
                             }
                         }
                     }
@@ -222,7 +225,7 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    match ir.add_block(nested_name, nested_ir) {
+                    match ir.add_block(nested_name.to_local_str(), nested_ir) {
                         Err(ir::IRError::WordAlreadyExists) => {
                             return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
                         }
@@ -250,7 +253,7 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    match ir.add_block(nested_name, nested_ir) {
+                    match ir.add_block(nested_name.to_local_str(), nested_ir) {
                         Err(ir::IRError::WordAlreadyExists) => {
                             return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
                         }
