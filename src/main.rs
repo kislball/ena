@@ -61,7 +61,7 @@ struct Run {
     debug_gc: bool,
 }
 
-fn save_ir(output: &String, i: &ir::IR) {
+fn save_ir<'a>(output: &String, i: &'a ir::IR<'a>) {
     let v = match i.into_serializable().into_vec() {
         Ok(i) => i,
         Err(_) => report_error(clap::error::ErrorKind::InvalidValue, "failed to serialize"),
