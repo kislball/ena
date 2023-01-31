@@ -1,9 +1,13 @@
 [package]
 name = "enalang"
 version = "0.1.0"
+authors = ["the Ena authors"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "Exhaustingly Notorious Algorithms"
+readme = "./README.md"
+repository = "https://github.com/kislball/ena"
+license = "GPL-3.0-only"
+keywords = ["programming-language"]
 
 [dependencies]
 bincode = "1.3.3"
