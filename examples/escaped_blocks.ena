@@ -1,5 +1,5 @@
 print_hello {
-  "Hello, world!\n" ena.io.print
+  "Hello, world!\n" ena.vm.io.print
 }
 
 main {

@@ -4,6 +4,6 @@ will_fail {
 
 main {
     'will_fail try
-    "i have not failed! here is the error: " ena.io.print
+    "i have not failed! here is the error: " ena.vm.io.print
     ena.vm.debug
 }

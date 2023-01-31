@@ -1,9 +1,9 @@
 # print converts top value to string and prints it
 print {
-    into_string ena.io.print
+    into_string ena.vm.io.print
 }
 
 # println calls print and prints a new line afterwards
 println {
-    print "\n" ena.io.print
+    print "\n" ena.vm.io.print
 }

@@ -32,34 +32,20 @@ Ena doesn't have functions, it has blocks. The only difference is that blocks do
 ```
 # Comments are written in Python style.
 
-# Let's implement our own println block based on the ena.io.print block.
-println {
-  # The stack currently has our "Hello, world!" string and the "\n" string.
-  "\n" # "\n" "Hello, world!"
-  # Since we need to append \n to our "Hello, world!", we need to swap them and concat them using the concat_str block.
-  swap # "Hello, world!" "\n"
-  # concat_str takes the top block on the stack and appends the second string to the top block.
-  # Both arguments are dropped.
-  concat_str # Now the stack only contains the string "Hello, world!\n".
-  ena.io.print # now we just print it
+# Let's print hello world.
+
+# Main is the entrypoint of any ena program.
+main {
+    print_hello # Calls print_hello block.
 }
 
-# The block "main" is the entry point of an ena program.
-main {
-  "Hello, world!" println
-  "It can be any string, by the way" println
+# Let's define another block to call from main.
+print_hello {
+    "hello world!" # A literal puts the value on top of stack.
+    println # println takes the literal on top of stack and prints it with a new line.
 }
 ```
 
 With all the comments removed, the result is a very short and tidy piece of code.
 
-```
-println {
-  "\n" swap concat_str print
-}
-
-main {
-  "Hello, world!" println
-  "It can be any string, by the way" println
-}
-```
+See more examples in the `examples` folder.

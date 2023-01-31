@@ -11,7 +11,7 @@ pub fn print(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
 }
 
 pub fn group<'a>() -> ir::NativeGroup<'a> {
-    let mut group = ir::NativeGroup::new("ena.io");
+    let mut group = ir::NativeGroup::new("ena.vm.io");
 
     group.add_native("print", print).unwrap();
 

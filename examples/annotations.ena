@@ -2,7 +2,7 @@
 # ahahfaw
 # fwrgfewfcw
 some_block {
-    'some_block ena.vm.get_annotation ena.io.print "\n" ena.io.print
+    'some_block ena.vm.get_annotation ena.vm.io.print "\n" ena.vm.io.print
 }
 
 main {
