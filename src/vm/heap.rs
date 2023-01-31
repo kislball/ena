@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::vm::ir;
 use std::collections::HashMap;
 
 use super::machine;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum HeapError {
     BlockNotAllocated(usize),
     BadPointer(usize),
@@ -100,9 +102,9 @@ impl Heap {
     fn move_memory(&mut self, src: usize, dest: usize, size: usize) {
         for i in 0..size {
             if let Some(val) = self.heap.get(&(src + i)) {
-                           self.heap.insert(dest + i, val.clone());
-                 self.heap.remove(&(src + i));
-               }
+                self.heap.insert(dest + i, val.clone());
+                self.heap.remove(&(src + i));
+            }
         }
     }
 
@@ -116,8 +118,8 @@ impl Heap {
                 println!("GC_DEBUG: freeing pointer {}", pointer + i);
             }
             if let Some(ir::Value::Pointer(i)) = self.heap.remove(&(pointer + i)) {
-                             self.rc_minus(i)?;
-                 }
+                self.rc_minus(i)?;
+            }
         }
 
         if self.debug_gc {
@@ -222,18 +224,14 @@ impl Heap {
 
     pub fn get(&self, pointer: usize) -> Option<ir::Value> {
         if self.gc_enabled && !self.is_used(pointer) {
-            println!(
-                "GC_DEBUG: read from an unallocated area at pointer {pointer}",
-            );
+            println!("GC_DEBUG: read from an unallocated area at pointer {pointer}",);
         }
         self.heap.get(&pointer).cloned()
     }
 
     pub fn set(&mut self, pointer: usize, value: ir::Value) -> Result<(), HeapError> {
         if self.gc_enabled && !self.is_used(pointer) {
-            println!(
-                "GC_DEBUG: write to an unallocated area at pointer {pointer}",
-            );
+            println!("GC_DEBUG: write to an unallocated area at pointer {pointer}",);
         }
         self.heap.insert(pointer, value.clone());
 

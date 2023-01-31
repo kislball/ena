@@ -8,6 +8,8 @@ pub enum ASTNodeInner {
     Keyword(tok::KeywordType),
     Number(f64),
     String(String),
+    Atom(String),
+    Comment(String),
     Closer,
 }
 
@@ -73,6 +75,23 @@ impl ASTBuilder {
         };
 
         let r = match &current.1 {
+            tok::TokenInner::Comment(data) => {
+                let mut comment_data = data.trim().to_string();
+                let begin = self.at;
+                let mut next = tokens.get(self.at + 1);
+
+                while let Some(tok::Token(_, tok::TokenInner::Comment(data))) = next {
+                    comment_data.push('\n');
+                    comment_data.push_str(data.trim());
+                    self.at += 1;
+                    next = tokens.get(self.at + 1);
+                }
+
+                Ok(ASTNode(
+                    begin,
+                    ASTNodeInner::Comment(comment_data.to_string()),
+                ))
+            }
             tok::TokenInner::Identifier(str) => {
                 Ok(ASTNode(self.at, ASTNodeInner::Identifier(str.to_string())))
             }
@@ -83,6 +102,7 @@ impl ASTBuilder {
             tok::TokenInner::String(str) => {
                 Ok(ASTNode(self.at, ASTNodeInner::String(str.to_string())))
             }
+            tok::TokenInner::Atom(str) => Ok(ASTNode(self.at, ASTNodeInner::Atom(str.to_string()))),
             tok::TokenInner::Number(num) => Ok(ASTNode(self.at, ASTNodeInner::Number(*num))),
             tok::TokenInner::Keyword(kw) => Ok(ASTNode(self.at, ASTNodeInner::Keyword(*kw))),
             block => {

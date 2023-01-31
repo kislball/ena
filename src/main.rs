@@ -113,10 +113,7 @@ fn link(opts: Link) {
     for path in paths {
         match fs::read(&path) {
             Ok(i) => file_contents.push(i),
-            Err(_) => report_error(
-                clap::error::ErrorKind::Io,
-                format!("failed to read {path}"),
-            ),
+            Err(_) => report_error(clap::error::ErrorKind::Io, format!("failed to read {path}")),
         };
     }
     let mut irs: Vec<ir::IR> = Vec::new();
@@ -155,10 +152,7 @@ fn run(opts: Run) {
     for path in paths {
         match fs::read(&path) {
             Ok(i) => file_contents.push(i),
-            Err(_) => report_error(
-                clap::error::ErrorKind::Io,
-                format!("failed to read {path}"),
-            ),
+            Err(_) => report_error(clap::error::ErrorKind::Io, format!("failed to read {path}")),
         };
     }
     let mut irs: Vec<ir::IR> = Vec::new();
@@ -191,8 +185,11 @@ fn run(opts: Run) {
     let mut virt = vm::machine::VM::new(opts.gc, opts.debug_gc);
     virt.debug_stack = opts.debug_stack;
 
-    if let Err(e) = virt.run(&ir, &opts.main_word.unwrap_or("main".to_string())) {
-        report_error(clap::error::ErrorKind::ValueValidation, format!("{e:?}"))
+    if let Err(e) = virt.run(ir, &opts.main_word.unwrap_or("main".to_string())) {
+        eprintln!(
+            "ran into unhandled exception: {e:?}\nstack: {:?}",
+            virt.call_stack
+        )
     }
 }
 
@@ -215,7 +212,10 @@ fn compile(opts: Compile) {
     let compiled = enalang::compile_many(&file_contents);
     match compiled {
         Ok(i) => save_ir(&opts.output.unwrap_or("output.enair".to_string()), &i),
-        Err(_) => report_error(clap::error::ErrorKind::Io, "failed to write file"),
+        Err(e) => report_error(
+            clap::error::ErrorKind::Io,
+            format!("failed to write file {e:?}"),
+        ),
     };
 }
 

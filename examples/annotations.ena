@@ -1,0 +1,10 @@
+# this is a comment for some block
+# ahahfaw
+# fwrgfewfcw
+some_block {
+    'some_block ena.vm.get_annotation ena.io.print "\n" ena.io.print
+}
+
+main {
+    some_block
+}

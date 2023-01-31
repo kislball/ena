@@ -27,6 +27,17 @@ pub fn vm_debug_calls(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::V
     Ok(())
 }
 
+pub fn vm_get_annotation(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
+    if let ir::Value::Block(name) = vm.pop()? {
+        match ir.annotations.get(&name) {
+            Some(i) => vm.push(ir::Value::String(i.clone())),
+            None => vm.push(ir::Value::Null)
+        }
+    } else {
+        Err(machine::VMError::ExpectedBlock)
+    }
+}
+
 pub fn group<'a>() -> ir::NativeGroup<'a> {
     let mut group = ir::NativeGroup::new("ena.vm");
 
@@ -34,6 +45,7 @@ pub fn group<'a>() -> ir::NativeGroup<'a> {
     group.add_native("debug_stack", vm_debug_stack).unwrap();
     group.add_native("debug_calls", vm_debug_calls).unwrap();
     group.add_native("random", vm_get_random).unwrap();
+    group.add_native("get_annotation", vm_get_annotation).unwrap();
 
     group
 }

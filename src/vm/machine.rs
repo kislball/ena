@@ -1,23 +1,28 @@
-use flexstr::{local_str, LocalStr, ToLocalStr};
+use flexstr::{LocalStr, ToLocalStr};
+use serde::{Deserialize, Serialize};
 
 use crate::vm::{heap, ir};
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VMError {
-    UnknownBlock(String),
+    UnknownBlock(LocalStr),
     NoIR,
-    StackEnded(String),
-    ExpectedBoolean(String),
-    ExpectedString(String),
-    ExpectedNumber(String),
-    ExpectedInteger(String),
-    CannotCompare(String),
-    ExpectedBlock(String),
-    ExpectedPointer(String),
+    StackEnded,
+    ExpectedBoolean,
+    ExpectedString,
+    ExpectedNumber,
+    ExpectedInteger,
+    ExpectedBlock,
+    ExpectedPointer,
+    ExpectedValue,
+    ExpectedException,
+    CannotShadowWordsInLocalScope,
+    CannotCompare(ir::Value, ir::Value),
+    CannotConvert(ir::Value),
     HeapError(heap::HeapError),
-    BadPointer(String),
-    ExpectedTwo(&'static str),
+    BadPointer(usize),
+    RuntimeException(ir::Value),
 }
 
 pub struct VM {
@@ -45,22 +50,33 @@ impl<'a> VM {
         self.single_eval_blocks = HashMap::new();
     }
 
-    pub fn run(&mut self, ir: &ir::IR<'a>, main: &'a str) -> Result<(), VMError> {
+    pub fn run(&mut self, ir: ir::IR<'a>, main: &'a str) -> Result<(), VMError> {
         self.clean();
-        self.run_block(main.to_local_str(), ir)
+        self.run_block(main.to_local_str(), &ir)
     }
 
-    pub fn run_main(&mut self, ir: &ir::IR<'a>) -> Result<(), VMError> {
+    pub fn run_main(&mut self, ir: ir::IR<'a>) -> Result<(), VMError> {
         self.run(ir, "main")
     }
 
-    pub fn push(&mut self, value: ir::Value) -> Result<(), VMError> {
+    pub fn handle_plus(&mut self, value: ir::Value) -> Result<(), VMError> {
         if let ir::Value::Pointer(pointer) = value {
-            self.heap
-                .rc_plus(pointer)
-                .map_err(VMError::HeapError)?;
+            self.heap.rc_plus(pointer).map_err(VMError::HeapError)
+        } else {
+            Ok(())
         }
+    }
 
+    pub fn handle_minus(&mut self, value: ir::Value) -> Result<(), VMError> {
+        if let ir::Value::Pointer(pointer) = value {
+            self.heap.rc_minus(pointer).map_err(VMError::HeapError)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn push(&mut self, value: ir::Value) -> Result<(), VMError> {
+        self.handle_plus(value.clone())?;
         self.stack.push(value);
         Ok(())
     }
@@ -68,14 +84,10 @@ impl<'a> VM {
     pub fn pop(&mut self) -> Result<ir::Value, VMError> {
         match self.stack.pop() {
             Some(i) => {
-                if let ir::Value::Pointer(pointer) = i {
-                    self.heap
-                        .rc_minus(pointer)
-                        .map_err(VMError::HeapError)?
-                }
+                self.handle_minus(i.clone())?;
                 Ok(i)
             }
-            None => Err(VMError::StackEnded(self.block_name().to_string())),
+            None => Err(VMError::StackEnded),
         }
     }
 
@@ -85,19 +97,12 @@ impl<'a> VM {
             let int = num as usize;
 
             if int as f64 != num {
-                return Err(VMError::ExpectedInteger(self.block_name().to_string()));
+                return Err(VMError::ExpectedInteger);
             }
 
             Ok(int)
         } else {
-            Err(VMError::ExpectedInteger(self.block_name().to_string()))
-        }
-    }
-
-    fn block_name(&self) -> LocalStr {
-        match self.call_stack.last() {
-            Some(i) => i.clone(),
-            None => local_str!("unknown block"),
+            Err(VMError::ExpectedInteger)
         }
     }
 
@@ -106,18 +111,23 @@ impl<'a> VM {
     }
 
     pub fn run_block(&mut self, block_name: LocalStr, ir: &ir::IR<'a>) -> Result<(), VMError> {
+        let mut locals: Vec<LocalStr> = Vec::new();
+
+        let mut local_ir = ir::IR::new();
+        local_ir.add(ir).unwrap();
         self.call_stack.push(block_name.clone());
-        let block = match ir.get_block(block_name.clone()) {
+        let binding = (&ir).get_block(block_name.clone());
+        let block = match binding {
             Some(b) => b,
-            None => return Err(VMError::UnknownBlock(block_name.to_string())),
+            None => return Err(VMError::UnknownBlock(block_name)),
         };
         let single_eval;
 
         if let ir::Block::IR(ir::BlockRunType::Once, _) = block {
             if let Some(i) = self.single_eval_blocks.get(&block_name) {
-                              self.stack.push(i.clone());
-                             return Ok(());
-                          }
+                self.stack.push(i.clone());
+                return Ok(());
+            }
             single_eval = true;
         } else {
             single_eval = false;
@@ -130,16 +140,25 @@ impl<'a> VM {
                         println!("\n\n=== stack debug ===\n\n{:?}", self.stack);
                     }
                     match c {
+                        ir::IRCode::LocalBlock(n, t, code) => {
+                            let err = local_ir
+                                .add_block(n.to_local_str(), ir::Block::IR(*t, code.to_vec()));
+                            if let Err(_) = err {
+                                return Err(VMError::CannotShadowWordsInLocalScope);
+                            } else {
+                                locals.push(n.to_local_str());
+                            }
+                        }
                         ir::IRCode::PutValue(v) => {
                             self.stack.push(v.clone());
                         }
                         ir::IRCode::Call(b) => {
-                            self.run_block(b.to_local_str(), ir)?;
+                            self.run_block(b.to_local_str(), &local_ir)?;
                         }
                         ir::IRCode::While(b) => loop {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(true) = top {
-                                self.run_block(b.to_local_str(), ir)?;
+                                self.run_block(b.to_local_str(), &local_ir)?;
                             } else {
                                 break;
                             }
@@ -150,36 +169,43 @@ impl<'a> VM {
                                 if !bo {
                                     continue;
                                 } else {
-                                    let v = self.run_block(b.to_local_str(), ir);
+                                    let v = self.run_block(b.to_local_str(), &local_ir);
                                     return v;
                                 }
                             } else {
-                                return Err(VMError::ExpectedBoolean(
-                                    self.block_name().to_string(),
-                                ));
+                                return Err(VMError::ExpectedBoolean);
                             }
                         }
                         ir::IRCode::Return => {
                             if single_eval {
                                 if let Some(i) = self.stack.last() {
-                                                                       self.single_eval_blocks.insert(block_name, i.clone());
-                                                                  };
+                                    self.single_eval_blocks.insert(block_name, i.clone());
+                                };
                             }
                             return Ok(());
                         }
                     }
                 }
                 if single_eval {
-                    if let Some(i) = self.stack.last() {
-                                              self.single_eval_blocks.insert(block_name, i.clone());
-                                };
+                    let v = self.stack.last();
+                    if let Some(i) = v {
+                        self.single_eval_blocks.insert(block_name, i.clone());
+                        self.handle_plus(i.clone())?;
+                    };
                 }
                 Ok(())
             }
-            ir::Block::Native(f) => f(self, ir),
+            ir::Block::Native(f) => f(self, &ir),
         };
 
         self.call_stack.pop();
+
+        for local in locals {
+            let v = self.single_eval_blocks.remove(&local);
+            if let Some(val) = v {
+                self.handle_minus(val)?;
+            }
+        }
 
         v
     }

@@ -4,11 +4,16 @@ pub const UNIQUE_OPEN: char = '{';
 pub const UNIQUE_CLOSE: char = '}';
 pub const STRING_QUOTES: char = '"';
 pub const ESCAPE_CHAR: char = '\'';
+pub const ATOM_CHAR: char = ':';
 pub const COMMENT_SYMBOL: char = '#';
 pub const STRING_ESCAPE_CHAR: char = '\\';
 
 fn is_id_beginning(ch: char) -> bool {
-    !ch.is_numeric() && !ch.is_whitespace() && ch != STRING_QUOTES && ch != ESCAPE_CHAR
+    !ch.is_numeric()
+        && !ch.is_whitespace()
+        && ch != STRING_QUOTES
+        && ch != ESCAPE_CHAR
+        && ch != ATOM_CHAR
 }
 
 #[derive(Debug)]
@@ -17,8 +22,9 @@ pub enum TokenizerErrorInner {
     UnclosedString,
     UnexpectedEOF,
     TooManyDotsInNumber,
-    CannotEscapeKeyword,
+    CannotEscapeNonRegularId,
     UnexpectedEscapeChar,
+    UnexpectedAtomChar,
     InvalidEscape,
 }
 
@@ -29,6 +35,8 @@ pub struct TokenizerError(pub usize, pub TokenizerErrorInner);
 pub enum TokenInner {
     Identifier(String),
     EscapedIdentifier(String),
+    Atom(String),
+    Comment(String),
     String(String),
     Number(f64),
     Keyword(KeywordType),
@@ -96,6 +104,12 @@ impl From<&str> for KeywordType {
     }
 }
 
+enum IdentifierType {
+    Escaped,
+    Regular,
+    Atom,
+}
+
 pub struct Tokenizer {
     pub tokens: Vec<Token>,
     pub str: String,
@@ -136,7 +150,33 @@ impl Tokenizer {
                     break;
                 }
             };
-            if c == COMMENT_SYMBOL {
+            if c == ATOM_CHAR {
+                let next = match en.get(self.at + 1) {
+                    Some(ch) => {
+                        self.at += 1;
+                        *ch
+                    }
+                    None => {
+                        return Err(TokenizerError(
+                            self.at,
+                            TokenizerErrorInner::UnexpectedEscapeChar,
+                        ));
+                    }
+                };
+
+                if is_id_beginning(next) {
+                    if let Some(err) = self.parse_id(&en, IdentifierType::Atom) {
+                        return Err(err);
+                    }
+                } else {
+                    return Err(TokenizerError(
+                        self.at,
+                        TokenizerErrorInner::UnexpectedAtomChar,
+                    ));
+                }
+            } else if c == COMMENT_SYMBOL {
+                let mut comment_data = String::new();
+                self.at += 1;
                 loop {
                     let c = match en.get(self.at) {
                         Some(ch) => *ch,
@@ -145,8 +185,11 @@ impl Tokenizer {
                         }
                     };
                     if c == '\n' {
+                        self.tokens
+                            .push(Token(self.at, TokenInner::Comment(comment_data)));
                         break;
                     } else {
+                        comment_data.push(c);
                         self.at += 1;
                     }
                 }
@@ -163,7 +206,7 @@ impl Tokenizer {
                 self.tokens.push(Token(self.at, TokenInner::UniqueClose));
                 self.at += 1;
             } else if is_id_beginning(c) {
-                if let Some(err) = self.parse_id(&en, false) {
+                if let Some(err) = self.parse_id(&en, IdentifierType::Regular) {
                     return Err(err);
                 }
             } else if c == ESCAPE_CHAR {
@@ -189,7 +232,7 @@ impl Tokenizer {
                         .push(Token(self.at, TokenInner::UniqueEscapedOpen));
                     self.at += 1;
                 } else if is_id_beginning(next) {
-                    if let Some(err) = self.parse_id(&en, true) {
+                    if let Some(err) = self.parse_id(&en, IdentifierType::Escaped) {
                         return Err(err);
                     }
                 } else {
@@ -271,7 +314,7 @@ impl Tokenizer {
         None
     }
 
-    fn parse_id(&mut self, en: &[char], escaped: bool) -> Option<TokenizerError> {
+    fn parse_id(&mut self, en: &[char], id_type: IdentifierType) -> Option<TokenizerError> {
         let c = match en.get(self.at) {
             Some(ch) => *ch,
             None => {
@@ -302,19 +345,20 @@ impl Tokenizer {
 
         let into_kw = KeywordType::from(str.as_str());
         match into_kw {
-            KeywordType::None => {
-                if !escaped {
+            KeywordType::None => match id_type {
+                IdentifierType::Regular => {
                     self.tokens.push(Token(begin, TokenInner::Identifier(str)))
-                } else {
-                    self.tokens
-                        .push(Token(begin, TokenInner::EscapedIdentifier(str)))
                 }
-            }
+                IdentifierType::Escaped => self
+                    .tokens
+                    .push(Token(begin, TokenInner::EscapedIdentifier(str))),
+                IdentifierType::Atom => self.tokens.push(Token(begin, TokenInner::Atom(str))),
+            },
             _ => {
-                if escaped {
+                if !matches!(id_type, IdentifierType::Regular) {
                     return Some(TokenizerError(
                         self.at,
-                        TokenizerErrorInner::CannotEscapeKeyword,
+                        TokenizerErrorInner::CannotEscapeNonRegularId,
                     ));
                 }
                 self.tokens.push(Token(begin, TokenInner::Keyword(into_kw)))

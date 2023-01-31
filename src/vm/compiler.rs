@@ -41,6 +41,14 @@ impl<'a> Compiler {
         {
             for (i, node) in nodes.iter().enumerate() {
                 match &node.1 {
+                    ast::ASTNodeInner::Comment(data) => {
+                        if let Some(ast::ASTNode(_, ast::ASTNodeInner::Identifier(id))) =
+                            nodes.get(i + 1)
+                        {
+                            ir.annotations
+                                .insert(id.to_local_str(), data.to_local_str());
+                        }
+                    }
                     ast::ASTNodeInner::Identifier(id) => {
                         let next = match nodes.get(i + 1) {
                             Some(i) => i,
@@ -55,13 +63,15 @@ impl<'a> Compiler {
                                     return Err(e);
                                 }
                                 Ok(v) => {
-                                    if let Err(ir::IRError::WordAlreadyExists) = ir.add_block(id.to_local_str(), v) {
+                                    if let Err(ir::IRError::WordAlreadyExists) =
+                                        ir.add_block(id.to_local_str(), v)
+                                    {
                                         return Err(CompilerError(
                                             i,
                                             CompilerErrorInner::WordAlreadyExists,
                                         ));
                                     }
-                                },
+                                }
                             };
                         } else {
                             return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
@@ -140,8 +150,23 @@ impl<'a> Compiler {
 
         for (i, node) in v.iter().enumerate() {
             match &node.1 {
-                ast::ASTNodeInner::Identifier(i) => {
-                    code.push(ir::IRCode::Call(i.as_str()));
+                ast::ASTNodeInner::Comment(_) => {}
+                ast::ASTNodeInner::Atom(i) => {
+                    code.push(ir::IRCode::PutValue(ir::Value::Atom(i.to_local_str())));
+                }
+                ast::ASTNodeInner::Identifier(id) => {
+                    let next = v.get(i + 1);
+                    match next {
+                        Some(ast::ASTNode(_, ast::ASTNodeInner::Block(_, _))) => {
+                            let compiled = self.compile_block(id, next.unwrap(), ir)?;
+                            if let ir::Block::IR(typ, data) = compiled {
+                                code.push(ir::IRCode::LocalBlock(id, typ, data));
+                            }
+                        }
+                        _ => {
+                            code.push(ir::IRCode::Call(id.as_str()));
+                        }
+                    };
                 }
                 ast::ASTNodeInner::EscapedIdentifier(i) => {
                     code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(i))));
@@ -185,14 +210,24 @@ impl<'a> Compiler {
                     } else {
                         match typ {
                             ast::BlockType::SingleEval | ast::BlockType::UniqueEval => {
-                                return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                                if !matches!(
+                                    v.get(i - 1),
+                                    Some(ast::ASTNode(_, ast::ASTNodeInner::Identifier(_)))
+                                ) {
+                                    return Err(CompilerError(
+                                        i,
+                                        CompilerErrorInner::UnexpectedBlock,
+                                    ));
+                                }
                             }
                             _ => {
-                                if let Err(ir::IRError::WordAlreadyExists) =  ir.add_block(nested_name.to_local_str(), nested_ir) {
-                                        return Err(CompilerError(
-                                            i,
-                                            CompilerErrorInner::WordAlreadyExists,
-                                        ));
+                                if let Err(ir::IRError::WordAlreadyExists) =
+                                    ir.add_block(nested_name.to_local_str(), nested_ir)
+                                {
+                                    return Err(CompilerError(
+                                        i,
+                                        CompilerErrorInner::WordAlreadyExists,
+                                    ));
                                 }
                                 code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(
                                     nested_name,
@@ -221,7 +256,9 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    if let Err(ir::IRError::WordAlreadyExists) = ir.add_block(nested_name.to_local_str(), nested_ir) {
+                    if let Err(ir::IRError::WordAlreadyExists) =
+                        ir.add_block(nested_name.to_local_str(), nested_ir)
+                    {
                         return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
                     }
                     code.push(ir::IRCode::If(nested_name));
@@ -246,9 +283,11 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    if let Err(ir::IRError::WordAlreadyExists) = ir.add_block(nested_name.to_local_str(), nested_ir) {
-return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
-              }
+                    if let Err(ir::IRError::WordAlreadyExists) =
+                        ir.add_block(nested_name.to_local_str(), nested_ir)
+                    {
+                        return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
+                    }
                     code.push(ir::IRCode::While(nested_name));
                 }
             }

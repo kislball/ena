@@ -14,6 +14,7 @@ pub enum IRError {
 #[derive(Debug, Clone)]
 pub struct IR<'a> {
     pub blocks: HashMap<LocalStr, Block<'a>>,
+    pub annotations: HashMap<LocalStr, LocalStr>,
 }
 
 impl<'a> Default for IR<'a> {
@@ -26,6 +27,7 @@ impl<'a> IR<'a> {
     pub fn new() -> Self {
         IR {
             blocks: HashMap::new(),
+            annotations: HashMap::new(),
         }
     }
 
@@ -38,12 +40,20 @@ impl<'a> IR<'a> {
             }
         }
 
+        for (block, content) in &self.annotations {
+            blocks.push(IRSerializable::Annotation(block.clone(), content.clone()));
+        }
+
         IRSerializable::Root(blocks)
     }
 
     pub fn add(&mut self, another: &ir::IR<'a>) -> Result<(), IRError> {
         for (name, block) in &another.blocks {
             self.add_block(name.clone(), block.clone())?;
+        }
+
+        for (name, comment) in &another.annotations {
+            self.annotations.insert(name.clone(), comment.clone());
         }
         Ok(())
     }
@@ -94,6 +104,7 @@ impl<'a> fmt::Debug for Block<'a> {
 pub enum IRSerializable<'a> {
     Block(&'a str, BlockRunType, Vec<IRCode<'a>>),
     Root(Vec<IRSerializable<'a>>),
+    Annotation(LocalStr, LocalStr),
 }
 
 #[derive(Debug)]
@@ -122,6 +133,8 @@ impl<'a> IRSerializable<'a> {
                     let block = Block::IR(typ, data.to_vec());
                     ir.add_block(name.to_local_str(), block)
                         .map_err(SerializationError::IRError)?;
+                } else if let IRSerializable::Annotation(name, data) = ser_block {
+                    ir.annotations.insert(name, data);
                 } else {
                     return Err(SerializationError::ExpectedBlock);
                 }
@@ -141,12 +154,15 @@ pub enum Value {
     Boolean(bool),
     Pointer(usize),
     Block(LocalStr),
+    VMError(Box<machine::VMError>),
+    Atom(LocalStr),
     Null,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IRCode<'a> {
     PutValue(Value),
+    LocalBlock(&'a str, BlockRunType, Vec<IRCode<'a>>),
     Call(&'a str),
     While(&'a str),
     If(&'a str),

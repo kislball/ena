@@ -26,8 +26,7 @@ pub fn compile_many<'a>(contents: &Vec<String>) -> Result<vm::ir::IR<'a>, EnaErr
     let mut ir = vm::ir::IR::new();
 
     for content in contents {
-        ir.add(&compile(content)?)
-            .map_err(EnaError::IRError)?;
+        ir.add(&compile(content)?).map_err(EnaError::IRError)?;
     }
 
     Ok(ir)
@@ -40,13 +39,9 @@ pub fn compile<'a>(contents: &String) -> Result<vm::ir::IR<'a>, EnaError> {
         .map_err(EnaError::TokenizerError)?;
     let mut ast_builder = ast::ASTBuilder::new();
     let parsed = Box::leak(Box::new(
-        ast_builder
-            .parse(tokens)
-            .map_err(EnaError::ASTError)?,
+        ast_builder.parse(tokens).map_err(EnaError::ASTError)?,
     ));
     let compiler = Box::leak(Box::new(vm::compiler::Compiler::new()));
-    let ir = compiler
-        .compile(parsed)
-        .map_err(EnaError::CompilerError)?;
+    let ir = compiler.compile(parsed).map_err(EnaError::CompilerError)?;
     Ok(ir)
 }

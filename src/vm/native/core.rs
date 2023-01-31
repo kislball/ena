@@ -6,6 +6,23 @@ pub fn drop_value(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMErr
     Ok(())
 }
 
+pub fn peek_value_at(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+    let num = vm.pop_usize()?;
+    match vm.stack.get(num) {
+        Some(i) => vm.push(i.clone()),
+        None => Err(machine::VMError::StackEnded),
+    }
+}
+
+pub fn drop_value_at(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+    let num = vm.pop_usize()?;
+    if ((vm.stack.len() - 1) - num) >= vm.stack.len() {
+        return Err(machine::VMError::StackEnded);
+    }
+    let val = vm.stack.remove((vm.stack.len() - 1) - num);
+    vm.handle_minus(val)
+}
+
 pub fn swap(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let one = vm.stack.pop();
     let two = vm.stack.pop();
@@ -29,14 +46,12 @@ pub fn plus(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
         let b = b as usize;
 
         if old_b != b as f64 {
-            return Err(machine::VMError::BadPointer(
-                "+(expected integer)".to_string(),
-            ));
+            return Err(machine::VMError::BadPointer(b));
         }
 
         vm.push(ir::Value::Pointer(a + b))?;
     } else {
-        return Err(machine::VMError::ExpectedNumber("+".to_string()));
+        return Err(machine::VMError::ExpectedNumber);
     }
 
     Ok(())
@@ -46,7 +61,7 @@ pub fn mul(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a * b))?;
     } else {
-        return Err(machine::VMError::ExpectedNumber("*".to_string()));
+        return Err(machine::VMError::ExpectedNumber);
     }
 
     Ok(())
@@ -56,7 +71,7 @@ pub fn div(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a / b))?;
     } else {
-        return Err(machine::VMError::ExpectedNumber("/".to_string()));
+        return Err(machine::VMError::ExpectedNumber);
     }
 
     Ok(())
@@ -71,20 +86,16 @@ pub fn subst(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
         let b = b as usize;
 
         if old_b != b as f64 {
-            return Err(machine::VMError::BadPointer(
-                "-(expected integer)".to_string(),
-            ));
+            return Err(machine::VMError::BadPointer(b));
         }
 
         if a < b {
-            return Err(machine::VMError::BadPointer(
-                "-(going negative)".to_string(),
-            ));
+            return Err(machine::VMError::BadPointer(b));
         }
 
         vm.push(ir::Value::Pointer(a - b))?;
     } else {
-        return Err(machine::VMError::ExpectedNumber("-".to_string()));
+        return Err(machine::VMError::ExpectedNumber);
     }
 
     Ok(())
@@ -94,7 +105,7 @@ pub fn pow(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a.powf(b)))?;
     } else {
-        return Err(machine::VMError::ExpectedNumber("pow".to_string()));
+        return Err(machine::VMError::ExpectedNumber);
     }
 
     Ok(())
@@ -104,7 +115,7 @@ pub fn root(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a.powf(1.0 / b)))?;
     } else {
-        return Err(machine::VMError::ExpectedNumber("pow".to_string()));
+        return Err(machine::VMError::ExpectedNumber);
     }
 
     Ok(())
@@ -116,7 +127,7 @@ pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let val = match val {
         Some(i) => i,
         None => {
-            return Err(machine::VMError::StackEnded("dup".to_string()));
+            return Err(machine::VMError::StackEnded);
         }
     };
 
@@ -127,8 +138,8 @@ pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
 
 pub fn equal(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let (a, b) = (vm.pop()?, vm.pop()?);
-    vm.push(ir::Value::Boolean(a == b))?;
-    Ok(())
+
+    vm.push(ir::Value::Boolean(a == b))
 }
 
 pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
@@ -137,7 +148,7 @@ pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VM
             .push(ir::Value::Boolean(ir.blocks.contains_key(&name)));
         Ok(())
     } else {
-        Err(machine::VMError::ExpectedBlock("block_exists?".to_string()))
+        Err(machine::VMError::ExpectedBlock)
     }
 }
 
@@ -160,7 +171,7 @@ pub fn realloc(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError>
     if let (ir::Value::Pointer(pointer_value), i) = (vm.pop()?, vm.pop_usize()?) {
         new_ptr = heap::heap_result_into_vm(vm.heap.realloc(pointer_value, i))?;
     } else {
-        return Err(machine::VMError::ExpectedPointer("realloc".to_string()));
+        return Err(machine::VMError::ExpectedPointer);
     }
 
     vm.push(ir::Value::Pointer(new_ptr))?;
@@ -172,30 +183,25 @@ pub fn free(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let pointer = match vm.pop()? {
         ir::Value::Pointer(i) => i,
         _ => {
-            return Err(machine::VMError::ExpectedPointer("free".to_string()));
+            return Err(machine::VMError::ExpectedPointer);
         }
     };
 
     match vm.heap.free(pointer) {
-        Err(_) => Err(machine::VMError::BadPointer("free".to_string())),
+        Err(_) => Err(machine::VMError::BadPointer(pointer)),
         _ => Ok(()),
     }
 }
 
 pub fn set_ref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
-    let ptr: usize;
-    let val: ir::Value;
-
-    if let (ir::Value::Pointer(value), b) = (vm.pop()?, vm.pop()?) {
-        ptr = value;
-        val = b;
+    let ptr = if let ir::Value::Pointer(point) = vm.pop()? {
+        point
     } else {
-        return Err(machine::VMError::ExpectedTwo("expected pointer and value"));
-    }
+        return Err(machine::VMError::ExpectedPointer);
+    };
+    let val = vm.pop()?;
 
-    vm.heap
-        .set(ptr, val)
-        .map_err(machine::VMError::HeapError)?;
+    vm.heap.set(ptr, val).map_err(machine::VMError::HeapError)?;
 
     Ok(())
 }
@@ -204,7 +210,7 @@ pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     let ptrval = match vm.stack.pop() {
         Some(i) => i,
         None => {
-            return Err(machine::VMError::StackEnded("deref".to_string()));
+            return Err(machine::VMError::StackEnded);
         }
     };
     let val: ir::Value;
@@ -215,7 +221,7 @@ pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
             .rc_minus(value)
             .map_err(machine::VMError::HeapError)?;
     } else {
-        return Err(machine::VMError::ExpectedPointer("@".to_string()));
+        return Err(machine::VMError::ExpectedPointer);
     }
 
     vm.push(val)?;
@@ -228,7 +234,7 @@ pub fn call(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
         vm.run_block(name, ir)?;
         Ok(())
     } else {
-        Err(machine::VMError::ExpectedBlock("call".to_string()))
+        Err(machine::VMError::ExpectedBlock)
     }
 }
 
@@ -236,7 +242,7 @@ pub fn neg(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     if let ir::Value::Boolean(b) = vm.pop()? {
         vm.push(ir::Value::Boolean(!b))
     } else {
-        Err(machine::VMError::ExpectedBoolean("!".to_string()))
+        Err(machine::VMError::ExpectedBoolean)
     }
 }
 
@@ -257,6 +263,8 @@ pub fn group<'a>() -> ir::NativeGroup<'a> {
     let mut group = ir::NativeGroup::new("");
 
     group.add_native("drop", drop_value).unwrap();
+    group.add_native("peek", peek_value_at).unwrap();
+    group.add_native("drop_at", drop_value_at).unwrap();
     group.add_native("swap", swap).unwrap();
     group.add_native("dup", dup).unwrap();
     group.add_native("+", plus).unwrap();
