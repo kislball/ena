@@ -47,7 +47,7 @@ struct Compile {
 struct Run {
     /// Files to run
     files: Vec<String>,
-    /// Word to start execution from
+    /// Block to start execution from
     #[arg(short, long)]
     main_word: Option<String>,
     /// Enable stack debugging

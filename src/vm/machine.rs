@@ -17,7 +17,7 @@ pub enum VMError {
     ExpectedPointer,
     ExpectedValue,
     ExpectedException,
-    CannotShadowWordsInLocalScope,
+    CannotShadowBlocksInLocalScope,
     CannotCompare(ir::Value, ir::Value),
     CannotConvert(ir::Value),
     HeapError(heap::HeapError),
@@ -144,7 +144,7 @@ impl<'a> VM {
                             let err = local_ir
                                 .add_block(n.to_local_str(), ir::Block::IR(*t, code.to_vec()));
                             if let Err(_) = err {
-                                return Err(VMError::CannotShadowWordsInLocalScope);
+                                return Err(VMError::CannotShadowBlocksInLocalScope);
                             } else {
                                 locals.push(n.to_local_str());
                             }

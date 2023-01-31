@@ -14,7 +14,7 @@ pub enum CompilerErrorInner {
     UnexpectedAnonymousBlock,
     ExpectedUnescapedBlock,
     ExpectedUniqueEvalBlockAfterIf,
-    WordAlreadyExists,
+    BlockAlreadyExists,
 }
 
 #[derive(Debug)]
@@ -63,12 +63,12 @@ impl<'a> Compiler {
                                     return Err(e);
                                 }
                                 Ok(v) => {
-                                    if let Err(ir::IRError::WordAlreadyExists) =
+                                    if let Err(ir::IRError::BlockAlreadyExists) =
                                         ir.add_block(id.to_local_str(), v)
                                     {
                                         return Err(CompilerError(
                                             i,
-                                            CompilerErrorInner::WordAlreadyExists,
+                                            CompilerErrorInner::BlockAlreadyExists,
                                         ));
                                     }
                                 }
@@ -221,12 +221,12 @@ impl<'a> Compiler {
                                 }
                             }
                             _ => {
-                                if let Err(ir::IRError::WordAlreadyExists) =
+                                if let Err(ir::IRError::BlockAlreadyExists) =
                                     ir.add_block(nested_name.to_local_str(), nested_ir)
                                 {
                                     return Err(CompilerError(
                                         i,
-                                        CompilerErrorInner::WordAlreadyExists,
+                                        CompilerErrorInner::BlockAlreadyExists,
                                     ));
                                 }
                                 code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(
@@ -256,10 +256,10 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    if let Err(ir::IRError::WordAlreadyExists) =
+                    if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir)
                     {
-                        return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
+                        return Err(CompilerError(i, CompilerErrorInner::BlockAlreadyExists));
                     }
                     code.push(ir::IRCode::If(nested_name));
                 }
@@ -283,10 +283,10 @@ impl<'a> Compiler {
 
                     let nested_name = Self::get_random_name(name);
                     let nested_ir = self.compile_block(nested_name, next, ir)?;
-                    if let Err(ir::IRError::WordAlreadyExists) =
+                    if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir)
                     {
-                        return Err(CompilerError(i, CompilerErrorInner::WordAlreadyExists));
+                        return Err(CompilerError(i, CompilerErrorInner::BlockAlreadyExists));
                     }
                     code.push(ir::IRCode::While(nested_name));
                 }

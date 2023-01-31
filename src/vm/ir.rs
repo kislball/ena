@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum IRError {
-    WordAlreadyExists,
+    BlockAlreadyExists,
 }
 
 #[derive(Debug, Clone)]
@@ -68,7 +68,7 @@ impl<'a> IR<'a> {
 
     pub fn add_block(&mut self, name: LocalStr, block: Block<'a>) -> Result<(), IRError> {
         if self.blocks.contains_key(&name) {
-            return Err(IRError::WordAlreadyExists);
+            return Err(IRError::BlockAlreadyExists);
         }
         self.blocks.insert(name, block);
         Ok(())
@@ -191,7 +191,7 @@ impl<'a> NativeGroup<'a> {
 
     pub fn add_native(&mut self, name: &'a str, f: NativeHandler<'a>) -> Result<(), IRError> {
         if self.natives.contains_key(name) {
-            return Err(IRError::WordAlreadyExists);
+            return Err(IRError::BlockAlreadyExists);
         }
         self.natives.insert(name, f);
         Ok(())
