@@ -9,7 +9,7 @@ ena.build {
 
 ena.deps {
     ena.dep.std
-    "some_library@version" ena.registry.enny
+    "kislball/some_library@git_tag" ena.dep.github
 }
 
 main {
