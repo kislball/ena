@@ -1,12 +1,12 @@
 # try_call checks if block on top of the stack exists,
-# if it exists, it will execute it
+# if it exists, it will execute it.
 try_call {
     dup block_exists? if {
         call
     }
 }
 
-# try_call_or runs the block on top, if it exists. Otherwise, it will 
+# try_call_or runs the block on top, if it exists. Otherwise, it will call a block before the aforementioned.
 try_call_or {
   dup block_exists? if {
     call
