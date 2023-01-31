@@ -1,0 +1,17 @@
+# Ena Build System
+
+# Not working, just a proposal
+
+# used for user configuration, called somewhere internally
+ena.build {
+    "./src/*.ena" ena.include
+}
+
+ena.deps {
+    ena.dep.std
+    "some_library@version" ena.registry.enny
+}
+
+main {
+    ena.build.main
+}
