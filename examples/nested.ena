@@ -1,0 +1,10 @@
+main {
+    hello ( ena.vm.random )
+
+    lol {
+        hello ( ena.vm.random )
+        ena.vm.debug
+    }
+
+    ena.vm.debug
+}

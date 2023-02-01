@@ -6,7 +6,7 @@ pub mod io;
 pub mod types;
 pub mod vm;
 
-pub fn group<'a>() -> ir::NativeGroup<'a> {
+pub fn group() -> ir::NativeGroup {
     let mut group = ir::NativeGroup::new("");
 
     group.add_child(&vm::group()).unwrap();

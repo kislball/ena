@@ -12,18 +12,18 @@ pub enum IRError {
 }
 
 #[derive(Debug, Clone)]
-pub struct IR<'a> {
-    pub blocks: HashMap<LocalStr, Block<'a>>,
+pub struct IR {
+    pub blocks: HashMap<LocalStr, Block>,
     pub annotations: HashMap<LocalStr, LocalStr>,
 }
 
-impl<'a> Default for IR<'a> {
+impl Default for IR {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> IR<'a> {
+impl IR {
     pub fn new() -> Self {
         IR {
             blocks: HashMap::new(),
@@ -31,8 +31,8 @@ impl<'a> IR<'a> {
         }
     }
 
-    pub fn into_serializable(&'a self) -> IRSerializable<'a> {
-        let mut blocks: Vec<IRSerializable<'a>> = Vec::new();
+    pub fn into_serializable(&self) -> IRSerializable {
+        let mut blocks: Vec<IRSerializable> = Vec::new();
 
         for (name, block) in &self.blocks {
             if let Block::IR(typ, data) = block {
@@ -47,7 +47,7 @@ impl<'a> IR<'a> {
         IRSerializable::Root(blocks)
     }
 
-    pub fn add(&mut self, another: &ir::IR<'a>) -> Result<(), IRError> {
+    pub fn add(&mut self, another: &ir::IR) -> Result<(), IRError> {
         for (name, block) in &another.blocks {
             self.add_block(name.clone(), block.clone())?;
         }
@@ -58,15 +58,15 @@ impl<'a> IR<'a> {
         Ok(())
     }
 
-    pub fn get_block(&self, id: LocalStr) -> Option<&Block<'a>> {
+    pub fn get_block(&self, id: LocalStr) -> Option<&Block> {
         self.blocks.get(&id)
     }
 
-    pub fn add_native(&mut self, name: LocalStr, f: NativeHandler<'a>) -> Result<(), IRError> {
+    pub fn add_native(&mut self, name: LocalStr, f: NativeHandler) -> Result<(), IRError> {
         self.add_block(name, Block::Native(f))
     }
 
-    pub fn add_block(&mut self, name: LocalStr, block: Block<'a>) -> Result<(), IRError> {
+    pub fn add_block(&mut self, name: LocalStr, block: Block) -> Result<(), IRError> {
         if self.blocks.contains_key(&name) {
             return Err(IRError::BlockAlreadyExists);
         }
@@ -75,7 +75,8 @@ impl<'a> IR<'a> {
     }
 }
 
-pub type NativeHandler<'a> = fn(&mut machine::VM, &ir::IR<'a>) -> Result<(), machine::VMError>;
+pub type NativeHandler =
+    fn(&mut machine::VM, &ir::IR, &HashMap<LocalStr, ir::Value>) -> Result<(), machine::VMError>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum BlockRunType {
@@ -84,12 +85,12 @@ pub enum BlockRunType {
 }
 
 #[derive(Clone)]
-pub enum Block<'a> {
-    IR(BlockRunType, Vec<IRCode<'a>>),
-    Native(NativeHandler<'a>),
+pub enum Block {
+    IR(BlockRunType, Vec<IRCode>),
+    Native(NativeHandler),
 }
 
-impl<'a> fmt::Debug for Block<'a> {
+impl fmt::Debug for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Block::IR(typ, vec) => {
@@ -102,7 +103,7 @@ impl<'a> fmt::Debug for Block<'a> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum IRSerializable<'a> {
-    Block(&'a str, BlockRunType, Vec<IRCode<'a>>),
+    Block(&'a str, BlockRunType, Vec<IRCode>),
     Root(Vec<IRSerializable<'a>>),
     Annotation(LocalStr, LocalStr),
 }
@@ -124,7 +125,7 @@ impl<'a> IRSerializable<'a> {
         bincode::serialize(self).map_err(|err| SerializationError::BincodeErr(*err))
     }
 
-    pub fn into_ir(self) -> Result<IR<'a>, SerializationError> {
+    pub fn into_ir(self) -> Result<IR, SerializationError> {
         let mut ir = IR::new();
 
         if let IRSerializable::Root(data) = self {
@@ -160,56 +161,59 @@ pub enum Value {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum IRCode<'a> {
+pub enum IRCode {
     PutValue(Value),
-    LocalBlock(&'a str, BlockRunType, Vec<IRCode<'a>>),
-    Call(&'a str),
-    While(&'a str),
-    If(&'a str),
+    LocalBlock(LocalStr, BlockRunType, Vec<IRCode>),
+    Call(LocalStr),
+    While(LocalStr),
+    If(LocalStr),
     Return,
 }
 
-pub struct NativeGroup<'a> {
-    natives: HashMap<&'a str, NativeHandler<'a>>,
-    prefix: &'a str,
+pub struct NativeGroup {
+    natives: HashMap<LocalStr, NativeHandler>,
+    prefix: LocalStr,
 }
 
-impl<'a> NativeGroup<'a> {
-    pub fn new(prefix: &'a str) -> Self {
+impl NativeGroup {
+    pub fn new(prefix: &str) -> Self {
         Self {
             natives: HashMap::new(),
-            prefix,
+            prefix: prefix.to_local_str(),
         }
     }
 
-    pub fn add_child(&mut self, group: &NativeGroup<'a>) -> Result<(), IRError> {
+    pub fn add_child(&mut self, group: &NativeGroup) -> Result<(), IRError> {
         for (k, v) in &group.natives {
-            self.add_native(Self::merge_prefix(group.prefix, k), *v)?;
+            self.add_native(Self::merge_prefix(group.prefix.as_str(), k), *v)?;
         }
         Ok(())
     }
 
-    pub fn add_native(&mut self, name: &'a str, f: NativeHandler<'a>) -> Result<(), IRError> {
+    pub fn add_native(&mut self, name: &str, f: NativeHandler) -> Result<(), IRError> {
         if self.natives.contains_key(name) {
             return Err(IRError::BlockAlreadyExists);
         }
-        self.natives.insert(name, f);
+        self.natives.insert(name.to_local_str(), f);
         Ok(())
     }
 
-    pub fn apply(&self, ir: &mut IR<'a>) -> Result<(), IRError> {
+    pub fn apply(&self, ir: &mut IR) -> Result<(), IRError> {
         for (k, v) in &self.natives {
             if self.prefix.is_empty() {
                 ir.add_native(k.to_local_str(), *v)?;
             } else {
-                ir.add_native(Self::merge_prefix(self.prefix, k).to_local_str(), *v)?;
+                ir.add_native(
+                    Self::merge_prefix(self.prefix.as_str(), k).to_local_str(),
+                    *v,
+                )?;
             }
         }
 
         Ok(())
     }
 
-    fn merge_prefix(prefix: &'a str, name: &'a str) -> &'a str {
+    fn merge_prefix<'a>(prefix: &'a str, name: &'a str) -> &'a str {
         if prefix.is_empty() {
             name
         } else {

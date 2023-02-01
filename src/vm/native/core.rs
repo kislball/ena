@@ -1,12 +1,24 @@
+use std::collections::HashMap;
+
+use flexstr::LocalStr;
+
 use crate::vm::{heap, ir, machine};
 
-pub fn drop_value(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn drop_value(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     vm.pop()?;
 
     Ok(())
 }
 
-pub fn peek_value_at(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn peek_value_at(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let num = vm.pop_usize()?;
     match vm.stack.get(num) {
         Some(i) => vm.push(i.clone()),
@@ -14,7 +26,11 @@ pub fn peek_value_at(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VM
     }
 }
 
-pub fn drop_value_at(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn drop_value_at(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let num = vm.pop_usize()?;
     if ((vm.stack.len() - 1) - num) >= vm.stack.len() {
         return Err(machine::VMError::StackEnded);
@@ -23,7 +39,11 @@ pub fn drop_value_at(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VM
     vm.handle_minus(val)
 }
 
-pub fn swap(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn swap(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let one = vm.stack.pop();
     let two = vm.stack.pop();
 
@@ -37,7 +57,11 @@ pub fn swap(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn plus(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn plus(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let popped = (vm.pop()?, vm.pop()?);
     if let (ir::Value::Number(a), ir::Value::Number(b)) = popped {
         vm.push(ir::Value::Number(a + b))?;
@@ -57,7 +81,11 @@ pub fn plus(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn mul(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn mul(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a * b))?;
     } else {
@@ -67,7 +95,11 @@ pub fn mul(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn div(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn div(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a / b))?;
     } else {
@@ -77,7 +109,11 @@ pub fn div(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn subst(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn subst(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let popped = (vm.pop()?, vm.pop()?);
     if let (ir::Value::Number(a), ir::Value::Number(b)) = popped {
         vm.push(ir::Value::Number(a - b))?;
@@ -101,7 +137,11 @@ pub fn subst(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn pow(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn pow(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a.powf(b)))?;
     } else {
@@ -111,7 +151,11 @@ pub fn pow(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn root(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn root(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
         vm.push(ir::Value::Number(a.powf(1.0 / b)))?;
     } else {
@@ -121,7 +165,11 @@ pub fn root(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn dup(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = vm.stack.last();
 
     let val = match val {
@@ -136,13 +184,21 @@ pub fn dup(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn equal(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn equal(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let (a, b) = (vm.pop()?, vm.pop()?);
 
     vm.push(ir::Value::Boolean(a == b))
 }
 
-pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
+pub fn block_exists(
+    vm: &mut machine::VM,
+    ir: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
         vm.stack
             .push(ir::Value::Boolean(ir.blocks.contains_key(&name)));
@@ -152,7 +208,11 @@ pub fn block_exists(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VM
     }
 }
 
-pub fn alloc(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn alloc(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let size = vm.pop_usize()?;
     let block: heap::MemoryBlock;
 
@@ -165,7 +225,11 @@ pub fn alloc(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn realloc(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn realloc(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let new_ptr: usize;
 
     if let (ir::Value::Pointer(pointer_value), i) = (vm.pop()?, vm.pop_usize()?) {
@@ -179,7 +243,11 @@ pub fn realloc(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError>
     Ok(())
 }
 
-pub fn free(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn free(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let pointer = match vm.pop()? {
         ir::Value::Pointer(i) => i,
         _ => {
@@ -193,7 +261,11 @@ pub fn free(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn set_ref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn set_ref(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let ptr = if let ir::Value::Pointer(point) = vm.pop()? {
         point
     } else {
@@ -206,7 +278,11 @@ pub fn set_ref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError>
     Ok(())
 }
 
-pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn deref(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let ptrval = match vm.stack.pop() {
         Some(i) => i,
         None => {
@@ -229,16 +305,24 @@ pub fn deref(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn call(vm: &mut machine::VM, ir: &ir::IR) -> Result<(), machine::VMError> {
+pub fn call(
+    vm: &mut machine::VM,
+    ir: &ir::IR,
+    locals: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = vm.pop()? {
-        vm.run_block(name, ir)?;
+        vm.run_block(name, ir, locals)?;
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock)
     }
 }
 
-pub fn neg(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn neg(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let ir::Value::Boolean(b) = vm.pop()? {
         vm.push(ir::Value::Boolean(!b))
     } else {
@@ -259,7 +343,7 @@ pub fn neg(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
 //     }
 // }
 
-pub fn group<'a>() -> ir::NativeGroup<'a> {
+pub fn group() -> ir::NativeGroup {
     let mut group = ir::NativeGroup::new("");
 
     group.add_native("drop", drop_value).unwrap();

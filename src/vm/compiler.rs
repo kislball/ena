@@ -18,7 +18,7 @@ pub enum CompilerErrorInner {
 }
 
 #[derive(Debug)]
-pub struct CompilerError(usize, CompilerErrorInner);
+pub struct CompilerError(pub ast::ASTNode, pub CompilerErrorInner);
 
 impl Default for Compiler {
     fn default() -> Self {
@@ -35,7 +35,12 @@ impl<'a> Compiler {
         let mut ir = ir::IR::new();
         let nodes = match &ast.1 {
             ast::ASTNodeInner::Block(ast::BlockType::Program, nodes) => nodes,
-            _ => return Err(CompilerError(0, CompilerErrorInner::ExpectedProgramAsRoot)),
+            _ => {
+                return Err(CompilerError(
+                    ast::ASTNode(0, ast::ASTNodeInner::Closer),
+                    CompilerErrorInner::ExpectedProgramAsRoot,
+                ))
+            }
         };
 
         {
@@ -53,7 +58,10 @@ impl<'a> Compiler {
                         let next = match nodes.get(i + 1) {
                             Some(i) => i,
                             None => {
-                                return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                                return Err(CompilerError(
+                                    node.clone(),
+                                    CompilerErrorInner::ExpectedBlock,
+                                ));
                             }
                         };
 
@@ -67,27 +75,36 @@ impl<'a> Compiler {
                                         ir.add_block(id.to_local_str(), v)
                                     {
                                         return Err(CompilerError(
-                                            i,
+                                            node.clone(),
                                             CompilerErrorInner::BlockAlreadyExists,
                                         ));
                                     }
                                 }
                             };
                         } else {
-                            return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                            return Err(CompilerError(
+                                node.clone(),
+                                CompilerErrorInner::ExpectedBlock,
+                            ));
                         }
                     }
                     ast::ASTNodeInner::Block(typ, _) => {
                         let prev = match nodes.get(i - 1) {
                             Some(i) => i,
                             None => {
-                                return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                                return Err(CompilerError(
+                                    node.clone(),
+                                    CompilerErrorInner::ExpectedBlock,
+                                ));
                             }
                         };
 
                         if let ast::ASTNodeInner::Identifier(_) = prev.1 {
                         } else {
-                            return Err(CompilerError(i, CompilerErrorInner::UnexpectedBlock));
+                            return Err(CompilerError(
+                                node.clone(),
+                                CompilerErrorInner::UnexpectedBlock,
+                            ));
                         }
 
                         match typ {
@@ -96,14 +113,17 @@ impl<'a> Compiler {
                             }
                             _ => {
                                 return Err(CompilerError(
-                                    i,
+                                    node.clone(),
                                     CompilerErrorInner::UnexpectedAnonymousBlock,
                                 ));
                             }
                         }
                     }
                     _ => {
-                        return Err(CompilerError(0, CompilerErrorInner::UnexpectedNode));
+                        return Err(CompilerError(
+                            node.clone(),
+                            CompilerErrorInner::UnexpectedNode,
+                        ));
                     }
                 }
             }
@@ -126,9 +146,9 @@ impl<'a> Compiler {
         &mut self,
         name: &'a str,
         block: &'a ast::ASTNode,
-        ir: &mut ir::IR<'a>,
-    ) -> Result<ir::Block<'a>, CompilerError> {
-        let mut code: Vec<ir::IRCode<'a>> = vec![];
+        ir: &mut ir::IR,
+    ) -> Result<ir::Block, CompilerError> {
+        let mut code: Vec<ir::IRCode> = vec![];
         let t: ast::BlockType;
         let v: &Vec<ast::ASTNode>;
         match &block.1 {
@@ -137,7 +157,10 @@ impl<'a> Compiler {
                 v = ve;
             }
             _ => {
-                return Err(CompilerError(0, CompilerErrorInner::ExpectedBlock));
+                return Err(CompilerError(
+                    block.clone(),
+                    CompilerErrorInner::ExpectedBlock,
+                ));
             }
         };
 
@@ -160,11 +183,11 @@ impl<'a> Compiler {
                         Some(ast::ASTNode(_, ast::ASTNodeInner::Block(_, _))) => {
                             let compiled = self.compile_block(id, next.unwrap(), ir)?;
                             if let ir::Block::IR(typ, data) = compiled {
-                                code.push(ir::IRCode::LocalBlock(id, typ, data));
+                                code.push(ir::IRCode::LocalBlock(id.to_local_str(), typ, data));
                             }
                         }
                         _ => {
-                            code.push(ir::IRCode::Call(id.as_str()));
+                            code.push(ir::IRCode::Call(id.to_local_str()));
                         }
                     };
                 }
@@ -202,7 +225,10 @@ impl<'a> Compiler {
                     let prev = match v.get(i - 1) {
                         Some(i) => i,
                         None => {
-                            return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                            return Err(CompilerError(
+                                node.clone(),
+                                CompilerErrorInner::ExpectedBlock,
+                            ));
                         }
                     };
 
@@ -215,7 +241,7 @@ impl<'a> Compiler {
                                     Some(ast::ASTNode(_, ast::ASTNodeInner::Identifier(_)))
                                 ) {
                                     return Err(CompilerError(
-                                        i,
+                                        node.clone(),
                                         CompilerErrorInner::UnexpectedBlock,
                                     ));
                                 }
@@ -225,7 +251,7 @@ impl<'a> Compiler {
                                     ir.add_block(nested_name.to_local_str(), nested_ir)
                                 {
                                     return Err(CompilerError(
-                                        i,
+                                        node.clone(),
                                         CompilerErrorInner::BlockAlreadyExists,
                                     ));
                                 }
@@ -240,7 +266,10 @@ impl<'a> Compiler {
                     let next = match v.get(i + 1) {
                         Some(i) => i,
                         None => {
-                            return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                            return Err(CompilerError(
+                                node.clone(),
+                                CompilerErrorInner::ExpectedBlock,
+                            ));
                         }
                     };
 
@@ -248,7 +277,7 @@ impl<'a> Compiler {
                         ast::ASTNodeInner::Block(ast::BlockType::UniqueEval, _) => {}
                         _ => {
                             return Err(CompilerError(
-                                i,
+                                node.clone(),
                                 CompilerErrorInner::ExpectedUniqueEvalBlockAfterIf,
                             ));
                         }
@@ -259,15 +288,21 @@ impl<'a> Compiler {
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir)
                     {
-                        return Err(CompilerError(i, CompilerErrorInner::BlockAlreadyExists));
+                        return Err(CompilerError(
+                            node.clone(),
+                            CompilerErrorInner::BlockAlreadyExists,
+                        ));
                     }
-                    code.push(ir::IRCode::If(nested_name));
+                    code.push(ir::IRCode::If(nested_name.to_local_str()));
                 }
                 ast::ASTNodeInner::Keyword(tok::KeywordType::While) => {
                     let next = match v.get(i + 1) {
                         Some(i) => i,
                         None => {
-                            return Err(CompilerError(i, CompilerErrorInner::ExpectedBlock));
+                            return Err(CompilerError(
+                                node.clone(),
+                                CompilerErrorInner::ExpectedBlock,
+                            ));
                         }
                     };
 
@@ -275,7 +310,7 @@ impl<'a> Compiler {
                         ast::ASTNodeInner::Block(ast::BlockType::UniqueEval, _) => {}
                         _ => {
                             return Err(CompilerError(
-                                i,
+                                node.clone(),
                                 CompilerErrorInner::ExpectedUniqueEvalBlockAfterIf,
                             ));
                         }
@@ -286,9 +321,12 @@ impl<'a> Compiler {
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir)
                     {
-                        return Err(CompilerError(i, CompilerErrorInner::BlockAlreadyExists));
+                        return Err(CompilerError(
+                            node.clone(),
+                            CompilerErrorInner::BlockAlreadyExists,
+                        ));
                     }
-                    code.push(ir::IRCode::While(nested_name));
+                    code.push(ir::IRCode::While(nested_name.to_local_str()));
                 }
             }
         }

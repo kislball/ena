@@ -118,14 +118,14 @@ impl ASTBuilder {
                 };
                 let mut nodes: Vec<ASTNode> = vec![];
                 let begin = self.at;
-
+                
                 self.at += 1;
 
                 loop {
                     let current = match tokens.get(self.at) {
                         Some(i) => i,
                         None => {
-                            return Err(ASTError(self.at, ASTErrorInner::UnexpectedEnd));
+                            return Err(ASTError(begin, ASTErrorInner::UnexpectedEnd));
                         }
                     };
 

@@ -137,9 +137,9 @@ impl Tokenizer {
         self.tokens = vec![];
     }
 
-    pub fn parse(&mut self, str: String) -> Result<&mut Vec<Token>, TokenizerError> {
+    pub fn parse(&mut self, str: &String) -> Result<&mut Vec<Token>, TokenizerError> {
         self.clean();
-        self.str = str;
+        self.str = str.clone();
         self.str.push(' '); // needs a whitespace for ids and numbers to work
         let en: Vec<char> = self.str.chars().enumerate().map(|x| x.1).collect();
 
@@ -151,6 +151,7 @@ impl Tokenizer {
                 }
             };
             if c == ATOM_CHAR {
+                let begin = self.at;
                 let next = match en.get(self.at + 1) {
                     Some(ch) => {
                         self.at += 1;
@@ -158,7 +159,7 @@ impl Tokenizer {
                     }
                     None => {
                         return Err(TokenizerError(
-                            self.at,
+                            begin,
                             TokenizerErrorInner::UnexpectedEscapeChar,
                         ));
                     }
@@ -170,12 +171,13 @@ impl Tokenizer {
                     }
                 } else {
                     return Err(TokenizerError(
-                        self.at,
+                        begin,
                         TokenizerErrorInner::UnexpectedAtomChar,
                     ));
                 }
             } else if c == COMMENT_SYMBOL {
                 let mut comment_data = String::new();
+                let begin = self.at;
                 self.at += 1;
                 loop {
                     let c = match en.get(self.at) {
@@ -186,7 +188,7 @@ impl Tokenizer {
                     };
                     if c == '\n' {
                         self.tokens
-                            .push(Token(self.at, TokenInner::Comment(comment_data)));
+                            .push(Token(begin, TokenInner::Comment(comment_data)));
                         break;
                     } else {
                         comment_data.push(c);
@@ -210,6 +212,7 @@ impl Tokenizer {
                     return Err(err);
                 }
             } else if c == ESCAPE_CHAR {
+                let begin = self.at;
                 let next = match en.get(self.at + 1) {
                     Some(ch) => {
                         self.at += 1;
@@ -217,7 +220,7 @@ impl Tokenizer {
                     }
                     None => {
                         return Err(TokenizerError(
-                            self.at,
+                            begin,
                             TokenizerErrorInner::UnexpectedEscapeChar,
                         ));
                     }
@@ -225,11 +228,11 @@ impl Tokenizer {
 
                 if next == ONCE_OPEN {
                     self.tokens
-                        .push(Token(self.at, TokenInner::OnceEscapedOpen));
+                        .push(Token(begin, TokenInner::OnceEscapedOpen));
                     self.at += 1;
                 } else if next == UNIQUE_OPEN {
                     self.tokens
-                        .push(Token(self.at, TokenInner::UniqueEscapedOpen));
+                        .push(Token(begin, TokenInner::UniqueEscapedOpen));
                     self.at += 1;
                 } else if is_id_beginning(next) {
                     if let Some(err) = self.parse_id(&en, IdentifierType::Escaped) {
@@ -237,7 +240,7 @@ impl Tokenizer {
                     }
                 } else {
                     return Err(TokenizerError(
-                        self.at,
+                        begin,
                         TokenizerErrorInner::UnexpectedEscapeChar,
                     ));
                 }
@@ -277,7 +280,7 @@ impl Tokenizer {
             let c = match en.get(self.at) {
                 Some(ch) => *ch,
                 None => {
-                    return Some(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+                    return Some(TokenizerError(begin, TokenizerErrorInner::UnexpectedEOF));
                 }
             };
 
@@ -286,7 +289,7 @@ impl Tokenizer {
             } else if c == '.' {
                 if had_dot {
                     return Some(TokenizerError(
-                        self.at,
+                        begin,
                         TokenizerErrorInner::TooManyDotsInNumber,
                     ));
                 } else {
@@ -330,7 +333,7 @@ impl Tokenizer {
             let c = match en.get(self.at) {
                 Some(ch) => *ch,
                 None => {
-                    return Some(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+                    return Some(TokenizerError(begin, TokenizerErrorInner::UnexpectedEOF));
                 }
             };
 
@@ -377,7 +380,7 @@ impl Tokenizer {
             let c = match en.get(self.at) {
                 Some(ch) => *ch,
                 None => {
-                    return Some(TokenizerError(self.at, TokenizerErrorInner::UnclosedString));
+                    return Some(TokenizerError(begin, TokenizerErrorInner::UnclosedString));
                 }
             };
 

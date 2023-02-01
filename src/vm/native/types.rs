@@ -1,7 +1,13 @@
-use crate::vm::{ir, machine};
-use flexstr::{local_fmt, local_str};
+use std::collections::HashMap;
 
-pub fn into_string(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+use crate::vm::{ir, machine};
+use flexstr::{local_fmt, local_str, LocalStr};
+
+pub fn into_string(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = vm.pop()?;
 
     let st = match val {
@@ -19,7 +25,11 @@ pub fn into_string(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMEr
     vm.push(ir::Value::String(st))
 }
 
-pub fn into_number(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn into_number(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = vm.pop()?;
 
     let st: f64 = match val {
@@ -34,37 +44,65 @@ pub fn into_number(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMEr
     vm.push(ir::Value::Number(st))
 }
 
-pub fn is_pointer(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn is_pointer(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = matches!(vm.pop()?, ir::Value::Pointer(_));
     vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_number(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn is_number(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = matches!(vm.pop()?, ir::Value::Number(_));
     vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_block(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn is_block(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = matches!(vm.pop()?, ir::Value::Block(_));
     vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_bool(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn is_bool(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = matches!(vm.pop()?, ir::Value::Boolean(_));
     vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_string(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn is_string(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = matches!(vm.pop()?, ir::Value::String(_));
     vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_null(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn is_null(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     let val = matches!(vm.pop()?, ir::Value::Null);
     vm.push(ir::Value::Boolean(val))
 }
 
-pub fn into_ptr(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError> {
+pub fn into_ptr(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
     if let ir::Value::Number(num) = vm.pop()? {
         let ptr = num as usize;
 
@@ -80,7 +118,7 @@ pub fn into_ptr(vm: &mut machine::VM, _: &ir::IR) -> Result<(), machine::VMError
     }
 }
 
-pub fn group<'a>() -> ir::NativeGroup<'a> {
+pub fn group() -> ir::NativeGroup {
     let mut group = ir::NativeGroup::new("");
 
     group.add_native("unsafe_into_ptr", into_ptr).unwrap();

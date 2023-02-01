@@ -30,15 +30,13 @@ pub struct VM {
     pub debug_stack: bool,
     pub call_stack: Vec<LocalStr>,
     pub heap: heap::Heap,
-    single_eval_blocks: HashMap<LocalStr, ir::Value>,
 }
 
-impl<'a> VM {
+impl VM {
     pub fn new(gc: bool, debug_gc: bool) -> Self {
         VM {
             stack: vec![],
             call_stack: vec![],
-            single_eval_blocks: HashMap::new(),
             debug_stack: false,
             heap: heap::Heap::new(gc, debug_gc),
         }
@@ -47,15 +45,14 @@ impl<'a> VM {
     pub fn clean(&mut self) {
         self.stack = vec![];
         self.call_stack = vec![];
-        self.single_eval_blocks = HashMap::new();
     }
 
-    pub fn run(&mut self, ir: ir::IR<'a>, main: &'a str) -> Result<(), VMError> {
+    pub fn run(&mut self, ir: ir::IR, main: &str) -> Result<(), VMError> {
         self.clean();
-        self.run_block(main.to_local_str(), &ir)
+        self.run_block(main.to_local_str(), &ir, &HashMap::new())
     }
 
-    pub fn run_main(&mut self, ir: ir::IR<'a>) -> Result<(), VMError> {
+    pub fn run_main(&mut self, ir: ir::IR) -> Result<(), VMError> {
         self.run(ir, "main")
     }
 
@@ -110,8 +107,14 @@ impl<'a> VM {
         println!("vm stack trace: {:#?}", self.call_stack);
     }
 
-    pub fn run_block(&mut self, block_name: LocalStr, ir: &ir::IR<'a>) -> Result<(), VMError> {
+    pub fn run_block(
+        &mut self,
+        block_name: LocalStr,
+        ir: &ir::IR,
+        single_evals: &HashMap<LocalStr, ir::Value>,
+    ) -> Result<(), VMError> {
         let mut locals: Vec<LocalStr> = Vec::new();
+        let mut single_evals = single_evals.clone();
 
         let mut local_ir = ir::IR::new();
         local_ir.add(ir).unwrap();
@@ -124,7 +127,7 @@ impl<'a> VM {
         let single_eval;
 
         if let ir::Block::IR(ir::BlockRunType::Once, _) = block {
-            if let Some(i) = self.single_eval_blocks.get(&block_name) {
+            if let Some(i) = single_evals.get(&block_name) {
                 self.stack.push(i.clone());
                 return Ok(());
             }
@@ -153,12 +156,12 @@ impl<'a> VM {
                             self.stack.push(v.clone());
                         }
                         ir::IRCode::Call(b) => {
-                            self.run_block(b.to_local_str(), &local_ir)?;
+                            self.run_block(b.to_local_str(), &local_ir, &single_evals)?;
                         }
                         ir::IRCode::While(b) => loop {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(true) = top {
-                                self.run_block(b.to_local_str(), &local_ir)?;
+                                self.run_block(b.to_local_str(), &local_ir, &single_evals)?;
                             } else {
                                 break;
                             }
@@ -169,7 +172,8 @@ impl<'a> VM {
                                 if !bo {
                                     continue;
                                 } else {
-                                    let v = self.run_block(b.to_local_str(), &local_ir);
+                                    let v =
+                                        self.run_block(b.to_local_str(), &local_ir, &single_evals);
                                     return v;
                                 }
                             } else {
@@ -179,7 +183,7 @@ impl<'a> VM {
                         ir::IRCode::Return => {
                             if single_eval {
                                 if let Some(i) = self.stack.last() {
-                                    self.single_eval_blocks.insert(block_name, i.clone());
+                                    single_evals.insert(block_name, i.clone());
                                 };
                             }
                             return Ok(());
@@ -189,19 +193,19 @@ impl<'a> VM {
                 if single_eval {
                     let v = self.stack.last();
                     if let Some(i) = v {
-                        self.single_eval_blocks.insert(block_name, i.clone());
+                        single_evals.insert(block_name, i.clone());
                         self.handle_plus(i.clone())?;
                     };
                 }
                 Ok(())
             }
-            ir::Block::Native(f) => f(self, &ir),
+            ir::Block::Native(f) => f(self, &ir, &single_evals),
         };
 
         self.call_stack.pop();
 
         for local in locals {
-            let v = self.single_eval_blocks.remove(&local);
+            let v = single_evals.remove(&local);
             if let Some(val) = v {
                 self.handle_minus(val)?;
             }
