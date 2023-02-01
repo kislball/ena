@@ -64,7 +64,7 @@ impl Ena {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(&file_data, data.0);
                 eprintln!(
-                    "{} in {} at {}:{} - {:?}",
+                    "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
                     file,
                     line,
@@ -85,7 +85,7 @@ impl Ena {
                 let token = self.tokenizer.tokens.get(data.0).unwrap();
                 let (line, col) = util::get_line(&file_data, token.0);
                 eprintln!(
-                    "{} in {} at {}:{} - {:?}",
+                    "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
                     file,
                     line,
@@ -105,7 +105,7 @@ impl Ena {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(&file_data, data.0 .0);
                 eprintln!(
-                    "{} in {} at {}:{} - {:?}",
+                    "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
                     file,
                     line,
