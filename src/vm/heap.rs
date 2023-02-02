@@ -182,25 +182,20 @@ impl Heap {
                 return Err(HeapError::BlockNotAllocated(pointer));
             }
         };
-
+        
+        let current_rc = **(&self.rc.get(&block.pointer).unwrap_or(&0));
         let new_value: usize = if plus {
-            match &self.rc.get(&block.pointer) {
-                Some(i) => *i + 1,
-                None => 1,
-            }
+            current_rc + 1
         } else {
-            match &self.rc.get(&block.pointer) {
-                Some(i) => *i - 1,
-                None => 0,
-            }
+            current_rc - 1
         };
 
         self.rc.insert(block.pointer, new_value);
 
         if self.debug_gc {
             println!(
-                "GC_DEBUG: {}(in block {}) - RC:{}",
-                pointer, block.pointer, new_value
+                "GC_DEBUG: {}(in block {}) - RC:{}->{}",
+                pointer, block.pointer, current_rc, new_value
             );
         }
 

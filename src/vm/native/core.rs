@@ -220,7 +220,7 @@ pub fn alloc(
         block = heap::heap_result_into_vm(vm.heap.alloc(size))?;
     }
 
-    vm.push(ir::Value::Pointer(block.pointer))?;
+    vm.stack.push(ir::Value::Pointer(block.pointer));
 
     Ok(())
 }
@@ -238,7 +238,7 @@ pub fn realloc(
         return Err(machine::VMError::ExpectedPointer);
     }
 
-    vm.push(ir::Value::Pointer(new_ptr))?;
+    vm.stack.push(ir::Value::Pointer(new_ptr));
 
     Ok(())
 }
