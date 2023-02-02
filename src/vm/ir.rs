@@ -1,9 +1,9 @@
 use crate::vm::ir;
 use crate::vm::machine;
 use core::fmt;
+use flexstr::local_fmt;
 use flexstr::LocalStr;
 use flexstr::ToLocalStr;
-use flexstr::local_fmt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -76,8 +76,14 @@ impl IR {
     }
 }
 
-pub type NativeHandler =
-    fn(&mut machine::VM, &ir::IR, &HashMap<LocalStr, ir::Value>) -> Result<(), machine::VMError>;
+pub struct NativeHandlerCtx<'a> {
+    pub vm: &'a mut machine::VM,
+    pub ir: &'a ir::IR,
+    pub single_evals: &'a mut HashMap<LocalStr, ir::Value>,
+    pub locals: &'a mut Vec<LocalStr>,
+}
+
+pub type NativeHandler = fn(ctx: NativeHandlerCtx) -> Result<(), machine::VMError>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum BlockRunType {

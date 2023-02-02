@@ -1,15 +1,8 @@
-use std::collections::HashMap;
-
 use crate::vm::{ir, machine};
-use flexstr::LocalStr;
 use rand::{self, Rng};
 
-pub fn vm_debug(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    let el = match vm.stack.pop() {
+pub fn vm_debug(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    let el = match ctx.vm.stack.pop() {
         Some(i) => i,
         None => ir::Value::Null,
     };
@@ -19,42 +12,27 @@ pub fn vm_debug(
     Ok(())
 }
 
-pub fn vm_get_random(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    vm.push(ir::Value::Number(rand::thread_rng().gen_range(0.0..=1.0)))?;
+pub fn vm_get_random(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    ctx.vm
+        .push(ir::Value::Number(rand::thread_rng().gen_range(0.0..=1.0)))?;
     Ok(())
 }
 
-pub fn vm_debug_stack(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    println!("\n=== stack debug ===\n{:?}", vm.stack);
+pub fn vm_debug_stack(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    println!("\n=== stack debug ===\n{:?}", ctx.vm.stack);
     Ok(())
 }
 
-pub fn vm_debug_calls(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    println!("\n=== call stack debug ===\n{:?}", vm.call_stack);
+pub fn vm_debug_calls(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    println!("\n=== call stack debug ===\n{:?}", ctx.vm.call_stack);
     Ok(())
 }
 
-pub fn vm_get_annotation(
-    vm: &mut machine::VM,
-    ir: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    if let ir::Value::Block(name) = vm.pop()? {
-        match ir.annotations.get(&name) {
-            Some(i) => vm.push(ir::Value::String(i.clone())),
-            None => vm.push(ir::Value::Null),
+pub fn vm_get_annotation(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    if let ir::Value::Block(name) = ctx.vm.pop()? {
+        match ctx.ir.annotations.get(&name) {
+            Some(i) => ctx.vm.push(ir::Value::String(i.clone())),
+            None => ctx.vm.push(ir::Value::Null),
         }
     } else {
         Err(machine::VMError::ExpectedBlock)

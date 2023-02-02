@@ -1,44 +1,32 @@
-use std::collections::HashMap;
-
-use flexstr::LocalStr;
-
 use crate::vm::{ir, machine};
 
-pub fn try_exception(
-    vm: &mut machine::VM,
-    ir: &ir::IR,
-    locals: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    let block = if let ir::Value::Block(block_name) = vm.pop()? {
+pub fn try_exception(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    let block = if let ir::Value::Block(block_name) = ctx.vm.pop()? {
         block_name
     } else {
         return Err(machine::VMError::ExpectedBlock);
     };
 
-    if let Err(err) = vm.run_block(block, ir, locals) {
-        vm.push(ir::Value::VMError(Box::from(err)))?;
+    if let Err(err) = ctx
+        .vm
+        .run_block(block, ctx.ir, ctx.single_evals)
+    {
+        ctx.vm.push(ir::Value::VMError(Box::from(err)))?;
     }
 
     Ok(())
 }
 
-pub fn into_exception(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    let exception = ir::Value::VMError(Box::from(machine::VMError::RuntimeException(vm.pop()?)));
-    vm.push(exception)
+pub fn into_exception(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    let exception =
+        ir::Value::VMError(Box::from(machine::VMError::RuntimeException(ctx.vm.pop()?)));
+    ctx.vm.push(exception)
 }
 
-pub fn unwrap_exception(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    if let ir::Value::VMError(err) = vm.pop()? {
+pub fn unwrap_exception(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    if let ir::Value::VMError(err) = ctx.vm.pop()? {
         if let machine::VMError::RuntimeException(real_err) = *err {
-            vm.push(real_err)
+            ctx.vm.push(real_err)
         } else {
             Err(machine::VMError::ExpectedException)
         }

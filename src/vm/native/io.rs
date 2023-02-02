@@ -1,15 +1,7 @@
-use std::collections::HashMap;
-
-use flexstr::LocalStr;
-
 use crate::vm::{ir, machine};
 
-pub fn print(
-    vm: &mut machine::VM,
-    _: &ir::IR,
-    _: &HashMap<LocalStr, ir::Value>,
-) -> Result<(), machine::VMError> {
-    if let ir::Value::String(st) = vm.pop()? {
+pub fn print(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    if let ir::Value::String(st) = ctx.vm.pop()? {
         print!("{st}");
     } else {
         return Err(machine::VMError::ExpectedString);

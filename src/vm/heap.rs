@@ -182,13 +182,9 @@ impl Heap {
                 return Err(HeapError::BlockNotAllocated(pointer));
             }
         };
-        
+
         let current_rc = **(&self.rc.get(&block.pointer).unwrap_or(&0));
-        let new_value: usize = if plus {
-            current_rc + 1
-        } else {
-            current_rc - 1
-        };
+        let new_value: usize = if plus { current_rc + 1 } else { current_rc - 1 };
 
         self.rc.insert(block.pointer, new_value);
 

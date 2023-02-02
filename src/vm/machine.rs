@@ -49,7 +49,7 @@ impl VM {
 
     pub fn run(&mut self, ir: ir::IR, main: &str) -> Result<(), VMError> {
         self.clean();
-        self.run_block(main.to_local_str(), &ir, &HashMap::new())
+        self.run_block(main.to_local_str(), &ir, &mut HashMap::new())
     }
 
     pub fn run_main(&mut self, ir: ir::IR) -> Result<(), VMError> {
@@ -111,14 +111,14 @@ impl VM {
         &mut self,
         block_name: LocalStr,
         ir: &ir::IR,
-        single_evals: &HashMap<LocalStr, ir::Value>,
+        single_evals: &mut HashMap<LocalStr, ir::Value>,
     ) -> Result<(), VMError> {
         let mut locals: Vec<LocalStr> = Vec::new();
-        let mut single_evals = single_evals.clone();
 
         let mut local_ir = ir::IR::new();
         local_ir.add(ir).unwrap();
         self.call_stack.push(block_name.clone());
+
         let binding = (&ir).get_block(block_name.clone());
         let block = match binding {
             Some(b) => b,
@@ -156,12 +156,12 @@ impl VM {
                             self.stack.push(v.clone());
                         }
                         ir::IRCode::Call(b) => {
-                            self.run_block(b.to_local_str(), &local_ir, &single_evals)?;
+                            self.run_block(b.to_local_str(), &local_ir, single_evals)?;
                         }
                         ir::IRCode::While(b) => loop {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(true) = top {
-                                self.run_block(b.to_local_str(), &local_ir, &single_evals)?;
+                                self.run_block(b.to_local_str(), &local_ir, single_evals)?;
                             } else {
                                 break;
                             }
@@ -172,7 +172,7 @@ impl VM {
                                 if !bo {
                                     continue;
                                 } else {
-                                    self.run_block(b.to_local_str(), &local_ir, &single_evals)?;
+                                    self.run_block(b.to_local_str(), &local_ir, single_evals)?;
                                 }
                             } else {
                                 return Err(VMError::ExpectedBoolean);
@@ -197,16 +197,21 @@ impl VM {
                 }
                 Ok(())
             }
-            ir::Block::Native(f) => f(self, &ir, &single_evals),
+            ir::Block::Native(f) => { 
+                f(ir::NativeHandlerCtx {
+                    ir: &ir,
+                    locals: &mut locals,
+                    single_evals: single_evals,
+                    vm: self,
+                })
+            },
         };
 
         self.call_stack.pop();
-        println!("{locals:?}");
 
-        for local in locals {
-            let v = single_evals.remove(&local);
-            if let Some(val) = v {
-                self.handle_minus(val)?;
+        for k in &locals {
+            if single_evals.contains_key(k) {
+                self.handle_minus(single_evals.remove(k).unwrap())?;
             }
         }
 

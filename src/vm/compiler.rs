@@ -1,6 +1,6 @@
 use crate::vm::ir;
 use crate::{ast, tok};
-use flexstr::{ToLocalStr, LocalStr, IntoLocalStr, local_fmt};
+use flexstr::{local_fmt, IntoLocalStr, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
 
 pub struct Compiler {}
