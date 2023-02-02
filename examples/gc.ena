@@ -1,8 +1,6 @@
 sub_main {
-    1 unsafe_alloc
-    dup # rc 2
-    drop # rc 1
-    # not dropped!
+    hello ( 1 unsafe_alloc )
+    "hello, world!" hello =
 }
 
 main {

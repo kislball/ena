@@ -1,6 +1,6 @@
 use crate::vm::ir;
 use crate::{ast, tok};
-use flexstr::ToLocalStr;
+use flexstr::{ToLocalStr, LocalStr, IntoLocalStr, local_fmt};
 use rand::distributions::{Alphanumeric, DistString};
 
 pub struct Compiler {}
@@ -132,14 +132,14 @@ impl<'a> Compiler {
         Ok(ir)
     }
 
-    fn get_random_name(name: &'a str) -> &'static str {
+    fn get_random_name(name: &LocalStr) -> LocalStr {
         // most likely won't be a problem
         // only used for block names, which should live for the entirety of execution
         // will be a problem, if we try to reuse the same process for an another execution
         let rand = Alphanumeric
             .sample_string(&mut rand::thread_rng(), 12)
-            .into_boxed_str();
-        Box::leak(format!("{name}_{rand}").into_boxed_str())
+            .into_local_str();
+        local_fmt!("{name}_{rand}")
     }
 
     fn compile_block(
@@ -148,6 +148,7 @@ impl<'a> Compiler {
         block: &'a ast::ASTNode,
         ir: &mut ir::IR,
     ) -> Result<ir::Block, CompilerError> {
+        let name = name.to_local_str();
         let mut code: Vec<ir::IRCode> = vec![];
         let t: ast::BlockType;
         let v: &Vec<ast::ASTNode>;
@@ -219,9 +220,9 @@ impl<'a> Compiler {
                     code.push(ir::IRCode::PutValue(ir::Value::Number(*num)));
                 }
                 ast::ASTNodeInner::Block(typ, _) => {
-                    let nested_name = Self::get_random_name(name);
+                    let nested_name = Self::get_random_name(&name);
 
-                    let nested_ir = self.compile_block(nested_name, node, ir)?;
+                    let nested_ir = self.compile_block(nested_name.as_str(), node, ir)?;
                     let prev = match v.get(i - 1) {
                         Some(i) => i,
                         None => {
@@ -283,8 +284,8 @@ impl<'a> Compiler {
                         }
                     }
 
-                    let nested_name = Self::get_random_name(name);
-                    let nested_ir = self.compile_block(nested_name, next, ir)?;
+                    let nested_name = Self::get_random_name(&name);
+                    let nested_ir = self.compile_block(&nested_name, next, ir)?;
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir)
                     {
@@ -316,8 +317,8 @@ impl<'a> Compiler {
                         }
                     }
 
-                    let nested_name = Self::get_random_name(name);
-                    let nested_ir = self.compile_block(nested_name, next, ir)?;
+                    let nested_name = Self::get_random_name(&name);
+                    let nested_ir = self.compile_block(&nested_name, next, ir)?;
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir)
                     {

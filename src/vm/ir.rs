@@ -3,6 +3,7 @@ use crate::vm::machine;
 use core::fmt;
 use flexstr::LocalStr;
 use flexstr::ToLocalStr;
+use flexstr::local_fmt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -185,7 +186,7 @@ impl NativeGroup {
 
     pub fn add_child(&mut self, group: &NativeGroup) -> Result<(), IRError> {
         for (k, v) in &group.natives {
-            self.add_native(Self::merge_prefix(group.prefix.as_str(), k), *v)?;
+            self.add_native(Self::merge_prefix(group.prefix.as_str(), k).as_str(), *v)?;
         }
         Ok(())
     }
@@ -213,13 +214,11 @@ impl NativeGroup {
         Ok(())
     }
 
-    fn merge_prefix<'a>(prefix: &'a str, name: &'a str) -> &'a str {
+    fn merge_prefix<'a>(prefix: &'a str, name: &'a str) -> LocalStr {
         if prefix.is_empty() {
-            name
+            name.to_local_str()
         } else {
-            // not dangerous since this stuff should not be freed until the end of the program.
-            let leaky: &'static str = Box::leak(format!("{prefix}.{name}").into_boxed_str());
-            leaky
+            local_fmt!("{prefix}.{name}")
         }
     }
 }

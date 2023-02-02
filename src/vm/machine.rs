@@ -172,9 +172,7 @@ impl VM {
                                 if !bo {
                                     continue;
                                 } else {
-                                    let v =
-                                        self.run_block(b.to_local_str(), &local_ir, &single_evals);
-                                    return v;
+                                    self.run_block(b.to_local_str(), &local_ir, &single_evals)?;
                                 }
                             } else {
                                 return Err(VMError::ExpectedBoolean);
@@ -203,6 +201,7 @@ impl VM {
         };
 
         self.call_stack.pop();
+        println!("{locals:?}");
 
         for local in locals {
             let v = single_evals.remove(&local);
