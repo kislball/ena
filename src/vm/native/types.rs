@@ -123,6 +123,7 @@ pub fn group() -> ir::NativeGroup {
 
     group.add_native("unsafe_into_ptr", into_ptr).unwrap();
     group.add_native("into_string", into_string).unwrap();
+    group.add_native("into_number", into_number).unwrap();
     group.add_native("is_string", is_string).unwrap();
     group.add_native("is_null", is_null).unwrap();
     group.add_native("is_number", is_number).unwrap();

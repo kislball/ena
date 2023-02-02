@@ -330,6 +330,92 @@ pub fn neg(
     }
 }
 
+pub fn or(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    if let (ir::Value::Boolean(a), ir::Value::Boolean(b)) = (vm.pop()?, vm.pop()?) {
+        vm.push(ir::Value::Boolean(a || b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean)
+    }
+}
+
+pub fn and(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    if let (ir::Value::Boolean(a), ir::Value::Boolean(b)) = (vm.pop()?, vm.pop()?) {
+        vm.push(ir::Value::Boolean(a && b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean)
+    }
+}
+
+pub fn gt(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
+        vm.push(ir::Value::Boolean(a > b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean)
+    }
+}
+
+pub fn lt(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
+        vm.push(ir::Value::Boolean(a < b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean)
+    }
+}
+
+pub fn lte(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
+        vm.push(ir::Value::Boolean(a <= b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean)
+    }
+}
+
+pub fn gte(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    if let (ir::Value::Number(a), ir::Value::Number(b)) = (vm.pop()?, vm.pop()?) {
+        vm.push(ir::Value::Boolean(a >= b))
+    } else {
+        Err(machine::VMError::ExpectedBoolean)
+    }
+}
+
+pub fn clear_stack(
+    vm: &mut machine::VM,
+    _: &ir::IR,
+    _: &HashMap<LocalStr, ir::Value>,
+) -> Result<(), machine::VMError> {
+    for value in &vm.stack.clone() {
+        vm.handle_minus(value.clone())?;
+    }
+
+    vm.stack = Vec::new();
+
+    Ok(())
+}
+
 // pub fn run_thread<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
 //     if let ir::Value::Block(name) = vm.pop()? {
 //         let n_name = name.clone();
@@ -351,11 +437,18 @@ pub fn group() -> ir::NativeGroup {
     group.add_native("drop_at", drop_value_at).unwrap();
     group.add_native("swap", swap).unwrap();
     group.add_native("dup", dup).unwrap();
+    group.add_native("clear", clear_stack).unwrap();
     group.add_native("+", plus).unwrap();
     group.add_native("*", mul).unwrap();
     group.add_native("/", div).unwrap();
     group.add_native("-", subst).unwrap();
     group.add_native("!", neg).unwrap();
+    group.add_native("or", or).unwrap();
+    group.add_native("and", and).unwrap();
+    group.add_native(">", gt).unwrap();
+    group.add_native("<", lt).unwrap();
+    group.add_native(">=", gte).unwrap();
+    group.add_native("<=", lte).unwrap();
     group.add_native("pow", pow).unwrap();
     group.add_native("root", root).unwrap();
     group.add_native("==", equal).unwrap();

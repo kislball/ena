@@ -58,7 +58,10 @@ struct Run {
 }
 
 fn compile(c: Compile) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions { debug_gc: false, gc: false });
+    let mut ena = enalang::Ena::new(enalang::EnaOptions {
+        debug_gc: false,
+        gc: false,
+    });
     if let Err(e) = ena.read_files(&c.files[..]) {
         ena.report_error_and_exit(e);
     }
@@ -77,7 +80,10 @@ fn compile(c: Compile) {
 }
 
 fn link(l: Link) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions { debug_gc: false, gc: false });
+    let mut ena = enalang::Ena::new(enalang::EnaOptions {
+        debug_gc: false,
+        gc: false,
+    });
     if let Err(e) = ena.load_irs(&l.files[..]) {
         ena.report_error_and_exit(e);
     }
@@ -90,14 +96,17 @@ fn link(l: Link) {
 }
 
 fn run(r: Run) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions { debug_gc: r.debug_gc, gc: r.gc });
+    let mut ena = enalang::Ena::new(enalang::EnaOptions {
+        debug_gc: r.debug_gc,
+        gc: r.gc,
+    });
     match ena.load_ir(&r.file) {
         Err(e) => {
             ena.report_error_and_exit(e);
-        },
+        }
         Ok(e) => {
             ena.ir = Some(e);
-        },
+        }
     }
     if let Err(e) = ena.run(&r.main_word.unwrap_or("main".to_string())) {
         ena.report_error_and_exit(e);
@@ -111,13 +120,21 @@ fn main() {
         Commands::Compile(c) => {
             let begin = time::Instant::now();
             compile(c);
-            println!("Compilation {} in {:?}", "successful".bold().green(), begin.elapsed());
-        },
+            println!(
+                "Compilation {} in {:?}",
+                "successful".bold().green(),
+                begin.elapsed()
+            );
+        }
         Commands::Link(l) => {
             let begin = time::Instant::now();
             link(l);
-            println!("Linking {} in {:?}", "successful".bold().green(), begin.elapsed());
-        },
+            println!(
+                "Linking {} in {:?}",
+                "successful".bold().green(),
+                begin.elapsed()
+            );
+        }
         Commands::Run(r) => run(r),
     };
 }

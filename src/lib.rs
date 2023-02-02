@@ -290,10 +290,10 @@ impl Ena {
             Some(ref mut i) => {
                 vm::native::group().apply(i).unwrap();
                 i
-            },
+            }
             None => {
                 return Err(EnaError::NotLinked);
-            },
+            }
         };
         self.vm.run(ir.clone(), main).map_err(EnaError::VMError)
     }

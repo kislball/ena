@@ -118,7 +118,7 @@ impl ASTBuilder {
                 };
                 let mut nodes: Vec<ASTNode> = vec![];
                 let begin = self.at;
-                
+
                 self.at += 1;
 
                 loop {

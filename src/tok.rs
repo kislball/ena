@@ -227,8 +227,7 @@ impl Tokenizer {
                 };
 
                 if next == ONCE_OPEN {
-                    self.tokens
-                        .push(Token(begin, TokenInner::OnceEscapedOpen));
+                    self.tokens.push(Token(begin, TokenInner::OnceEscapedOpen));
                     self.at += 1;
                 } else if next == UNIQUE_OPEN {
                     self.tokens
