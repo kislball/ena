@@ -5,7 +5,7 @@ pub fn strlen(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {
         ctx.vm.push(ir::Value::Number(st.len() as f64))
     } else {
-        return Err(machine::VMError::ExpectedString);
+        Err(machine::VMError::ExpectedString)
     }
 }
 
@@ -13,7 +13,7 @@ pub fn concat(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::String(a), ir::Value::String(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::String(local_fmt!("{a}{b}")))
     } else {
-        return Err(machine::VMError::ExpectedString);
+        Err(machine::VMError::ExpectedString)
     }
 }
 
@@ -29,7 +29,7 @@ pub fn split(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 
         Ok(())
     } else {
-        return Err(machine::VMError::ExpectedString);
+        Err(machine::VMError::ExpectedString)
     }
 }
 
@@ -54,7 +54,7 @@ pub fn chars(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 
         Ok(())
     } else {
-        return Err(machine::VMError::ExpectedString);
+        Err(machine::VMError::ExpectedString)
     }
 }
 

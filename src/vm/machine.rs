@@ -120,7 +120,7 @@ impl VM {
         local_ir.add(ir).unwrap();
         self.call_stack.push(block_name.clone());
 
-        let binding = (&ir).get_block(block_name.clone());
+        let binding = ir.get_block(block_name.clone());
         let block = match binding {
             Some(b) => b,
             None => return Err(VMError::UnknownBlock(block_name)),
@@ -200,7 +200,7 @@ impl VM {
                 Ok(())
             }
             ir::Block::Native(f) => f(ir::NativeHandlerCtx {
-                ir: &ir,
+                ir,
                 locals: &mut locals,
                 single_evals: &mut single_evals,
                 vm: self,

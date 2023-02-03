@@ -62,7 +62,7 @@ impl Ena {
         match err {
             EnaError::TokenizerError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
-                let (line, col) = util::get_line(&file_data, data.0);
+                let (line, col) = util::get_line(file_data, data.0);
                 eprintln!(
                     "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
@@ -83,7 +83,7 @@ impl Ena {
             EnaError::ASTError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let token = self.tokenizer.tokens.get(data.0).unwrap();
-                let (line, col) = util::get_line(&file_data, token.0);
+                let (line, col) = util::get_line(file_data, token.0);
                 eprintln!(
                     "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
@@ -103,7 +103,7 @@ impl Ena {
             }
             EnaError::CompilerError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
-                let (line, col) = util::get_line(&file_data, data.0 .0);
+                let (line, col) = util::get_line(file_data, data.0 .0);
                 eprintln!(
                     "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
@@ -236,7 +236,7 @@ impl Ena {
             .into_values()
             .collect::<Vec<vm::ir::IR>>()
         {
-            ir.add(&sub_ir).map_err(|x| EnaError::IRError(x))?;
+            ir.add(&sub_ir).map_err(EnaError::IRError)?;
         }
 
         self.ir = Some(ir);
@@ -249,7 +249,7 @@ impl Ena {
                 let u8vec = i
                     .into_serializable()
                     .into_vec()
-                    .map_err(|x| EnaError::SerializationError(x))?;
+                    .map_err(EnaError::SerializationError)?;
                 let mut file = OpenOptions::new()
                     .create(true)
                     .write(true)
@@ -288,7 +288,7 @@ impl Ena {
             .map_err(|x| EnaError::FSError(x.to_string()))?;
 
         let serial = vm::ir::from_vec(&v).map_err(EnaError::SerializationError)?;
-        Ok(serial.into_ir().map_err(EnaError::SerializationError)?)
+        serial.into_ir().map_err(EnaError::SerializationError)
     }
 
     pub fn run(&mut self, main: &str) -> Result<(), EnaError> {
@@ -341,7 +341,7 @@ impl Ena {
                         return Err(EnaError::FailedToReadGlobPattern(format!(
                             "{}: {}",
                             e.path().display(),
-                            e.error().to_string()
+                            e.error()
                         )));
                     }
                 };
@@ -354,7 +354,7 @@ impl Ena {
             }
         }
 
-        if unwrapped.len() == 0 {
+        if unwrapped.is_empty() {
             return Err(EnaError::FSError("files not found".to_string()));
         }
 
