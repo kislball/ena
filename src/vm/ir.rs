@@ -63,11 +63,21 @@ impl IR {
         self.blocks.get(&id)
     }
 
-    pub fn add_native(&mut self, name: LocalStr, f: NativeHandler, output_err: bool) -> Result<(), IRError> {
+    pub fn add_native(
+        &mut self,
+        name: LocalStr,
+        f: NativeHandler,
+        output_err: bool,
+    ) -> Result<(), IRError> {
         self.add_block(name, Block::Native(f), output_err)
     }
 
-    pub fn add_block(&mut self, name: LocalStr, block: Block, output_err: bool) -> Result<(), IRError> {
+    pub fn add_block(
+        &mut self,
+        name: LocalStr,
+        block: Block,
+        output_err: bool,
+    ) -> Result<(), IRError> {
         if self.blocks.contains_key(&name) && output_err {
             return Err(IRError::BlockAlreadyExists);
         }

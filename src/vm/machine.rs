@@ -146,8 +146,12 @@ impl VM {
                     match c {
                         ir::IRCode::LocalBlock(n, t, code) => {
                             local_ir
-                                .add_block(n.to_local_str(), ir::Block::IR(*t, code.to_vec()), false)
-                                .unwrap(); // unreachable due to                                                ^^^^^ 
+                                .add_block(
+                                    n.to_local_str(),
+                                    ir::Block::IR(*t, code.to_vec()),
+                                    false,
+                                )
+                                .unwrap(); // unreachable due to                                                ^^^^^
                             locals.push(n.to_local_str());
                         }
                         ir::IRCode::PutValue(v) => {
