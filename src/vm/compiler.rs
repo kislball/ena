@@ -72,7 +72,7 @@ impl<'a> Compiler {
                                 }
                                 Ok(v) => {
                                     if let Err(ir::IRError::BlockAlreadyExists) =
-                                        ir.add_block(id.to_local_str(), v)
+                                        ir.add_block(id.to_local_str(), v, true)
                                     {
                                         return Err(CompilerError(
                                             node.clone(),
@@ -249,7 +249,7 @@ impl<'a> Compiler {
                             }
                             _ => {
                                 if let Err(ir::IRError::BlockAlreadyExists) =
-                                    ir.add_block(nested_name.to_local_str(), nested_ir)
+                                    ir.add_block(nested_name.to_local_str(), nested_ir, true)
                                 {
                                     return Err(CompilerError(
                                         node.clone(),
@@ -287,7 +287,7 @@ impl<'a> Compiler {
                     let nested_name = Self::get_random_name(&name);
                     let nested_ir = self.compile_block(&nested_name, next, ir)?;
                     if let Err(ir::IRError::BlockAlreadyExists) =
-                        ir.add_block(nested_name.to_local_str(), nested_ir)
+                        ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
                         return Err(CompilerError(
                             node.clone(),
@@ -320,7 +320,7 @@ impl<'a> Compiler {
                     let nested_name = Self::get_random_name(&name);
                     let nested_ir = self.compile_block(&nested_name, next, ir)?;
                     if let Err(ir::IRError::BlockAlreadyExists) =
-                        ir.add_block(nested_name.to_local_str(), nested_ir)
+                        ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
                         return Err(CompilerError(
                             node.clone(),

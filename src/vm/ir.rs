@@ -50,7 +50,7 @@ impl IR {
 
     pub fn add(&mut self, another: &ir::IR) -> Result<(), IRError> {
         for (name, block) in &another.blocks {
-            self.add_block(name.clone(), block.clone())?;
+            self.add_block(name.clone(), block.clone(), true)?;
         }
 
         for (name, comment) in &another.annotations {
@@ -63,12 +63,12 @@ impl IR {
         self.blocks.get(&id)
     }
 
-    pub fn add_native(&mut self, name: LocalStr, f: NativeHandler) -> Result<(), IRError> {
-        self.add_block(name, Block::Native(f))
+    pub fn add_native(&mut self, name: LocalStr, f: NativeHandler, output_err: bool) -> Result<(), IRError> {
+        self.add_block(name, Block::Native(f), output_err)
     }
 
-    pub fn add_block(&mut self, name: LocalStr, block: Block) -> Result<(), IRError> {
-        if self.blocks.contains_key(&name) {
+    pub fn add_block(&mut self, name: LocalStr, block: Block, output_err: bool) -> Result<(), IRError> {
+        if self.blocks.contains_key(&name) && output_err {
             return Err(IRError::BlockAlreadyExists);
         }
         self.blocks.insert(name, block);
@@ -139,7 +139,7 @@ impl<'a> IRSerializable<'a> {
             for ser_block in data {
                 if let IRSerializable::Block(name, typ, data) = ser_block {
                     let block = Block::IR(typ, data.to_vec());
-                    ir.add_block(name.to_local_str(), block)
+                    ir.add_block(name.to_local_str(), block, true)
                         .map_err(SerializationError::IRError)?;
                 } else if let IRSerializable::Annotation(name, data) = ser_block {
                     ir.annotations.insert(name, data);
@@ -208,11 +208,12 @@ impl NativeGroup {
     pub fn apply(&self, ir: &mut IR) -> Result<(), IRError> {
         for (k, v) in &self.natives {
             if self.prefix.is_empty() {
-                ir.add_native(k.to_local_str(), *v)?;
+                ir.add_native(k.to_local_str(), *v, true)?;
             } else {
                 ir.add_native(
                     Self::merge_prefix(self.prefix.as_str(), k).to_local_str(),
                     *v,
+                    true,
                 )?;
             }
         }

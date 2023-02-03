@@ -126,7 +126,7 @@ impl Ena {
                 for call in &self.vm.call_stack {
                     eprintln!("{}", format!("\t\t- {call}").dimmed());
                 }
-            },
+            }
             other => eprintln!("{}: {other:?}", "error".red().bold()),
         }
     }

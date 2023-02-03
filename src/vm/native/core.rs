@@ -236,8 +236,7 @@ pub fn deref(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 
 pub fn call(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
-        ctx.vm
-            .run_block(name, ctx.ir, ctx.single_evals)?;
+        ctx.vm.run_block(name, ctx.ir, ctx.single_evals)?;
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock)

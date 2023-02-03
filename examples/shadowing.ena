@@ -1,16 +1,15 @@
-foo {
-    random ( ena.vm.random )
-    baz
-    random ena.vm.debug
+hello {
+    "hello, world!\n" ena.vm.io.print
 }
 
-baz {
-    random {
-        "hello, world!" ena.vm.io.print
+sub {
+    hello {
+        "hi!\n" ena.vm.io.print
     }
-    random
+    hello
 }
 
 main {
-    foo
+    sub
+    hello
 }

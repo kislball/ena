@@ -17,7 +17,7 @@ pub enum VMError {
     ExpectedPointer,
     ExpectedValue,
     ExpectedException,
-    CannotShadowBlocksInLocalScope,
+    CannotShadowBlocksInLocalScope(LocalStr),
     CannotCompare(ir::Value, ir::Value),
     CannotConvert(ir::Value),
     HeapError(heap::HeapError),
@@ -114,6 +114,7 @@ impl VM {
         single_evals: &mut HashMap<LocalStr, ir::Value>,
     ) -> Result<(), VMError> {
         let mut locals: Vec<LocalStr> = Vec::new();
+        let mut single_evals = single_evals.clone();
 
         let mut local_ir = ir::IR::new();
         local_ir.add(ir).unwrap();
@@ -144,24 +145,21 @@ impl VM {
                     }
                     match c {
                         ir::IRCode::LocalBlock(n, t, code) => {
-                            let err = local_ir
-                                .add_block(n.to_local_str(), ir::Block::IR(*t, code.to_vec()));
-                            if let Err(_) = err {
-                                return Err(VMError::CannotShadowBlocksInLocalScope);
-                            } else {
-                                locals.push(n.to_local_str());
-                            }
+                            local_ir
+                                .add_block(n.to_local_str(), ir::Block::IR(*t, code.to_vec()), false)
+                                .unwrap(); // unreachable due to                                                ^^^^^ 
+                            locals.push(n.to_local_str());
                         }
                         ir::IRCode::PutValue(v) => {
                             self.stack.push(v.clone());
                         }
                         ir::IRCode::Call(b) => {
-                            self.run_block(b.to_local_str(), &local_ir, single_evals)?;
+                            self.run_block(b.to_local_str(), &local_ir, &mut single_evals)?;
                         }
                         ir::IRCode::While(b) => loop {
                             let top = self.pop()?;
                             if let ir::Value::Boolean(true) = top {
-                                self.run_block(b.to_local_str(), &local_ir, single_evals)?;
+                                self.run_block(b.to_local_str(), &local_ir, &mut single_evals)?;
                             } else {
                                 break;
                             }
@@ -172,7 +170,7 @@ impl VM {
                                 if !bo {
                                     continue;
                                 } else {
-                                    self.run_block(b.to_local_str(), &local_ir, single_evals)?;
+                                    self.run_block(b.to_local_str(), &local_ir, &mut single_evals)?;
                                 }
                             } else {
                                 return Err(VMError::ExpectedBoolean);
@@ -197,14 +195,12 @@ impl VM {
                 }
                 Ok(())
             }
-            ir::Block::Native(f) => { 
-                f(ir::NativeHandlerCtx {
-                    ir: &ir,
-                    locals: &mut locals,
-                    single_evals: single_evals,
-                    vm: self,
-                })
-            },
+            ir::Block::Native(f) => f(ir::NativeHandlerCtx {
+                ir: &ir,
+                locals: &mut locals,
+                single_evals: &mut single_evals,
+                vm: self,
+            }),
         };
 
         self.call_stack.pop();
