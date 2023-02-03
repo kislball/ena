@@ -1,0 +1,4 @@
+# get_annotation gets comment for some block.
+get_annotation {
+    ena.vm.get_annotation
+}

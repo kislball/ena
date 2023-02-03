@@ -3,6 +3,7 @@ use crate::vm::ir;
 pub mod core;
 pub mod exceptions;
 pub mod io;
+pub mod os;
 pub mod strings;
 pub mod types;
 pub mod vm;
@@ -16,6 +17,7 @@ pub fn group() -> ir::NativeGroup {
     group.add_child(&types::group()).unwrap();
     group.add_child(&exceptions::group()).unwrap();
     group.add_child(&strings::group()).unwrap();
+    group.add_child(&os::group()).unwrap();
 
     group
 }
