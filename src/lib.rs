@@ -121,6 +121,12 @@ impl Ena {
                     )
                 );
             }
+            EnaError::VMError(err) => {
+                eprintln!("{}: {:?}\n\tcall stack:", "error".red().bold(), err);
+                for call in &self.vm.call_stack {
+                    eprintln!("{}", format!("\t\t- {call}").dimmed());
+                }
+            },
             other => eprintln!("{}: {other:?}", "error".red().bold()),
         }
     }

@@ -1,0 +1,16 @@
+foo {
+    random ( ena.vm.random )
+    baz
+    random ena.vm.debug
+}
+
+baz {
+    random {
+        "hello, world!" ena.vm.io.print
+    }
+    random
+}
+
+main {
+    foo
+}
