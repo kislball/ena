@@ -1,0 +1,3 @@
+ena.fs.path {
+    "PATH" ena.get_env
+}

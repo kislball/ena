@@ -1,0 +1,4 @@
+# != is a logical operator, which returns true if values are NOT equal.
+!= {
+    == neg
+}

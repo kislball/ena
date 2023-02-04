@@ -1,0 +1,6 @@
+main {
+    5 units
+    dup 1 swap +
+    "hello" swap =
+    @ ena.vm.debug
+}

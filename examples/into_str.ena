@@ -1,0 +1,16 @@
+into_str_and_print {
+    into_string ena.vm.debug
+}
+
+main {
+    5 into_str_and_print
+    true into_str_and_print
+    false into_str_and_print
+    null into_str_and_print
+    'main into_str_and_print
+    1 unsafe_alloc into_str_and_print
+    "hello" into_str_and_print
+
+    "hi!!!" is_string ena.vm.debug
+    5 into_string is_string ena.vm.debug
+}

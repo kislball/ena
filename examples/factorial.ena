@@ -1,0 +1,17 @@
+factorial_inner {
+  dup 1 == if {
+    1 return
+  }
+
+  dup 1 swap - factorial_inner *
+}
+
+# figure out why it works this way
+factorial {
+  factorial_inner *
+}
+
+main {
+  5 factorial
+  ena.vm.debug
+}

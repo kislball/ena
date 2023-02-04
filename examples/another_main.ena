@@ -1,0 +1,3 @@
+another_main {
+  "Hello, world!\n" ena.vm.io.print
+}

@@ -1,0 +1,15 @@
+hello {
+    "hello, world!\n" ena.vm.io.print
+}
+
+sub {
+    hello {
+        "hi!\n" ena.vm.io.print
+    }
+    hello
+}
+
+main {
+    sub
+    hello
+}

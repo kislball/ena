@@ -1,0 +1,20 @@
+# todo: move sqrt and rsqrt to std
+sqrt {
+  2 swap root
+}
+
+rsqrt {
+  sqrt 1 /
+}
+
+main {
+  2 2 * ena.vm.debug # 4
+  2 2 2 + * ena.vm.debug # 8
+  2 4 / ena.vm.debug # 2
+  3 5 - ena.vm.debug # 2
+  8 2 pow ena.vm.debug # 256
+  2 2 root ena.vm.debug # ~1.141
+  2 4 root ena.vm.debug # 2
+  4 sqrt ena.vm.debug # 2
+  2 rsqrt ena.vm.debug # 0.7071067
+}
