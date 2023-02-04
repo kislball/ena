@@ -1,6 +1,7 @@
 /build/
 .idea
 .sconsign.dblite
+ena_build
 
 # Added by cargo
 

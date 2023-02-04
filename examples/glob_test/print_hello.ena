@@ -1,3 +1,0 @@
-print_hello {
-  "Hello, world!\n" ena.vm.io.print
-}

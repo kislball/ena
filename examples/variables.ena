@@ -1,5 +1,0 @@
-main {
-    hello ( 1 unsafe_alloc )
-    "hello world" hello =
-    hello @ ena.vm.debug
-}

@@ -1,7 +1,0 @@
-main {
-    "hello world!" string.len ena.vm.debug
-    "lol_kek_cheburek" "_" swap string.split ena.vm.debug_stack clear
-    "abcdef" string.chars ena.vm.debug_stack clear
-    "lol" "kek" string.concat ena.vm.debug
-    "a" "abc" string.contains ena.vm.debug
-}
