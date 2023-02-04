@@ -1,0 +1,9 @@
+will_fail {
+    drop
+}
+
+main {
+    'will_fail try
+    "i have not failed! here is the error: " ena.vm.io.print
+    ena.vm.debug
+}

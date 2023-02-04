@@ -1,0 +1,9 @@
+sub_main {
+    hello ( 1 unsafe_alloc )
+    "hello, world!" hello =
+}
+
+main {
+    sub_main
+    "some garbage" ena.vm.debug
+}

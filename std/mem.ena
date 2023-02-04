@@ -1,0 +1,9 @@
+# units allocates memory with the size given.
+units {
+    unsafe_alloc
+}
+
+# unit allocates one unit of memory 
+unit {
+    1 units
+}

@@ -1,0 +1,6 @@
+main {
+  true while {
+    "infinite loop\n" ena.vm.io.print 
+    true  
+  }
+}

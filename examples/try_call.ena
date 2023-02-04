@@ -1,0 +1,9 @@
+hello_world {
+  "hello, world!\n" ena.vm.io.print
+}
+
+main {
+  'hello_world try_call
+  'nonexistent_block try_call
+  'hello_world 'nonexistent_block try_call_or
+}
