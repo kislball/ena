@@ -1,4 +1,5 @@
-use crate::vm::{ir, machine};
+use crate::vm::{machine};
+use crate::ir;
 
 pub fn try_exception(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let block = if let ir::Value::Block(block_name) = ctx.vm.pop()? {

@@ -1,4 +1,5 @@
-use crate::vm::{heap, ir, machine};
+use crate::vm::{heap, machine};
+use crate::ir;
 
 pub fn drop_value(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm.pop()?;

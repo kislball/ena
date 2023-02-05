@@ -1,4 +1,5 @@
-use crate::vm::{ir, machine};
+use crate::vm::{machine};
+use crate::ir;
 
 pub fn print(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {

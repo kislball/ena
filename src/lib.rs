@@ -10,6 +10,8 @@ use std::{
 };
 
 pub mod ast;
+pub mod compiler;
+pub mod ir;
 pub mod tok;
 pub mod util;
 pub mod vm;
@@ -18,9 +20,9 @@ pub mod vm;
 pub enum EnaError {
     TokenizerError(String, tok::TokenizerError),
     ASTError(String, ast::ASTError),
-    CompilerError(String, vm::compiler::CompilerError),
-    IRError(vm::ir::IRError),
-    SerializationError(vm::ir::SerializationError),
+    CompilerError(String, compiler::CompilerError),
+    IRError(ir::IRError),
+    SerializationError(ir::SerializationError),
     VMError(vm::machine::VMError),
     FailedToReadGlobPattern(String),
     FSError(String),
@@ -50,12 +52,12 @@ impl Default for EnaOptions {
 pub struct Ena {
     tokenizer: tok::Tokenizer,
     ast: ast::ASTBuilder,
-    compiler: vm::compiler::Compiler,
+    compiler: compiler::Compiler,
     vm: vm::machine::VM,
     files: HashMap<String, String>,
     astified_files: HashMap<String, ast::ASTNode>,
-    compiled_files: HashMap<String, vm::ir::IR>,
-    pub ir: Option<vm::ir::IR>,
+    compiled_files: HashMap<String, ir::IR>,
+    pub ir: Option<ir::IR>,
 }
 
 impl Ena {
@@ -63,7 +65,7 @@ impl Ena {
         Self {
             tokenizer: tok::Tokenizer::new(),
             ast: ast::ASTBuilder::new(),
-            compiler: vm::compiler::Compiler::new(),
+            compiler: compiler::Compiler::new(),
             vm: vm::machine::VM::new(vm::machine::VMOptions {
                 debug_gc: options.debug_gc,
                 enable_gc: options.gc,
@@ -247,13 +249,13 @@ impl Ena {
     }
 
     pub fn link_files(&mut self) -> Result<(), EnaError> {
-        let mut ir = vm::ir::IR::new();
+        let mut ir =ir::IR::new();
 
         for sub_ir in self
             .compiled_files
             .clone()
             .into_values()
-            .collect::<Vec<vm::ir::IR>>()
+            .collect::<Vec<ir::IR>>()
         {
             ir.add(&sub_ir).map_err(EnaError::IRError)?;
         }
@@ -284,7 +286,7 @@ impl Ena {
 
     pub fn load_irs(&mut self, paths: &[String]) -> Result<(), EnaError> {
         let paths = Self::read_paths(paths)?;
-        let mut ir = vm::ir::IR::new();
+        let mut ir = ir::IR::new();
 
         for path in paths {
             let sub_ir = self.load_ir(path.to_str().unwrap())?;
@@ -296,7 +298,7 @@ impl Ena {
         Ok(())
     }
 
-    pub fn load_ir(&mut self, from: &str) -> Result<vm::ir::IR, EnaError> {
+    pub fn load_ir(&mut self, from: &str) -> Result<ir::IR, EnaError> {
         let mut open_opts = OpenOptions::new()
             .read(true)
             .open(from)
@@ -306,7 +308,7 @@ impl Ena {
             .read_to_end(&mut v)
             .map_err(|x| EnaError::FSError(x.to_string()))?;
 
-        let serial = vm::ir::from_vec(&v).map_err(EnaError::SerializationError)?;
+        let serial = ir::from_vec(&v).map_err(EnaError::SerializationError)?;
         serial.into_ir().map_err(EnaError::SerializationError)
     }
 

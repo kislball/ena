@@ -1,4 +1,3 @@
-use crate::vm::ir;
 use crate::vm::machine;
 use core::fmt;
 use flexstr::local_fmt;
@@ -48,7 +47,7 @@ impl IR {
         IRSerializable::Root(blocks)
     }
 
-    pub fn add(&mut self, another: &ir::IR) -> Result<(), IRError> {
+    pub fn add(&mut self, another: &IR) -> Result<(), IRError> {
         for (name, block) in &another.blocks {
             self.add_block(name.clone(), block.clone(), true)?;
         }

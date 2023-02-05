@@ -1,6 +1,6 @@
 use flexstr::ToLocalStr;
-
-use crate::vm::{ir, machine};
+use crate::ir;
+use crate::vm::{machine};
 use std::env;
 
 pub fn vm_get_env(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {

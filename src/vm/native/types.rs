@@ -1,5 +1,6 @@
-use crate::vm::{ir, machine};
+use crate::vm::{machine};
 use flexstr::{local_fmt, local_str};
+use crate::ir;
 
 pub fn into_string(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.pop()?;
