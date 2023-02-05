@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
 
-use crate::vm::{heap, ir};
-
-use super::ir::BlockRunType;
+use crate::vm::{heap};
+use crate::ir;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VMError {
@@ -85,7 +84,7 @@ impl ScopeManager {
         let mut locals: Vec<LocalStr> = Vec::new();
 
         for (name, block) in &ir.blocks {
-            if let ir::Block::IR(true, BlockRunType::Once, _) = block {
+            if let ir::Block::IR(true, ir::BlockRunType::Once, _) = block {
                 locals.push(name.clone());
             }
         }
@@ -433,7 +432,7 @@ impl VM {
                     result?;
                 }
 
-                if let BlockRunType::Once = typ {
+                if let ir::BlockRunType::Once = typ {
                     let top = self.stack.last();
                     if top.is_none() {
                         return Err(VMError::ExpectedValue);

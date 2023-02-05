@@ -1,5 +1,6 @@
-use crate::vm::{ir, machine};
+use crate::vm::{machine};
 use rand::{self, Rng};
+use crate::ir;
 
 pub fn vm_debug(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let el = match ctx.vm.stack.pop() {

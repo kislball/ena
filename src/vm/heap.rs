@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::vm::ir;
+use crate::ir;
 use std::collections::HashMap;
 
 use super::machine;

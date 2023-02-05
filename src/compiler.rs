@@ -1,4 +1,4 @@
-use crate::vm::ir;
+use crate::ir;
 use crate::{ast, tok};
 use flexstr::{local_fmt, IntoLocalStr, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};

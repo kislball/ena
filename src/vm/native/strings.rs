@@ -1,4 +1,5 @@
-use crate::vm::{ir, machine};
+use crate::vm::{machine};
+use crate::ir;
 use flexstr::{local_fmt, ToLocalStr};
 
 pub fn strlen(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {

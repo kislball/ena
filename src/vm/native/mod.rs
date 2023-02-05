@@ -1,4 +1,4 @@
-use crate::vm::ir;
+use crate::ir;
 
 pub mod core;
 pub mod exceptions;
