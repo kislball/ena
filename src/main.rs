@@ -37,6 +37,9 @@ struct Compile {
     /// Output file
     #[arg(short, long)]
     output: Option<String>,
+    /// Prints ir before exit
+    #[arg(short, long, default_value_t = false)]
+    print_ir: bool,
 }
 
 #[derive(Args)]
@@ -55,13 +58,13 @@ struct Run {
     /// Whether to debug GC
     #[arg(long, default_value_t = false)]
     debug_gc: bool,
+    /// Whether to debug calls
+    #[arg(long, default_value_t = false)]
+    debug_calls: bool,
 }
 
 fn compile(c: Compile) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions {
-        debug_gc: false,
-        gc: false,
-    });
+    let mut ena = enalang::Ena::new(enalang::EnaOptions::default());
     if let Err(e) = ena.read_files(&c.files[..]) {
         ena.report_error_and_exit(e);
     }
@@ -77,13 +80,14 @@ fn compile(c: Compile) {
     if let Err(e) = ena.save(&c.output.unwrap_or("output.enair".to_string())) {
         ena.report_error_and_exit(e);
     }
+
+    if c.print_ir {
+        println!("{:#?}", ena.ir.unwrap());
+    }
 }
 
 fn link(l: Link) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions {
-        debug_gc: false,
-        gc: false,
-    });
+    let mut ena = enalang::Ena::new(enalang::EnaOptions::default());
     if let Err(e) = ena.load_irs(&l.files[..]) {
         ena.report_error_and_exit(e);
     }
@@ -99,6 +103,8 @@ fn run(r: Run) {
     let mut ena = enalang::Ena::new(enalang::EnaOptions {
         debug_gc: r.debug_gc,
         gc: r.gc,
+        debug_stack: r.debug_stack,
+        debug_calls: r.debug_calls,
     });
     match ena.load_ir(&r.file) {
         Err(e) => {

@@ -53,7 +53,7 @@ impl Scope {
     }
 
     pub fn has_local(&self, local: &LocalStr) -> bool {
-        self.locals.contains(&local)
+        self.locals.contains(local)
     }
 
     pub fn add_single_eval(&mut self, local: LocalStr, value: ir::Value) {
@@ -67,6 +67,12 @@ impl Scope {
 
 pub struct ScopeManager {
     pub scopes: Vec<Scope>,
+}
+
+impl Default for ScopeManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ScopeManager {
@@ -204,13 +210,10 @@ impl ScopeManager {
     }
 
     pub fn lookup_local_owner_mut(&mut self, local: &LocalStr) -> Option<&mut Scope> {
-        for scope in self.scopes.iter_mut().rev() {
-            if scope.has_local(local) {
-                return Some(scope);
-            }
-        }
-
-        None
+        self.scopes
+            .iter_mut()
+            .rev()
+            .find(|scope| scope.has_local(local))
     }
 
     pub fn ir(&self) -> &ir::IR {
@@ -222,13 +225,23 @@ impl ScopeManager {
     }
 
     pub fn lookup_local_owner(&self, local: &LocalStr) -> Option<&Scope> {
-        for scope in self.scopes.iter().rev() {
-            if scope.has_local(local) {
-                return Some(scope);
-            }
-        }
+        self.scopes
+            .iter()
+            .rev()
+            .find(|&scope| scope.has_local(local))
+    }
+}
+#[derive(Clone, Copy)]
+pub struct VMOptions {
+    pub debug_stack: bool,
+    pub enable_gc: bool,
+    pub debug_gc: bool,
+    pub debug_calls: bool,
+}
 
-        None
+impl VMOptions {
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -240,18 +253,6 @@ pub struct VM {
     pub scope_manager: ScopeManager,
 }
 
-#[derive(Clone, Copy)]
-pub struct VMOptions {
-    pub debug_stack: bool,
-    pub enable_gc: bool,
-    pub debug_gc: bool,
-}
-
-impl VMOptions {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
 
 impl Default for VMOptions {
     fn default() -> Self {
@@ -259,6 +260,7 @@ impl Default for VMOptions {
             debug_stack: false,
             enable_gc: true,
             debug_gc: false,
+            debug_calls: false,
         }
     }
 }
@@ -327,7 +329,7 @@ impl VM {
         }
     }
 
-    pub fn run(&mut self, main: &LocalStr, ir: ir::IR) -> Result<(), VMError> {
+    pub fn run(&mut self, main: &LocalStr, ir: ir::IR) -> Result<bool, VMError> {
         self.new_scope(ir)?;
         self.run_block(main)
     }
@@ -344,7 +346,15 @@ impl VM {
         Ok(())
     }
 
-    pub fn run_block(&mut self, block_name: &LocalStr) -> Result<(), VMError> {
+    pub fn run_block(&mut self, block_name: &LocalStr) -> Result<bool, VMError> {
+        if self.options.debug_calls {
+            println!("CALL_DEBUG: {block_name}");
+        }
+
+        if self.options.debug_stack {
+            println!("STACK_DEBUG: {stack:?}", stack = self.stack);
+        }
+
         let block = match self.scope_manager.ir().get_block(block_name).cloned() {
             Some(i) => i,
             None => {
@@ -363,7 +373,7 @@ impl VM {
             if let Ok(v) = val {
                 self.push(v)?;
                 self.pop_scope().unwrap();
-                return Ok(());
+                return Ok(false);
             }
         }
 
@@ -376,9 +386,12 @@ impl VM {
                     let result = match code {
                         ir::IRCode::PutValue(val) => self.push(val.clone()),
                         ir::IRCode::Return => {
-                            break;
+                            self.pop_scope().unwrap();
+                            self.call_stack.pop().unwrap();
+
+                            return Ok(true);
                         }
-                        ir::IRCode::Call(name) => self.run_block(&name),
+                        ir::IRCode::Call(name) => self.run_block(&name).map(|_| ()),
                         ir::IRCode::LocalBlock(name, typ, vec) => {
                             self.scope_manager.add_local(name.clone())?;
                             self.scope_manager
@@ -390,9 +403,18 @@ impl VM {
                             let val = self.pop()?;
                             if let ir::Value::Boolean(b) = val {
                                 if b {
-                                    self.run_block(&block)
+                                    match self.run_block(&block) {
+                                        Ok(b) => {
+                                            if b {
+                                                break;
+                                            } else {
+                                                Ok(())
+                                            }
+                                        },
+                                        Err(e) => Err(e),
+                                    }
                                 } else {
-                                    Ok(())
+                                    continue;
                                 }
                             } else {
                                 Err(VMError::ExpectedBoolean)
@@ -400,19 +422,20 @@ impl VM {
                         }
                         ir::IRCode::While(block) => {
                             while let ir::Value::Boolean(true) = self.pop()? {
-                                self.run_block(&block)?;
+                                match self.run_block(&block)? {
+                                    true => { break; },
+                                    _ => {},
+                                }
                             }
                             Ok(())
                         }
                     };
-                    if let Err(e) = result {
-                        return Err(e);
-                    }
+                    result?;
                 }
 
                 if let BlockRunType::Once = typ {
                     let top = self.stack.last();
-                    if let None = top {
+                    if top.is_none() {
                         return Err(VMError::ExpectedValue);
                     } else if let Some(i) = top {
                         self.scope_manager
@@ -425,14 +448,12 @@ impl VM {
             }
         };
 
-        if let Err(e) = v {
-            return Err(e);
-        }
+        v?;
 
         self.pop_scope().unwrap();
         self.call_stack.pop().unwrap();
 
-        Ok(())
+        Ok(false)
     }
 }
 
