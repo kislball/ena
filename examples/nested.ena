@@ -1,10 +1,18 @@
+step {
+    ena.vm.debug
+}
+
+
+lol {
+    hello ( ena.vm.random )
+    hello
+    ena.vm.debug
+}
+
 main {
     hello ( ena.vm.random )
 
-    lol {
-        hello ( ena.vm.random )
-        ena.vm.debug
-    }
-
-    ena.vm.debug
+    hello ena.vm.debug 
+    lol
+    hello ena.vm.debug
 }

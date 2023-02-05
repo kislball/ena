@@ -30,7 +30,7 @@ pub fn vm_debug_calls(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError>
 
 pub fn vm_get_annotation(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
-        match ctx.ir.annotations.get(&name) {
+        match ctx.vm.scope_manager.ir().annotations.get(&name) {
             Some(i) => ctx.vm.push(ir::Value::String(i.clone())),
             None => ctx.vm.push(ir::Value::Null),
         }

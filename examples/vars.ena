@@ -1,0 +1,9 @@
+main {
+    i ( 1 unsafe_alloc )
+    5 i =
+    i @ ena.vm.debug
+
+    another_variable ( 1 unsafe_alloc )
+    25 another_variable =
+    another_variable @ ena.vm.debug
+}

@@ -1,4 +1,5 @@
 use colored::Colorize;
+use flexstr::ToLocalStr;
 use glob::glob;
 use std::{
     collections::HashMap,
@@ -50,7 +51,11 @@ impl Ena {
             tokenizer: tok::Tokenizer::new(),
             ast: ast::ASTBuilder::new(),
             compiler: vm::compiler::Compiler::new(),
-            vm: vm::machine::VM::new(options.gc, options.debug_gc),
+            vm: vm::machine::VM::new(vm::machine::VMOptions {
+                debug_gc: options.debug_gc,
+                enable_gc: options.gc,
+                debug_stack: false,
+            }),
             files: HashMap::new(),
             astified_files: HashMap::new(),
             compiled_files: HashMap::new(),
@@ -301,7 +306,9 @@ impl Ena {
                 return Err(EnaError::NotLinked);
             }
         };
-        self.vm.run(ir.clone(), main).map_err(EnaError::VMError)
+        self.vm
+            .run(&main.to_local_str(), ir.clone())
+            .map_err(EnaError::VMError)
     }
 
     pub fn run_main(&mut self) -> Result<(), EnaError> {
