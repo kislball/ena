@@ -137,9 +137,9 @@ impl Tokenizer {
         self.tokens = vec![];
     }
 
-    pub fn parse(&mut self, str: &String) -> Result<&mut Vec<Token>, TokenizerError> {
+    pub fn parse(&mut self, str: &str) -> Result<&mut Vec<Token>, TokenizerError> {
         self.clean();
-        self.str = str.clone();
+        self.str = str.to_owned();
         self.str.push(' '); // needs a whitespace for ids and numbers to work
         let en: Vec<char> = self.str.chars().enumerate().map(|x| x.1).collect();
 

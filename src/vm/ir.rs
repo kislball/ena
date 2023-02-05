@@ -106,17 +106,11 @@ pub enum Block {
 
 impl Block {
     pub fn is_single_eval(&self) -> bool {
-        match self {
-            Block::IR(_, BlockRunType::Once, _) => true,
-            _ => false,
-        }
+        matches!(self, Block::IR(_, BlockRunType::Once, _))
     }
 
     pub fn is_global(&self) -> bool {
-        match self {
-            Block::IR(true, _, _) => true,
-            _ => false,
-        }
+        matches!(self, Block::IR(true, _, _))
     }
 }
 

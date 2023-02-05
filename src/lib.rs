@@ -32,6 +32,19 @@ pub enum EnaError {
 pub struct EnaOptions {
     pub debug_gc: bool,
     pub gc: bool,
+    pub debug_calls: bool,
+    pub debug_stack: bool,
+}
+
+impl Default for EnaOptions {
+    fn default() -> Self {
+        Self {
+            debug_gc: false,
+            gc: true,
+            debug_calls: false,
+            debug_stack: false,
+        }
+    }
 }
 
 pub struct Ena {
@@ -54,7 +67,8 @@ impl Ena {
             vm: vm::machine::VM::new(vm::machine::VMOptions {
                 debug_gc: options.debug_gc,
                 enable_gc: options.gc,
-                debug_stack: false,
+                debug_stack: options.debug_stack,
+                debug_calls: options.debug_calls,
             }),
             files: HashMap::new(),
             astified_files: HashMap::new(),
@@ -309,6 +323,7 @@ impl Ena {
         self.vm
             .run(&main.to_local_str(), ir.clone())
             .map_err(EnaError::VMError)
+            .map(|_| ())
     }
 
     pub fn run_main(&mut self) -> Result<(), EnaError> {
