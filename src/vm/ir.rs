@@ -36,8 +36,8 @@ impl IR {
         let mut blocks: Vec<IRSerializable> = Vec::new();
 
         for (name, block) in &self.blocks {
-            if let Block::IR(typ, data) = block {
-                blocks.push(IRSerializable::Block(name, *typ, data.to_vec()));
+            if let Block::IR(global, typ, data) = block {
+                blocks.push(IRSerializable::Block(name, *global, *typ, data.to_vec()));
             }
         }
 
@@ -59,8 +59,8 @@ impl IR {
         Ok(())
     }
 
-    pub fn get_block(&self, id: LocalStr) -> Option<&Block> {
-        self.blocks.get(&id)
+    pub fn get_block(&self, id: &LocalStr) -> Option<&Block> {
+        self.blocks.get(id)
     }
 
     pub fn add_native(
@@ -88,9 +88,6 @@ impl IR {
 
 pub struct NativeHandlerCtx<'a> {
     pub vm: &'a mut machine::VM,
-    pub ir: &'a ir::IR,
-    pub single_evals: &'a mut HashMap<LocalStr, ir::Value>,
-    pub locals: &'a mut Vec<LocalStr>,
 }
 
 pub type NativeHandler = fn(ctx: NativeHandlerCtx) -> Result<(), machine::VMError>;
@@ -103,15 +100,31 @@ pub enum BlockRunType {
 
 #[derive(Clone)]
 pub enum Block {
-    IR(BlockRunType, Vec<IRCode>),
+    IR(bool, BlockRunType, Vec<IRCode>),
     Native(NativeHandler),
+}
+
+impl Block {
+    pub fn is_single_eval(&self) -> bool {
+        match self {
+            Block::IR(_, BlockRunType::Once, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_global(&self) -> bool {
+        match self {
+            Block::IR(true, _, _) => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Debug for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Block::IR(typ, vec) => {
-                write!(f, "IRBlock({typ:?}, {vec:?})")
+            Block::IR(global, typ, vec) => {
+                write!(f, "IRBlock(global: {global}, {typ:?}, {vec:?})")
             }
             Block::Native(_) => write!(f, "NativeHandler"),
         }
@@ -120,7 +133,7 @@ impl fmt::Debug for Block {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum IRSerializable<'a> {
-    Block(&'a str, BlockRunType, Vec<IRCode>),
+    Block(&'a str, bool, BlockRunType, Vec<IRCode>),
     Root(Vec<IRSerializable<'a>>),
     Annotation(LocalStr, LocalStr),
 }
@@ -147,8 +160,8 @@ impl<'a> IRSerializable<'a> {
 
         if let IRSerializable::Root(data) = self {
             for ser_block in data {
-                if let IRSerializable::Block(name, typ, data) = ser_block {
-                    let block = Block::IR(typ, data.to_vec());
+                if let IRSerializable::Block(name, global, typ, data) = ser_block {
+                    let block = Block::IR(global, typ, data.to_vec());
                     ir.add_block(name.to_local_str(), block, true)
                         .map_err(SerializationError::IRError)?;
                 } else if let IRSerializable::Annotation(name, data) = ser_block {

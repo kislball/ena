@@ -66,7 +66,7 @@ impl<'a> Compiler {
                         };
 
                         if let ast::ASTNodeInner::Block(_, _) = next.1 {
-                            match self.compile_block(id.as_str(), next, &mut ir) {
+                            match self.compile_block(id.as_str(), next, &mut ir, true) {
                                 Err(e) => {
                                     return Err(e);
                                 }
@@ -147,6 +147,7 @@ impl<'a> Compiler {
         name: &'a str,
         block: &'a ast::ASTNode,
         ir: &mut ir::IR,
+        is_global: bool,
     ) -> Result<ir::Block, CompilerError> {
         let name = name.to_local_str();
         let mut code: Vec<ir::IRCode> = vec![];
@@ -182,8 +183,8 @@ impl<'a> Compiler {
                     let next = v.get(i + 1);
                     match next {
                         Some(ast::ASTNode(_, ast::ASTNodeInner::Block(_, _))) => {
-                            let compiled = self.compile_block(id, next.unwrap(), ir)?;
-                            if let ir::Block::IR(typ, data) = compiled {
+                            let compiled = self.compile_block(id, next.unwrap(), ir, false)?;
+                            if let ir::Block::IR(_, typ, data) = compiled {
                                 code.push(ir::IRCode::LocalBlock(id.to_local_str(), typ, data));
                             }
                         }
@@ -222,7 +223,7 @@ impl<'a> Compiler {
                 ast::ASTNodeInner::Block(typ, _) => {
                     let nested_name = Self::get_random_name(&name);
 
-                    let nested_ir = self.compile_block(nested_name.as_str(), node, ir)?;
+                    let nested_ir = self.compile_block(nested_name.as_str(), node, ir, false)?;
                     let prev = match v.get(i - 1) {
                         Some(i) => i,
                         None => {
@@ -285,7 +286,7 @@ impl<'a> Compiler {
                     }
 
                     let nested_name = Self::get_random_name(&name);
-                    let nested_ir = self.compile_block(&nested_name, next, ir)?;
+                    let nested_ir = self.compile_block(&nested_name, next, ir, false)?;
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
@@ -318,7 +319,7 @@ impl<'a> Compiler {
                     }
 
                     let nested_name = Self::get_random_name(&name);
-                    let nested_ir = self.compile_block(&nested_name, next, ir)?;
+                    let nested_ir = self.compile_block(&nested_name, next, ir, false)?;
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
@@ -332,6 +333,6 @@ impl<'a> Compiler {
             }
         }
 
-        Ok(ir::Block::IR(t, code))
+        Ok(ir::Block::IR(is_global, t, code))
     }
 }

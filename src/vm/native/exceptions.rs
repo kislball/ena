@@ -7,7 +7,7 @@ pub fn try_exception(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> 
         return Err(machine::VMError::ExpectedBlock);
     };
 
-    if let Err(err) = ctx.vm.run_block(block, ctx.ir, ctx.single_evals) {
+    if let Err(err) = ctx.vm.run_block(&block) {
         ctx.vm.push(ir::Value::VMError(Box::from(err)))?;
     }
 

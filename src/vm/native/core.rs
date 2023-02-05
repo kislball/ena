@@ -7,7 +7,7 @@ pub fn drop_value(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 }
 
 pub fn peek_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
-    let num = ctx.vm.pop_usize()?;
+    let num = ctx.vm.pop_pointer()?;
     match ctx.vm.stack.get(num) {
         Some(i) => ctx.vm.push(i.clone()),
         None => Err(machine::VMError::StackEnded),
@@ -15,7 +15,7 @@ pub fn peek_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> 
 }
 
 pub fn drop_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
-    let num = ctx.vm.pop_usize()?;
+    let num = ctx.vm.pop_pointer()?;
     if ((ctx.vm.stack.len() - 1) - num) >= ctx.vm.stack.len() {
         return Err(machine::VMError::StackEnded);
     }
@@ -144,9 +144,9 @@ pub fn equal(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 
 pub fn block_exists(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
-        ctx.vm
-            .stack
-            .push(ir::Value::Boolean(ctx.ir.blocks.contains_key(&name)));
+        ctx.vm.stack.push(ir::Value::Boolean(
+            ctx.vm.scope_manager.ir().blocks.contains_key(&name),
+        ));
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock)
@@ -154,7 +154,7 @@ pub fn block_exists(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 }
 
 pub fn alloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
-    let size = ctx.vm.pop_usize()?;
+    let size = ctx.vm.pop_pointer()?;
     let block: heap::MemoryBlock;
 
     {
@@ -169,7 +169,7 @@ pub fn alloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 pub fn realloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let new_ptr: usize;
 
-    if let (ir::Value::Pointer(pointer_value), i) = (ctx.vm.pop()?, ctx.vm.pop_usize()?) {
+    if let (ir::Value::Pointer(pointer_value), i) = (ctx.vm.pop()?, ctx.vm.pop_pointer()?) {
         new_ptr = heap::heap_result_into_vm(ctx.vm.heap.realloc(pointer_value, i))?;
     } else {
         return Err(machine::VMError::ExpectedPointer);
@@ -236,7 +236,7 @@ pub fn deref(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 
 pub fn call(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
-        ctx.vm.run_block(name, ctx.ir, ctx.single_evals)?;
+        ctx.vm.run_block(&name)?;
         Ok(())
     } else {
         Err(machine::VMError::ExpectedBlock)
