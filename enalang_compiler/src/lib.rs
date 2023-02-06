@@ -1,4 +1,4 @@
 pub mod ast;
-pub mod compiler;
+pub mod irgen;
 pub mod ir;
 pub mod tok;

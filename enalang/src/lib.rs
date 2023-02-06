@@ -18,7 +18,7 @@ pub mod util;
 pub enum EnaError {
     TokenizerError(String, compiler::tok::TokenizerError),
     ASTError(String, compiler::ast::ASTError),
-    CompilerError(String, compiler::compiler::CompilerError),
+    IRGenError(String, compiler::irgen::IRGenError),
     IRError(compiler::ir::IRError),
     SerializationError(compiler::ir::SerializationError),
     VMError(vm::machine::VMError),
@@ -50,7 +50,7 @@ impl Default for EnaOptions {
 pub struct Ena {
     tokenizer: compiler::tok::Tokenizer,
     ast: compiler::ast::ASTBuilder,
-    compiler: compiler::compiler::Compiler,
+    compiler: compiler::irgen::IRGen,
     vm: vm::machine::VM,
     files: HashMap<String, String>,
     astified_files: HashMap<String, compiler::ast::ASTNode>,
@@ -63,7 +63,7 @@ impl Ena {
         Self {
             tokenizer: compiler::tok::Tokenizer::new(),
             ast: compiler::ast::ASTBuilder::new(),
-            compiler: compiler::compiler::Compiler::new(),
+            compiler: compiler::irgen::IRGen::new(),
             vm: vm::machine::VM::new(vm::machine::VMOptions {
                 debug_gc: options.debug_gc,
                 enable_gc: options.gc,
@@ -120,7 +120,7 @@ impl Ena {
                     )
                 );
             }
-            EnaError::CompilerError(file, data) => {
+            EnaError::IRGenError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(file_data, data.0 .0);
                 eprintln!(
@@ -239,7 +239,7 @@ impl Ena {
         let ir = self
             .compiler
             .compile(data)
-            .map_err(|x| EnaError::CompilerError(name.clone(), x))?;
+            .map_err(|x| EnaError::IRGenError(name.clone(), x))?;
 
         self.compiled_files.insert(name.clone(), ir);
 

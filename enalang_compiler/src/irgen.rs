@@ -3,10 +3,10 @@ use crate::{ast, tok};
 use flexstr::{local_fmt, IntoLocalStr, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
 
-pub struct Compiler {}
+pub struct IRGen {}
 
 #[derive(Debug)]
-pub enum CompilerErrorInner {
+pub enum IRGenErrorInner {
     ExpectedProgramAsRoot,
     UnexpectedBlock,
     UnexpectedNode,
@@ -18,27 +18,27 @@ pub enum CompilerErrorInner {
 }
 
 #[derive(Debug)]
-pub struct CompilerError(pub ast::ASTNode, pub CompilerErrorInner);
+pub struct IRGenError(pub ast::ASTNode, pub IRGenErrorInner);
 
-impl Default for Compiler {
+impl Default for IRGen {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> Compiler {
+impl<'a> IRGen {
     pub fn new() -> Self {
-        Compiler {}
+        IRGen {}
     }
 
-    pub fn compile(&'a mut self, ast: &'a ast::ASTNode) -> Result<ir::IR, CompilerError> {
+    pub fn compile(&'a mut self, ast: &'a ast::ASTNode) -> Result<ir::IR, IRGenError> {
         let mut ir = ir::IR::new();
         let nodes = match &ast.1 {
             ast::ASTNodeInner::Block(ast::BlockType::Program, nodes) => nodes,
             _ => {
-                return Err(CompilerError(
+                return Err(IRGenError(
                     ast::ASTNode(0, ast::ASTNodeInner::Closer),
-                    CompilerErrorInner::ExpectedProgramAsRoot,
+                    IRGenErrorInner::ExpectedProgramAsRoot,
                 ))
             }
         };
@@ -58,9 +58,9 @@ impl<'a> Compiler {
                         let next = match nodes.get(i + 1) {
                             Some(i) => i,
                             None => {
-                                return Err(CompilerError(
+                                return Err(IRGenError(
                                     node.clone(),
-                                    CompilerErrorInner::ExpectedBlock,
+                                    IRGenErrorInner::ExpectedBlock,
                                 ));
                             }
                         };
@@ -74,17 +74,17 @@ impl<'a> Compiler {
                                     if let Err(ir::IRError::BlockAlreadyExists) =
                                         ir.add_block(id.to_local_str(), v, true)
                                     {
-                                        return Err(CompilerError(
+                                        return Err(IRGenError(
                                             node.clone(),
-                                            CompilerErrorInner::BlockAlreadyExists,
+                                            IRGenErrorInner::BlockAlreadyExists,
                                         ));
                                     }
                                 }
                             };
                         } else {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::ExpectedBlock,
+                                IRGenErrorInner::ExpectedBlock,
                             ));
                         }
                     }
@@ -92,18 +92,18 @@ impl<'a> Compiler {
                         let prev = match nodes.get(i - 1) {
                             Some(i) => i,
                             None => {
-                                return Err(CompilerError(
+                                return Err(IRGenError(
                                     node.clone(),
-                                    CompilerErrorInner::ExpectedBlock,
+                                    IRGenErrorInner::ExpectedBlock,
                                 ));
                             }
                         };
 
                         if let ast::ASTNodeInner::Identifier(_) = prev.1 {
                         } else {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::UnexpectedBlock,
+                                IRGenErrorInner::UnexpectedBlock,
                             ));
                         }
 
@@ -112,17 +112,17 @@ impl<'a> Compiler {
                                 continue;
                             }
                             _ => {
-                                return Err(CompilerError(
+                                return Err(IRGenError(
                                     node.clone(),
-                                    CompilerErrorInner::UnexpectedAnonymousBlock,
+                                    IRGenErrorInner::UnexpectedAnonymousBlock,
                                 ));
                             }
                         }
                     }
                     _ => {
-                        return Err(CompilerError(
+                        return Err(IRGenError(
                             node.clone(),
-                            CompilerErrorInner::UnexpectedNode,
+                            IRGenErrorInner::UnexpectedNode,
                         ));
                     }
                 }
@@ -148,7 +148,7 @@ impl<'a> Compiler {
         block: &'a ast::ASTNode,
         ir: &mut ir::IR,
         is_global: bool,
-    ) -> Result<ir::Block, CompilerError> {
+    ) -> Result<ir::Block, IRGenError> {
         let name = name.to_local_str();
         let mut code: Vec<ir::IRCode> = vec![];
         let t: ast::BlockType;
@@ -159,9 +159,9 @@ impl<'a> Compiler {
                 v = ve;
             }
             _ => {
-                return Err(CompilerError(
+                return Err(IRGenError(
                     block.clone(),
-                    CompilerErrorInner::ExpectedBlock,
+                    IRGenErrorInner::ExpectedBlock,
                 ));
             }
         };
@@ -229,9 +229,9 @@ impl<'a> Compiler {
                     let prev = match v.get(i - 1) {
                         Some(i) => i,
                         None => {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::ExpectedBlock,
+                                IRGenErrorInner::ExpectedBlock,
                             ));
                         }
                     };
@@ -244,9 +244,9 @@ impl<'a> Compiler {
                                     v.get(i - 1),
                                     Some(ast::ASTNode(_, ast::ASTNodeInner::Identifier(_)))
                                 ) {
-                                    return Err(CompilerError(
+                                    return Err(IRGenError(
                                         node.clone(),
-                                        CompilerErrorInner::UnexpectedBlock,
+                                        IRGenErrorInner::UnexpectedBlock,
                                     ));
                                 }
                             }
@@ -254,9 +254,9 @@ impl<'a> Compiler {
                                 if let Err(ir::IRError::BlockAlreadyExists) =
                                     ir.add_block(nested_name.to_local_str(), nested_ir, true)
                                 {
-                                    return Err(CompilerError(
+                                    return Err(IRGenError(
                                         node.clone(),
-                                        CompilerErrorInner::BlockAlreadyExists,
+                                        IRGenErrorInner::BlockAlreadyExists,
                                     ));
                                 }
                                 code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(
@@ -270,9 +270,9 @@ impl<'a> Compiler {
                     let next = match v.get(i + 1) {
                         Some(i) => i,
                         None => {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::ExpectedBlock,
+                                IRGenErrorInner::ExpectedBlock,
                             ));
                         }
                     };
@@ -280,9 +280,9 @@ impl<'a> Compiler {
                     match &next.1 {
                         ast::ASTNodeInner::Block(ast::BlockType::UniqueEval, _) => {}
                         _ => {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::ExpectedUniqueEvalBlockAfterIf,
+                                IRGenErrorInner::ExpectedUniqueEvalBlockAfterIf,
                             ));
                         }
                     }
@@ -292,9 +292,9 @@ impl<'a> Compiler {
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
-                        return Err(CompilerError(
+                        return Err(IRGenError(
                             node.clone(),
-                            CompilerErrorInner::BlockAlreadyExists,
+                            IRGenErrorInner::BlockAlreadyExists,
                         ));
                     }
                     code.push(ir::IRCode::If(nested_name.to_local_str()));
@@ -303,9 +303,9 @@ impl<'a> Compiler {
                     let next = match v.get(i + 1) {
                         Some(i) => i,
                         None => {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::ExpectedBlock,
+                                IRGenErrorInner::ExpectedBlock,
                             ));
                         }
                     };
@@ -313,9 +313,9 @@ impl<'a> Compiler {
                     match &next.1 {
                         ast::ASTNodeInner::Block(ast::BlockType::UniqueEval, _) => {}
                         _ => {
-                            return Err(CompilerError(
+                            return Err(IRGenError(
                                 node.clone(),
-                                CompilerErrorInner::ExpectedUniqueEvalBlockAfterIf,
+                                IRGenErrorInner::ExpectedUniqueEvalBlockAfterIf,
                             ));
                         }
                     }
@@ -325,9 +325,9 @@ impl<'a> Compiler {
                     if let Err(ir::IRError::BlockAlreadyExists) =
                         ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
-                        return Err(CompilerError(
+                        return Err(IRGenError(
                             node.clone(),
-                            CompilerErrorInner::BlockAlreadyExists,
+                            IRGenErrorInner::BlockAlreadyExists,
                         ));
                     }
                     code.push(ir::IRCode::While(nested_name.to_local_str()));
