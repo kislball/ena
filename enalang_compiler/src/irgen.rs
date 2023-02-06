@@ -124,9 +124,6 @@ impl<'a> IRGen {
     }
 
     fn get_random_name(name: &LocalStr) -> LocalStr {
-        // most likely won't be a problem
-        // only used for block names, which should live for the entirety of execution
-        // will be a problem, if we try to reuse the same process for an another execution
         let rand = Alphanumeric
             .sample_string(&mut rand::thread_rng(), 12)
             .into_local_str();
