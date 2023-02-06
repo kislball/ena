@@ -1,6 +1,6 @@
-use std::time;
 use clap::{Args, Parser, Subcommand};
 use colored::Colorize;
+use std::time;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

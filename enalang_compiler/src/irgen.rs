@@ -82,10 +82,7 @@ impl<'a> IRGen {
                                 }
                             };
                         } else {
-                            return Err(IRGenError(
-                                node.clone(),
-                                IRGenErrorInner::ExpectedBlock,
-                            ));
+                            return Err(IRGenError(node.clone(), IRGenErrorInner::ExpectedBlock));
                         }
                     }
                     ast::ASTNodeInner::Block(typ, _) => {
@@ -101,10 +98,7 @@ impl<'a> IRGen {
 
                         if let ast::ASTNodeInner::Identifier(_) = prev.1 {
                         } else {
-                            return Err(IRGenError(
-                                node.clone(),
-                                IRGenErrorInner::UnexpectedBlock,
-                            ));
+                            return Err(IRGenError(node.clone(), IRGenErrorInner::UnexpectedBlock));
                         }
 
                         match typ {
@@ -120,10 +114,7 @@ impl<'a> IRGen {
                         }
                     }
                     _ => {
-                        return Err(IRGenError(
-                            node.clone(),
-                            IRGenErrorInner::UnexpectedNode,
-                        ));
+                        return Err(IRGenError(node.clone(), IRGenErrorInner::UnexpectedNode));
                     }
                 }
             }
@@ -159,10 +150,7 @@ impl<'a> IRGen {
                 v = ve;
             }
             _ => {
-                return Err(IRGenError(
-                    block.clone(),
-                    IRGenErrorInner::ExpectedBlock,
-                ));
+                return Err(IRGenError(block.clone(), IRGenErrorInner::ExpectedBlock));
             }
         };
 
@@ -229,10 +217,7 @@ impl<'a> IRGen {
                     let prev = match v.get(i - 1) {
                         Some(i) => i,
                         None => {
-                            return Err(IRGenError(
-                                node.clone(),
-                                IRGenErrorInner::ExpectedBlock,
-                            ));
+                            return Err(IRGenError(node.clone(), IRGenErrorInner::ExpectedBlock));
                         }
                     };
 
@@ -270,10 +255,7 @@ impl<'a> IRGen {
                     let next = match v.get(i + 1) {
                         Some(i) => i,
                         None => {
-                            return Err(IRGenError(
-                                node.clone(),
-                                IRGenErrorInner::ExpectedBlock,
-                            ));
+                            return Err(IRGenError(node.clone(), IRGenErrorInner::ExpectedBlock));
                         }
                     };
 
@@ -303,10 +285,7 @@ impl<'a> IRGen {
                     let next = match v.get(i + 1) {
                         Some(i) => i,
                         None => {
-                            return Err(IRGenError(
-                                node.clone(),
-                                IRGenErrorInner::ExpectedBlock,
-                            ));
+                            return Err(IRGenError(node.clone(), IRGenErrorInner::ExpectedBlock));
                         }
                     };
 

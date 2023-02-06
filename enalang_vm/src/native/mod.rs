@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use flexstr::{local_fmt, LocalStr, ToLocalStr};
-use enalang_compiler::ir;
 use crate::machine;
+use enalang_compiler::ir;
+use flexstr::{local_fmt, LocalStr, ToLocalStr};
+use std::collections::HashMap;
 
 pub mod core;
 pub mod exceptions;

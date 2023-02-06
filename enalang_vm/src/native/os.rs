@@ -1,5 +1,5 @@
-use enalang_compiler::ir;
 use crate::{machine, native};
+use enalang_compiler::ir;
 use flexstr::ToLocalStr;
 use std::env;
 
