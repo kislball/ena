@@ -11,13 +11,13 @@ Ena is written in Rust, so you should have `cargo` and `rustc` installed.
 Build and install command: 
 
 ```sh
-$ cargo install --path .
+$ cargo install --path ./enalang
 ```
 
 Test if you have installed Ena:
 
 ```sh
-$ enalang --version
+$ ena --version
 ```
 
 If you see an error, check if your PATH variable is configured.
