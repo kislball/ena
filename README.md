@@ -11,6 +11,10 @@ Ena is written in Rust, so you should have `cargo` and `rustc` installed.
 Build and install command: 
 
 ```sh
+# If you want a stable version
+$ cargo install enalang
+
+# If you have cloned the repo
 $ cargo install --path ./enalang
 ```
 
