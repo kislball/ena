@@ -1,5 +1,4 @@
 use std::time;
-
 use clap::{Args, Parser, Subcommand};
 use colored::Colorize;
 
