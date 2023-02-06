@@ -323,7 +323,7 @@ impl Ena {
             Ok(blocks) => blocks,
             Err(err) => {
                 return Err(EnaError::IRError(err.into()));
-            }
+            },
         };
 
         self.vm
