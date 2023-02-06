@@ -1,6 +1,3 @@
-use crate::vm::machine;
-use core::fmt;
-use flexstr::local_fmt;
 use flexstr::LocalStr;
 use flexstr::ToLocalStr;
 use serde::{Deserialize, Serialize};
@@ -35,9 +32,12 @@ impl IR {
         let mut blocks: Vec<IRSerializable> = Vec::new();
 
         for (name, block) in &self.blocks {
-            if let Block::IR(global, typ, data) = block {
-                blocks.push(IRSerializable::Block(name, *global, *typ, data.to_vec()));
-            }
+            blocks.push(IRSerializable::Block(
+                name.as_str(),
+                block.global,
+                block.run_type,
+                block.code.clone(),
+            ));
         }
 
         for (block, content) in &self.annotations {
@@ -62,15 +62,6 @@ impl IR {
         self.blocks.get(id)
     }
 
-    pub fn add_native(
-        &mut self,
-        name: LocalStr,
-        f: NativeHandler,
-        output_err: bool,
-    ) -> Result<(), IRError> {
-        self.add_block(name, Block::Native(f), output_err)
-    }
-
     pub fn add_block(
         &mut self,
         name: LocalStr,
@@ -85,42 +76,26 @@ impl IR {
     }
 }
 
-pub struct NativeHandlerCtx<'a> {
-    pub vm: &'a mut machine::VM,
-}
-
-pub type NativeHandler = fn(ctx: NativeHandlerCtx) -> Result<(), machine::VMError>;
-
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum BlockRunType {
     Once,
     Unique,
 }
 
-#[derive(Clone)]
-pub enum Block {
-    IR(bool, BlockRunType, Vec<IRCode>),
-    Native(NativeHandler),
+#[derive(Clone, Debug)]
+pub struct Block {
+    pub global: bool,
+    pub run_type: BlockRunType,
+    pub code: Vec<IRCode>,
 }
 
 impl Block {
     pub fn is_single_eval(&self) -> bool {
-        matches!(self, Block::IR(_, BlockRunType::Once, _))
+        matches!(self.run_type, BlockRunType::Once)
     }
 
     pub fn is_global(&self) -> bool {
-        matches!(self, Block::IR(true, _, _))
-    }
-}
-
-impl fmt::Debug for Block {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Block::IR(global, typ, vec) => {
-                write!(f, "IRBlock(global: {global}, {typ:?}, {vec:?})")
-            }
-            Block::Native(_) => write!(f, "NativeHandler"),
-        }
+        self.global
     }
 }
 
@@ -154,7 +129,11 @@ impl<'a> IRSerializable<'a> {
         if let IRSerializable::Root(data) = self {
             for ser_block in data {
                 if let IRSerializable::Block(name, global, typ, data) = ser_block {
-                    let block = Block::IR(global, typ, data.to_vec());
+                    let block = Block {
+                        code: data,
+                        global,
+                        run_type: typ,
+                    };
                     ir.add_block(name.to_local_str(), block, true)
                         .map_err(SerializationError::IRError)?;
                 } else if let IRSerializable::Annotation(name, data) = ser_block {
@@ -178,7 +157,7 @@ pub enum Value {
     Boolean(bool),
     Pointer(usize),
     Block(LocalStr),
-    VMError(Box<machine::VMError>),
+    Exception(Box<Value>),
     Atom(LocalStr),
     Null,
 }
@@ -191,57 +170,4 @@ pub enum IRCode {
     While(LocalStr),
     If(LocalStr),
     Return,
-}
-
-pub struct NativeGroup {
-    natives: HashMap<LocalStr, NativeHandler>,
-    prefix: LocalStr,
-}
-
-impl NativeGroup {
-    pub fn new(prefix: &str) -> Self {
-        Self {
-            natives: HashMap::new(),
-            prefix: prefix.to_local_str(),
-        }
-    }
-
-    pub fn add_child(&mut self, group: &NativeGroup) -> Result<(), IRError> {
-        for (k, v) in &group.natives {
-            self.add_native(Self::merge_prefix(group.prefix.as_str(), k).as_str(), *v)?;
-        }
-        Ok(())
-    }
-
-    pub fn add_native(&mut self, name: &str, f: NativeHandler) -> Result<(), IRError> {
-        if self.natives.contains_key(name) {
-            return Err(IRError::BlockAlreadyExists);
-        }
-        self.natives.insert(name.to_local_str(), f);
-        Ok(())
-    }
-
-    pub fn apply(&self, ir: &mut IR) -> Result<(), IRError> {
-        for (k, v) in &self.natives {
-            if self.prefix.is_empty() {
-                ir.add_native(k.to_local_str(), *v, true)?;
-            } else {
-                ir.add_native(
-                    Self::merge_prefix(self.prefix.as_str(), k).to_local_str(),
-                    *v,
-                    true,
-                )?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn merge_prefix<'a>(prefix: &'a str, name: &'a str) -> LocalStr {
-        if prefix.is_empty() {
-            name.to_local_str()
-        } else {
-            local_fmt!("{prefix}.{name}")
-        }
-    }
 }

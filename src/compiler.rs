@@ -184,9 +184,11 @@ impl<'a> Compiler {
                     match next {
                         Some(ast::ASTNode(_, ast::ASTNodeInner::Block(_, _))) => {
                             let compiled = self.compile_block(id, next.unwrap(), ir, false)?;
-                            if let ir::Block::IR(_, typ, data) = compiled {
-                                code.push(ir::IRCode::LocalBlock(id.to_local_str(), typ, data));
-                            }
+                            code.push(ir::IRCode::LocalBlock(
+                                id.to_local_str(),
+                                compiled.run_type,
+                                compiled.code,
+                            ));
                         }
                         _ => {
                             code.push(ir::IRCode::Call(id.to_local_str()));
@@ -333,6 +335,10 @@ impl<'a> Compiler {
             }
         }
 
-        Ok(ir::Block::IR(is_global, t, code))
+        Ok(ir::Block {
+            global: is_global,
+            code: code,
+            run_type: t,
+        })
     }
 }

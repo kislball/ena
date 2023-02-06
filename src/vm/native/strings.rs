@@ -1,8 +1,8 @@
-use crate::vm::{machine};
 use crate::ir;
+use crate::vm::{machine, native};
 use flexstr::{local_fmt, ToLocalStr};
 
-pub fn strlen(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn strlen(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {
         ctx.vm.push(ir::Value::Number(st.len() as f64))
     } else {
@@ -10,7 +10,7 @@ pub fn strlen(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn concat(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn concat(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::String(a), ir::Value::String(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::String(local_fmt!("{a}{b}")))
     } else {
@@ -18,7 +18,7 @@ pub fn concat(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn split(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn split(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::String(a), ir::Value::String(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         let vals: Vec<&str> = a.split(b.as_str()).collect();
 
@@ -34,7 +34,7 @@ pub fn split(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn contains(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn contains(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::String(a), ir::Value::String(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm
             .push(ir::Value::Boolean(a.to_string().contains(b.as_str())))
@@ -43,7 +43,7 @@ pub fn contains(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn chars(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn chars(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(a) = ctx.vm.pop()? {
         let chars: Vec<char> = a.chars().collect();
 
@@ -59,8 +59,8 @@ pub fn chars(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn group() -> ir::NativeGroup {
-    let mut group = ir::NativeGroup::new("string");
+pub fn group() -> native::NativeGroup {
+    let mut group = native::NativeGroup::new("string");
 
     group.add_native("len", strlen).unwrap();
     group.add_native("concat", concat).unwrap();

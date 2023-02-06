@@ -1,8 +1,8 @@
-use crate::vm::{machine};
-use flexstr::{local_fmt, local_str};
 use crate::ir;
+use crate::vm::{machine, native};
+use flexstr::{local_fmt, local_str};
 
-pub fn into_string(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn into_string(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.pop()?;
 
     let st = match val {
@@ -13,14 +13,14 @@ pub fn into_string(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
         ir::Value::Block(block_name) => local_fmt!("'{}", block_name),
         ir::Value::Number(num) => local_fmt!("{}", num),
         ir::Value::Pointer(pointer) => local_fmt!("{}->", pointer),
-        ir::Value::VMError(err) => local_fmt!("{err:?}"),
+        ir::Value::Exception(err) => local_fmt!("{err:?}"),
         ir::Value::Atom(atom) => local_fmt!(":{atom}"),
     };
 
     ctx.vm.push(ir::Value::String(st))
 }
 
-pub fn into_number(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn into_number(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.pop()?;
 
     let st: f64 = match val {
@@ -35,37 +35,37 @@ pub fn into_number(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm.push(ir::Value::Number(st))
 }
 
-pub fn is_pointer(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn is_pointer(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = matches!(ctx.vm.pop()?, ir::Value::Pointer(_));
     ctx.vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_number(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn is_number(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = matches!(ctx.vm.pop()?, ir::Value::Number(_));
     ctx.vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_block(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn is_block(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = matches!(ctx.vm.pop()?, ir::Value::Block(_));
     ctx.vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_bool(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn is_bool(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = matches!(ctx.vm.pop()?, ir::Value::Boolean(_));
     ctx.vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_string(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn is_string(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = matches!(ctx.vm.pop()?, ir::Value::String(_));
     ctx.vm.push(ir::Value::Boolean(val))
 }
 
-pub fn is_null(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn is_null(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = matches!(ctx.vm.pop()?, ir::Value::Null);
     ctx.vm.push(ir::Value::Boolean(val))
 }
 
-pub fn into_ptr(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn into_ptr(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Number(num) = ctx.vm.pop()? {
         let ptr = num as usize;
 
@@ -81,8 +81,8 @@ pub fn into_ptr(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn group() -> ir::NativeGroup {
-    let mut group = ir::NativeGroup::new("");
+pub fn group() -> native::NativeGroup {
+    let mut group = native::NativeGroup::new("");
 
     group.add_native("unsafe_into_ptr", into_ptr).unwrap();
     group.add_native("into_string", into_string).unwrap();

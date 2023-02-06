@@ -1,8 +1,8 @@
-use crate::vm::{machine};
-use rand::{self, Rng};
 use crate::ir;
+use crate::vm::{machine, native};
+use rand::{self, Rng};
 
-pub fn vm_debug(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn vm_debug(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let el = match ctx.vm.stack.pop() {
         Some(i) => i,
         None => ir::Value::Null,
@@ -13,25 +13,25 @@ pub fn vm_debug(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn vm_get_random(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn vm_get_random(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm
         .push(ir::Value::Number(rand::thread_rng().gen_range(0.0..=1.0)))?;
     Ok(())
 }
 
-pub fn vm_debug_stack(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn vm_debug_stack(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     println!("\n=== stack debug ===\n{:?}", ctx.vm.stack);
     Ok(())
 }
 
-pub fn vm_debug_calls(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn vm_debug_calls(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     println!("\n=== call stack debug ===\n{:?}", ctx.vm.call_stack);
     Ok(())
 }
 
-pub fn vm_get_annotation(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn vm_get_annotation(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
-        match ctx.vm.scope_manager.ir().annotations.get(&name) {
+        match ctx.vm.scope_manager.blocks().annotations.get(&name) {
             Some(i) => ctx.vm.push(ir::Value::String(i.clone())),
             None => ctx.vm.push(ir::Value::Null),
         }
@@ -40,8 +40,8 @@ pub fn vm_get_annotation(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMErr
     }
 }
 
-pub fn group() -> ir::NativeGroup {
-    let mut group = ir::NativeGroup::new("ena.vm");
+pub fn group() -> native::NativeGroup {
+    let mut group = native::NativeGroup::new("ena.vm");
 
     group.add_native("debug", vm_debug).unwrap();
     group.add_native("debug_stack", vm_debug_stack).unwrap();
