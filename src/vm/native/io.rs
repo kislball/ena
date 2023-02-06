@@ -1,7 +1,7 @@
-use crate::vm::{machine};
 use crate::ir;
+use crate::vm::{machine, native};
 
-pub fn print(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn print(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {
         print!("{st}");
     } else {
@@ -11,8 +11,8 @@ pub fn print(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn group() -> ir::NativeGroup {
-    let mut group = ir::NativeGroup::new("ena.vm.io");
+pub fn group() -> native::NativeGroup {
+    let mut group = native::NativeGroup::new("ena.vm.io");
 
     group.add_native("print", print).unwrap();
 

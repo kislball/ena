@@ -249,7 +249,7 @@ impl Ena {
     }
 
     pub fn link_files(&mut self) -> Result<(), EnaError> {
-        let mut ir =ir::IR::new();
+        let mut ir = ir::IR::new();
 
         for sub_ir in self
             .compiled_files
@@ -314,16 +314,22 @@ impl Ena {
 
     pub fn run(&mut self, main: &str) -> Result<(), EnaError> {
         let ir = match self.ir {
-            Some(ref mut i) => {
-                vm::native::group().apply(i).unwrap();
-                i
-            }
+            Some(ref mut i) => i,
             None => {
                 return Err(EnaError::NotLinked);
             }
         };
+
+        let blocks = vm::blocks::Blocks::new(vm::native::group(), ir.clone());
+        let blocks = match blocks {
+            Ok(blocks) => blocks,
+            Err(err) => {
+                return Err(EnaError::IRError(err.into()));
+            },
+        };
+
         self.vm
-            .run(&main.to_local_str(), ir.clone())
+            .run(&main.to_local_str(), blocks)
             .map_err(EnaError::VMError)
             .map(|_| ())
     }

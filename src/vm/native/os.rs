@@ -1,9 +1,9 @@
-use flexstr::ToLocalStr;
 use crate::ir;
-use crate::vm::{machine};
+use crate::vm::{machine, native};
+use flexstr::ToLocalStr;
 use std::env;
 
-pub fn vm_get_env(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn vm_get_env(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(env_name) = ctx.vm.pop()? {
         match env::var(env_name.as_str()) {
             Ok(st) => ctx.vm.push(ir::Value::String(st.to_local_str())),
@@ -14,8 +14,8 @@ pub fn vm_get_env(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn group() -> ir::NativeGroup {
-    let mut group = ir::NativeGroup::new("ena.vm.os");
+pub fn group() -> native::NativeGroup {
+    let mut group = native::NativeGroup::new("ena.vm.os");
 
     group.add_native("get_env", vm_get_env).unwrap();
 

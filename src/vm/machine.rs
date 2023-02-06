@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
+use crate::ir;
+use crate::vm::{blocks, heap, native};
 use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
-
-use crate::vm::{heap};
-use crate::ir;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum VMError {
@@ -32,15 +30,15 @@ pub enum VMError {
 #[derive(Clone, Debug)]
 pub struct Scope {
     pub block: LocalStr,
-    pub ir: ir::IR,
+    pub blocks: blocks::Blocks,
     pub single_evals: HashMap<LocalStr, ir::Value>,
     pub locals: Vec<LocalStr>,
 }
 
 impl Scope {
-    pub fn new(ir: ir::IR, block: LocalStr) -> Self {
+    pub fn new(blocks: blocks::Blocks, block: LocalStr) -> Self {
         Self {
-            ir,
+            blocks,
             single_evals: HashMap::new(),
             locals: vec![],
             block,
@@ -79,18 +77,20 @@ impl ScopeManager {
         ScopeManager { scopes: vec![] }
     }
 
-    pub fn root(&mut self, ir: ir::IR, block: LocalStr) -> Result<&Scope, VMError> {
+    pub fn root(&mut self, blocks: blocks::Blocks, block: LocalStr) -> Result<&Scope, VMError> {
         self.scopes = vec![];
         let mut locals: Vec<LocalStr> = Vec::new();
 
-        for (name, block) in &ir.blocks {
-            if let ir::Block::IR(true, ir::BlockRunType::Once, _) = block {
-                locals.push(name.clone());
+        for (name, block) in &blocks.blocks {
+            if let blocks::VMBlock::IR(st) = block {
+                if st.global {
+                    locals.push(name.clone());
+                }
             }
         }
 
         let root = Scope {
-            ir,
+            blocks,
             single_evals: HashMap::new(),
             locals,
             block,
@@ -110,7 +110,7 @@ impl ScopeManager {
         };
 
         let new_scope = Scope {
-            ir: root.ir.clone(),
+            blocks: root.blocks.clone(),
             locals: vec![],
             single_evals: HashMap::new(),
             block,
@@ -129,7 +129,7 @@ impl ScopeManager {
         };
 
         let new_scope = Scope {
-            ir: parent.ir.clone(),
+            blocks: parent.blocks.clone(),
             locals: vec![],
             single_evals: HashMap::new(),
             block,
@@ -215,12 +215,12 @@ impl ScopeManager {
             .find(|scope| scope.has_local(local))
     }
 
-    pub fn ir(&self) -> &ir::IR {
-        &self.scopes.last().unwrap().ir
+    pub fn blocks(&self) -> &blocks::Blocks {
+        &self.scopes.last().unwrap().blocks
     }
 
-    pub fn ir_mut(&mut self) -> &mut ir::IR {
-        &mut self.scopes.last_mut().unwrap().ir
+    pub fn blocks_mut(&mut self) -> &mut blocks::Blocks {
+        &mut self.scopes.last_mut().unwrap().blocks
     }
 
     pub fn lookup_local_owner(&self, local: &LocalStr) -> Option<&Scope> {
@@ -251,7 +251,6 @@ pub struct VM {
     pub options: VMOptions,
     pub scope_manager: ScopeManager,
 }
-
 
 impl Default for VMOptions {
     fn default() -> Self {
@@ -328,12 +327,12 @@ impl VM {
         }
     }
 
-    pub fn run(&mut self, main: &LocalStr, ir: ir::IR) -> Result<bool, VMError> {
+    pub fn run(&mut self, main: &LocalStr, ir: blocks::Blocks) -> Result<bool, VMError> {
         self.new_scope(ir)?;
         self.run_block(main)
     }
 
-    pub fn new_scope(&mut self, ir: ir::IR) -> Result<&Scope, VMError> {
+    pub fn new_scope(&mut self, ir: blocks::Blocks) -> Result<&Scope, VMError> {
         self.scope_manager.root(ir, local_str!("root"))
     }
 
@@ -354,7 +353,7 @@ impl VM {
             println!("STACK_DEBUG: {stack:?}", stack = self.stack);
         }
 
-        let block = match self.scope_manager.ir().get_block(block_name).cloned() {
+        let block = match self.scope_manager.blocks().get_block(block_name).cloned() {
             Some(i) => i,
             None => {
                 return Err(VMError::UnknownBlock(block_name.clone()));
@@ -379,8 +378,10 @@ impl VM {
         self.call_stack.push(block_name.clone());
 
         let v = match block {
-            ir::Block::Native(f) => f(ir::NativeHandlerCtx { vm: self }),
-            ir::Block::IR(_, typ, vec) => {
+            blocks::VMBlock::NativeHandler(f) => f(native::NativeHandlerCtx { vm: self }),
+            blocks::VMBlock::IR(block) => {
+                let typ = block.run_type;
+                let vec = block.code;
                 for code in vec {
                     let result = match code {
                         ir::IRCode::PutValue(val) => self.push(val.clone()),
@@ -394,8 +395,15 @@ impl VM {
                         ir::IRCode::LocalBlock(name, typ, vec) => {
                             self.scope_manager.add_local(name.clone())?;
                             self.scope_manager
-                                .ir_mut()
-                                .add_block(name.clone(), ir::Block::IR(false, typ, vec), true)
+                                .blocks_mut()
+                                .add_block(
+                                    name.clone(),
+                                    blocks::VMBlock::IR(ir::Block {
+                                        global: false,
+                                        run_type: typ,
+                                        code: vec,
+                                    }),
+                                )
                                 .map_err(|_| VMError::CannotShadowBlocksInLocalScope(name.clone()))
                         }
                         ir::IRCode::If(block) => {
@@ -409,7 +417,7 @@ impl VM {
                                             } else {
                                                 Ok(())
                                             }
-                                        },
+                                        }
                                         Err(e) => Err(e),
                                     }
                                 } else {
@@ -422,8 +430,10 @@ impl VM {
                         ir::IRCode::While(block) => {
                             while let ir::Value::Boolean(true) = self.pop()? {
                                 match self.run_block(&block)? {
-                                    true => { break; },
-                                    _ => {},
+                                    true => {
+                                        break;
+                                    }
+                                    _ => {}
                                 }
                             }
                             Ok(())

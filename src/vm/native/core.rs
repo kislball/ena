@@ -1,13 +1,13 @@
-use crate::vm::{heap, machine};
 use crate::ir;
+use crate::vm::{heap, machine, native};
 
-pub fn drop_value(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn drop_value(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm.pop()?;
 
     Ok(())
 }
 
-pub fn peek_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn peek_value_at(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let num = ctx.vm.pop_pointer()?;
     match ctx.vm.stack.get(num) {
         Some(i) => ctx.vm.push(i.clone()),
@@ -15,7 +15,7 @@ pub fn peek_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> 
     }
 }
 
-pub fn drop_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn drop_value_at(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let num = ctx.vm.pop_pointer()?;
     if ((ctx.vm.stack.len() - 1) - num) >= ctx.vm.stack.len() {
         return Err(machine::VMError::StackEnded);
@@ -24,7 +24,7 @@ pub fn drop_value_at(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> 
     ctx.vm.handle_minus(val)
 }
 
-pub fn swap(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn swap(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let one = ctx.vm.stack.pop();
     let two = ctx.vm.stack.pop();
 
@@ -38,7 +38,7 @@ pub fn swap(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn plus(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn plus(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let popped = (ctx.vm.pop()?, ctx.vm.pop()?);
     if let (ir::Value::Number(a), ir::Value::Number(b)) = popped {
         ctx.vm.push(ir::Value::Number(a + b))?;
@@ -58,7 +58,7 @@ pub fn plus(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn mul(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn mul(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Number(a * b))?;
     } else {
@@ -68,7 +68,7 @@ pub fn mul(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn div(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn div(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Number(a / b))?;
     } else {
@@ -78,7 +78,7 @@ pub fn div(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn subst(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn subst(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let popped = (ctx.vm.pop()?, ctx.vm.pop()?);
     if let (ir::Value::Number(a), ir::Value::Number(b)) = popped {
         ctx.vm.push(ir::Value::Number(a - b))?;
@@ -102,7 +102,7 @@ pub fn subst(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn pow(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn pow(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Number(a.powf(b)))?;
     } else {
@@ -112,7 +112,7 @@ pub fn pow(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn root(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn root(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Number(a.powf(1.0 / b)))?;
     } else {
@@ -122,7 +122,7 @@ pub fn root(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn dup(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn dup(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.stack.last();
 
     let val = match val {
@@ -137,16 +137,16 @@ pub fn dup(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn equal(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn equal(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let (a, b) = (ctx.vm.pop()?, ctx.vm.pop()?);
 
     ctx.vm.push(ir::Value::Boolean(a == b))
 }
 
-pub fn block_exists(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn block_exists(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
         ctx.vm.stack.push(ir::Value::Boolean(
-            ctx.vm.scope_manager.ir().blocks.contains_key(&name),
+            ctx.vm.scope_manager.blocks().blocks.contains_key(&name),
         ));
         Ok(())
     } else {
@@ -154,7 +154,7 @@ pub fn block_exists(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn alloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn alloc(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let size = ctx.vm.pop_pointer()?;
     let block: heap::MemoryBlock;
 
@@ -167,7 +167,7 @@ pub fn alloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn realloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn realloc(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let new_ptr: usize;
 
     if let (ir::Value::Pointer(pointer_value), i) = (ctx.vm.pop()?, ctx.vm.pop_pointer()?) {
@@ -181,7 +181,7 @@ pub fn realloc(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn free(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn free(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let pointer = match ctx.vm.pop()? {
         ir::Value::Pointer(i) => i,
         _ => {
@@ -195,7 +195,7 @@ pub fn free(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn set_ref(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn set_ref(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let ptr = if let ir::Value::Pointer(point) = ctx.vm.pop()? {
         point
     } else {
@@ -211,7 +211,7 @@ pub fn set_ref(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn deref(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn deref(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let ptrval = match ctx.vm.stack.pop() {
         Some(i) => i,
         None => {
@@ -235,7 +235,7 @@ pub fn deref(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn call(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn call(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Block(name) = ctx.vm.pop()? {
         ctx.vm.run_block(&name)?;
         Ok(())
@@ -244,7 +244,7 @@ pub fn call(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn neg(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn neg(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::Boolean(b) = ctx.vm.pop()? {
         ctx.vm.push(ir::Value::Boolean(!b))
     } else {
@@ -252,7 +252,7 @@ pub fn neg(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn or(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn or(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Boolean(a), ir::Value::Boolean(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Boolean(a || b))
     } else {
@@ -260,7 +260,7 @@ pub fn or(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn and(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn and(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Boolean(a), ir::Value::Boolean(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Boolean(a && b))
     } else {
@@ -268,7 +268,7 @@ pub fn and(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn gt(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn gt(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Boolean(a > b))
     } else {
@@ -276,7 +276,7 @@ pub fn gt(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn lt(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn lt(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Boolean(a < b))
     } else {
@@ -284,7 +284,7 @@ pub fn lt(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn lte(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn lte(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Boolean(a <= b))
     } else {
@@ -292,7 +292,7 @@ pub fn lte(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn gte(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn gte(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::Number(a), ir::Value::Number(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
         ctx.vm.push(ir::Value::Boolean(a >= b))
     } else {
@@ -300,7 +300,7 @@ pub fn gte(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn clear_stack(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn clear_stack(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     for value in &ctx.vm.stack.clone() {
         ctx.vm.handle_minus(value.clone())?;
     }
@@ -323,8 +323,8 @@ pub fn clear_stack(ctx: ir::NativeHandlerCtx) -> Result<(), machine::VMError> {
 //     }
 // }
 
-pub fn group() -> ir::NativeGroup {
-    let mut group = ir::NativeGroup::new("");
+pub fn group() -> native::NativeGroup {
+    let mut group = native::NativeGroup::new("");
 
     group.add_native("drop", drop_value).unwrap();
     group.add_native("peek", peek_value_at).unwrap();
