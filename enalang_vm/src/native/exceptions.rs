@@ -1,7 +1,7 @@
 use flexstr::local_fmt;
 
-use crate::ir;
-use crate::vm::{machine, native};
+use enalang_compiler::ir;
+use crate::{machine, native};
 
 pub fn try_exception(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let block = if let ir::Value::Block(block_name) = ctx.vm.pop()? {

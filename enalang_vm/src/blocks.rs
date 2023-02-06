@@ -1,5 +1,5 @@
-use crate::ir;
-use crate::vm::native;
+use enalang_compiler::ir;
+use crate::native;
 use core::fmt::Debug;
 use flexstr::LocalStr;
 use std::collections::HashMap;

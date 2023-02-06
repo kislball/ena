@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use crate::ir;
+use enalang_compiler::ir;
 use std::collections::HashMap;
 
 use super::machine;
