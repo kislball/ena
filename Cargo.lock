@@ -90,7 +90,7 @@ dependencies = [
 
 [[package]]
 name = "enalang"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bincode",
  "clap",
@@ -105,7 +105,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_compiler"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bincode",
  "flexstr",
@@ -115,7 +115,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_vm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bincode",
  "enalang_compiler",
