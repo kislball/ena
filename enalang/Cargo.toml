@@ -19,3 +19,4 @@ rand = "0.8.5"
 serde = { version = "1.0.152", features = [ "derive",] }
 enalang_compiler = { path = "../enalang_compiler", version = "0.2.1" }
 enalang_vm = { path = "../enalang_vm", version = "0.2.1" }
+enalang_checker = { path = "../enalang_checker", version = "0.2.1" }
