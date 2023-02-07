@@ -1,5 +1,8 @@
+use enalang_vm::{
+    blocks,
+    machine::{self, ScopeManager},
+};
 use std::fmt::Debug;
-use enalang_vm::{blocks,machine::{self, ScopeManager}};
 
 pub struct Checker {
     pub checks: Vec<Box<dyn Check>>,
@@ -39,7 +42,7 @@ impl Checker {
         errs
     }
 
-    pub fn add_check(&mut self, check: Box<impl Check + 'static>)  {
+    pub fn add_check(&mut self, check: Box<impl Check + 'static>) {
         self.checks.push(check)
     }
 }
