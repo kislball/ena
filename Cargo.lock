@@ -105,11 +105,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "enalang_checker"
+name = "enalang_cgen"
 version = "0.2.1"
 dependencies = [
  "bincode",
  "enalang_compiler",
+ "enalang_vm",
+ "flexstr",
+ "rand",
+ "serde",
+]
+
+[[package]]
+name = "enalang_checker"
+version = "0.2.1"
+dependencies = [
+ "bincode",
  "enalang_vm",
  "flexstr",
  "serde",
