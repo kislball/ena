@@ -109,8 +109,6 @@ name = "enalang_cgen"
 version = "0.2.1"
 dependencies = [
  "bincode",
- "enalang_compiler",
- "enalang_vm",
  "flexstr",
  "rand",
  "serde",
