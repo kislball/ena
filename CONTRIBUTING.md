@@ -7,10 +7,11 @@ However, I will provide some information about repository structure(very little 
 ## Repo
 
 This repo is a Cargo workspace, which consists of three packages:
-    - `enalang` - umbrella package, which contains the binary 
-    - `enalang_compiler` - contains IR and the compiler. Independent of virtual machine.
-    - `enalang_vm` - virtual machine for Ena.
-    - `enalang_llvm` - planned. LLVM code generator.
+* `enalang` - umbrella package, which contains the binary 
+* `enalang_compiler` - contains IR and the compiler. Independent of virtual machine.
+* `enalang_vm` - virtual machine for Ena.
+* `enalang_checker` - static validity checker for Ena.
+* `enalang_cgen` - generates C code from Ena IR. Planned.
 
 ## `./tools.py`
 
