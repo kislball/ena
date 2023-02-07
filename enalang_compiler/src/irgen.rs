@@ -153,7 +153,6 @@ impl<'a> IRGen {
 
         let t: ir::BlockRunType = match t {
             ast::BlockType::Program
-            | ast::BlockType::EscapedUniqueEval
             | ast::BlockType::UniqueEval => ir::BlockRunType::Unique,
             _ => ir::BlockRunType::Once,
         };
