@@ -1,3 +1,4 @@
 enalang_compiler
 enalang_vm
+enalang_checker
 enalang
