@@ -122,7 +122,7 @@ impl Ena {
             }
             EnaError::IRGenError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
-                let (line, col) = util::get_line(file_data, data.0 .0);
+                let (line, col) = util::get_line(file_data, data.0.0);
                 eprintln!(
                     "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
@@ -392,7 +392,7 @@ impl Ena {
     fn highlight_char_in_string(initial: &str, at: usize) -> String {
         let start: String = initial.chars().take(at).collect();
         let end: String = initial.chars().skip(at + 1).collect();
-        let ch = String::from(initial.chars().nth(at).unwrap());
+        let ch = String::from(initial.chars().nth(at).unwrap_or('\0'));
 
         format!("{}{}{}", start, ch.bold().red(), end)
     }
