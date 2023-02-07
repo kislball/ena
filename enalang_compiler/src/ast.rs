@@ -16,9 +16,7 @@ pub enum ASTNodeInner {
 #[derive(Debug, Clone, Copy)]
 pub enum BlockType {
     Program,
-    EscapedSingleEval,
     SingleEval,
-    EscapedUniqueEval,
     UniqueEval,
 }
 
@@ -109,8 +107,6 @@ impl ASTBuilder {
                 let typ = match block {
                     tok::TokenInner::OnceOpen => BlockType::SingleEval,
                     tok::TokenInner::UniqueOpen => BlockType::UniqueEval,
-                    tok::TokenInner::OnceEscapedOpen => BlockType::EscapedSingleEval,
-                    tok::TokenInner::UniqueEscapedOpen => BlockType::EscapedUniqueEval,
                     _ => {
                         self.at += 1;
                         return Ok(ASTNode(self.at, ASTNodeInner::Closer));

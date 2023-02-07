@@ -41,9 +41,7 @@ pub enum TokenInner {
     Number(f64),
     Keyword(KeywordType),
     OnceOpen,
-    OnceEscapedOpen,
     OnceClose,
-    UniqueEscapedOpen,
     UniqueOpen,
     UniqueClose,
 }
@@ -55,14 +53,6 @@ pub fn is_closer(open: &TokenInner, close: &TokenInner) -> Option<bool> {
             _ => Some(false),
         },
         TokenInner::UniqueOpen => match *close {
-            TokenInner::UniqueClose => Some(true),
-            _ => Some(false),
-        },
-        TokenInner::OnceEscapedOpen => match *close {
-            TokenInner::OnceClose => Some(true),
-            _ => Some(false),
-        },
-        TokenInner::UniqueEscapedOpen => match *close {
             TokenInner::UniqueClose => Some(true),
             _ => Some(false),
         },
@@ -226,14 +216,7 @@ impl Tokenizer {
                     }
                 };
 
-                if next == ONCE_OPEN {
-                    self.tokens.push(Token(begin, TokenInner::OnceEscapedOpen));
-                    self.at += 1;
-                } else if next == UNIQUE_OPEN {
-                    self.tokens
-                        .push(Token(begin, TokenInner::UniqueEscapedOpen));
-                    self.at += 1;
-                } else if is_id_beginning(next) {
+                if is_id_beginning(next) {
                     if let Some(err) = self.parse_id(&en, IdentifierType::Escaped) {
                         return Err(err);
                     }
