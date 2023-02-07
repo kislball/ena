@@ -2,5 +2,6 @@
 members = [
     "./enalang",
     "./enalang_compiler",
-    "./enalang_vm"
+    "./enalang_vm",
+    "./enalang_checker",
 ]
