@@ -1,5 +1,5 @@
 use enalang_vm::{
-    blocks,
+    blocks::{self, Blocks},
     machine::{self, ScopeManager},
 };
 use std::fmt::Debug;
@@ -20,6 +20,7 @@ impl Checker {
     fn create_check_context(&self) -> CheckContext {
         CheckContext {
             scope_manager: ScopeManager::new(),
+            blocks: self.blocks.as_ref().unwrap().clone(),
         }
     }
 
@@ -28,13 +29,13 @@ impl Checker {
     }
 
     pub fn run_checks(&self, independent: bool) -> Vec<Box<dyn CheckError>> {
-        let mut errs = Vec::<Box<dyn CheckError>>::new();
+        let mut errs = Vec::new();
 
         for check in &self.checks {
             if independent && !check.is_independent() {
                 continue;
             }
-            if let Some(err) = check.check(self.create_check_context()) {
+            if let Err(err) = check.check(self.create_check_context()) {
                 errs.push(err);
             }
         }
@@ -58,21 +59,29 @@ impl Default for Checker {
 
 pub struct CheckContext {
     pub scope_manager: machine::ScopeManager,
+    pub blocks: Blocks,
 }
 
 impl Default for CheckContext {
     fn default() -> Self {
         Self {
             scope_manager: machine::ScopeManager::default(),
+            blocks: Blocks::default(),
         }
     }
 }
 
 pub trait Check {
-    fn check(&self, ctx: CheckContext) -> Option<Box<dyn CheckError>>;
+    fn check(&self, ctx: CheckContext) -> Result<(), Box<dyn CheckError>>;
     fn is_independent(&self) -> bool;
 }
 
 pub trait CheckError: Debug {
     fn explain(&self) -> String;
+}
+
+impl<T: CheckError + 'static> From<Box<T>> for Box<dyn CheckError> {
+    fn from(value: Box<T>) -> Self {
+        value
+    }
 }

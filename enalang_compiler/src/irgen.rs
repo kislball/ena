@@ -153,8 +153,7 @@ impl<'a> IRGen {
         };
 
         let t: ir::BlockRunType = match t {
-            ast::BlockType::Program
-            | ast::BlockType::UniqueEval => ir::BlockRunType::Unique,
+            ast::BlockType::Program | ast::BlockType::UniqueEval => ir::BlockRunType::Unique,
             _ => ir::BlockRunType::Once,
         };
 
@@ -184,7 +183,10 @@ impl<'a> IRGen {
                     let i = i.to_local_str();
 
                     if (i != name) && !ir.blocks.contains_key(&i) {
-                        return Err(IRGenError(node.clone(), IRGenErrorInner::CannotPutLocalBlockOnStack));
+                        return Err(IRGenError(
+                            node.clone(),
+                            IRGenErrorInner::CannotPutLocalBlockOnStack,
+                        ));
                     }
                     code.push(ir::IRCode::PutValue(ir::Value::Block(i)));
                 }
