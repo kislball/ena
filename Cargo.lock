@@ -119,6 +119,7 @@ name = "enalang_checker"
 version = "0.2.1"
 dependencies = [
  "bincode",
+ "enalang_compiler",
  "enalang_vm",
  "flexstr",
  "serde",

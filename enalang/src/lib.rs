@@ -122,7 +122,7 @@ impl Ena {
             }
             EnaError::IRGenError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
-                let (line, col) = util::get_line(file_data, data.0.0);
+                let (line, col) = util::get_line(file_data, data.0 .0);
                 eprintln!(
                     "{} in {}:{}:{}: {:?}",
                     "error".red().bold(),
