@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define STACK_PREALLOC 30
 
@@ -57,6 +58,16 @@ void realloc_stack() {
     stack_begin = new_stack;
 }
 
+void expected_double() {
+    fprintf(stderr, "expected number");
+    exit(1);
+}
+
+void expected_int() {
+    fprintf(stderr, "expected int");
+    exit(1);
+}
+
 void push_stack(struct ena_value val) {
     if (stack_size >= stack_capacity) {
         realloc_stack();
@@ -65,21 +76,6 @@ void push_stack(struct ena_value val) {
     stack_begin[stack_size - 1] = val;
 }
 
-void alloc() {
-    struct ena_value * new_mem = malloc(sizeof(struct ena_value));
-    if (new_mem == NULL) {
-        fprintf(stderr, "failed to allocate memory for ena heap");
-        exit(1);
-    }
-    
-    struct ena_value val = {
-        .type = ena_pointer,
-        .value = {
-            .pointer = new_mem,
-        }
-    };
-    push_stack(val);
-}
 
 void free_value(struct ena_value val) {
     switch (val.type) {
@@ -112,6 +108,25 @@ void free_stack() {
 }
 
 void ena_run();
+
+void alloc() {
+    struct ena_value val = pop_stack();
+    if (val.type != ena_number) {
+        expected_double();
+    }
+
+    if (val.value.number != roundf(val.value.number)) {
+        expected_int();
+    }
+
+    struct ena_value * new_mem = malloc(sizeof(struct ena_value) * val.value.number);
+    if (new_mem == NULL) {
+        fprintf(stderr, "failed to allocate memory for ena heap");
+        exit(1);
+    }
+    
+    push_stack(val);
+}
 
 int main(void) {
     init_stack();
