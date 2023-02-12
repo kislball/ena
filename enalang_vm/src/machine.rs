@@ -429,11 +429,8 @@ impl VM {
                         }
                         ir::IRCode::While(block) => {
                             while let ir::Value::Boolean(true) = self.pop()? {
-                                match self.run_block(&block)? {
-                                    true => {
-                                        break;
-                                    }
-                                    _ => {}
+                                if self.run_block(&block)? {
+                                    break;
                                 }
                             }
                             Ok(())

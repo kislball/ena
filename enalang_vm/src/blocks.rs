@@ -48,19 +48,10 @@ impl VMBlock {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Blocks {
     pub blocks: HashMap<LocalStr, VMBlock>,
     pub annotations: HashMap<LocalStr, LocalStr>,
-}
-
-impl Default for Blocks {
-    fn default() -> Self {
-        Self {
-            blocks: HashMap::new(),
-            annotations: HashMap::new(),
-        }
-    }
 }
 
 impl Blocks {
