@@ -10,7 +10,11 @@ use std::{
     path::PathBuf,
     process,
 };
-use vm::machine::VMOptions;
+use vm::{
+    blocks::{Blocks, BlocksError},
+    machine::VMOptions,
+    native,
+};
 
 pub use enalang_checker as checker;
 pub use enalang_compiler as compiler;
@@ -30,6 +34,7 @@ pub enum EnaError {
     CheckerErrors(Vec<Box<dyn CheckError>>),
     FailedToReadGlobPattern(String),
     FSError(String),
+    BlocksError(BlocksError),
     NotYetParsed(String),
     NotLinked,
 }
@@ -86,7 +91,10 @@ impl Ena {
         }
     }
 
-    pub fn check(&self) -> Result<(), EnaError> {
+    pub fn check(&mut self) -> Result<(), EnaError> {
+        let blocks = Blocks::new(native::group(), self.ir.as_ref().unwrap().clone())
+            .map_err(EnaError::BlocksError)?;
+        self.checker.blocks = Some(blocks);
         let vec = self.checker.run_checks(false);
         if !vec.is_empty() {
             Err(EnaError::CheckerErrors(vec))
@@ -105,7 +113,7 @@ impl Ena {
         print_line: bool,
     ) {
         eprintln!(
-            "{} in {}:{}:{}: {:?}",
+            "{} in {}:{}:{}: {}",
             "error".red().bold(),
             file,
             line,
@@ -161,18 +169,23 @@ impl Ena {
             EnaError::CheckerError(err) => {
                 let pos = match err.from() {
                     Some(i) => match &self.ir {
-                        Some(ir) => ir.source_map.get(&i.to_local_str()).cloned().unwrap_or_default(),
+                        Some(ir) => ir
+                            .source_map
+                            .get(&i.to_local_str())
+                            .cloned()
+                            .unwrap_or_default(),
                         None => Position::default(),
                     },
                     None => Position::default(),
                 };
+
                 self.print_error(
-                    &format!("{:?}", err),
+                    &err.explain(),
                     &pos.file,
                     pos.line,
                     pos.col,
                     "",
-                    true,
+                    false,
                 );
             }
             other => eprintln!("{}: {other:?}", "error".red().bold()),

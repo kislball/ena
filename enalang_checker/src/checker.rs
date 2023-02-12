@@ -42,7 +42,7 @@ impl Checker {
             }
         }
 
-        errs
+        errs.into_iter().flatten().collect()
     }
 
     pub fn add_check(&mut self, check: Box<impl Check + 'static>) {
@@ -53,10 +53,8 @@ impl Checker {
 impl Default for Checker {
     fn default() -> Self {
         Self {
-            blocks: None,
-            checks: vec![
-                Box::new(BlocksChecker::new()),
-            ],
+            blocks: Some(blocks::Blocks::default()),
+            checks: vec![Box::new(BlocksChecker::new())],
         }
     }
 }
@@ -68,7 +66,7 @@ pub struct CheckContext {
 }
 
 pub trait Check {
-    fn check(&self, ctx: CheckContext) -> Result<(), Box<dyn CheckError>>;
+    fn check(&self, ctx: CheckContext) -> Result<(), Vec<Box<dyn CheckError>>>;
     fn is_independent(&self) -> bool;
 }
 

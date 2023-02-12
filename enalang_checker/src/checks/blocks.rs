@@ -20,7 +20,7 @@ impl CheckError for BlocksCheckerError {
             Self::CannotShadowBlocksInLocalScope(_, b) => Some(b.to_string()),
             Self::VM(_) => None,
         }
-    } 
+    }
 
     fn explain(&self) -> String {
         match self {
@@ -49,33 +49,43 @@ impl BlocksChecker {
         name: LocalStr,
         block: &Block,
         scope_manager: &mut ScopeManager,
-    ) -> Result<(), Box<dyn CheckError>> {
+    ) -> Result<(), Vec<Box<dyn CheckError>>> {
+        let mut errs: Vec<Box<dyn CheckError>> = Default::default();
         for op in &block.code {
             if let IRCode::LocalBlock(sub_name, typ, data) = op {
-                scope_manager.add_local(sub_name.clone()).map_err(|_| {
+                let r = scope_manager.add_local(sub_name.clone()).map_err(|_| {
                     Box::new(BlocksCheckerError::CannotShadowBlocksInLocalScope(
                         sub_name.clone(),
                         name.clone(),
                     ))
-                })?;
+                });
+
+                if let Err(e) = r {
+                    errs.push(e);
+                    continue;
+                }
+
                 let block = Block {
                     code: data.clone(),
                     global: false,
                     run_type: *typ,
                 };
-                scope_manager
+                let e = scope_manager
                     .blocks_mut()
-                    .add_block(
-                        sub_name.clone(),
-                        VMBlock::IR(block.clone()),
-                    )
+                    .add_block(sub_name.clone(), VMBlock::IR(block.clone()))
                     .map_err(|_| {
                         Box::new(BlocksCheckerError::CannotShadowBlocksInLocalScope(
                             sub_name.clone(),
                             name.clone(),
                         ))
-                    })?;
-                self.check_block(sub_name.clone(), &block, scope_manager)?;
+                    });
+                if let Err(err) = e {
+                    errs.push(err);
+                    continue;
+                }
+                if let Err(mut err) = self.check_block(sub_name.clone(), &block, scope_manager) {
+                    errs.append(&mut err);
+                }
                 continue;
             }
 
@@ -88,19 +98,37 @@ impl BlocksChecker {
                     continue;
                 }
             };
-            if scope_manager.blocks().get_block(sub).is_none() {
-                return Err(Box::new(BlocksCheckerError::UnknownBlock(
+
+            let block_sub = scope_manager.blocks().get_block(sub);
+            if block_sub.is_none() {
+                errs.push(Box::new(BlocksCheckerError::UnknownBlock(
                     sub.clone(),
-                    name,
+                    name.clone(),
                 )));
+                continue;
+            }
+
+            let block_sub = block_sub.cloned().unwrap();
+            let block_sub = match block_sub {
+                VMBlock::IR(b) => b,
+                _ => { continue; }
+            };
+
+            if let Err(mut e) = self.check_block(sub.clone(), &block_sub, scope_manager) {
+                errs.append(&mut e);
             }
         }
-        Ok(())
+        if errs.is_empty() {
+            Ok(())
+        } else {
+            Err(errs)
+        }
     }
 }
 
 impl Check for BlocksChecker {
-    fn check(&self, mut ctx: CheckContext) -> Result<(), Box<dyn CheckError>> {
+    fn check(&self, mut ctx: CheckContext) -> Result<(), Vec<Box<dyn CheckError>>> {
+        let mut errs: Vec<Box<dyn CheckError>> = vec![];
         for (name, block) in &ctx.blocks.blocks {
             if !block.is_global() {
                 continue;
@@ -110,19 +138,29 @@ impl Check for BlocksChecker {
                 continue;
             }
 
-            ctx.scope_manager
+            let err = ctx.scope_manager
                 .root(ctx.blocks.clone(), name.clone())
-                .map_err(|x| Box::new(BlocksCheckerError::VM(x)))?;
+                .map_err(|x| Box::new(BlocksCheckerError::VM(x)));
+            if let Err(e) = err {
+                errs.push(e);
+                continue;
+            }
 
             let block = match block {
                 VMBlock::NativeHandler(_) => panic!("unreachable"),
                 VMBlock::IR(ir) => ir,
             };
 
-            self.check_block(name.clone(), block, &mut ctx.scope_manager)?;
+            if let Err(mut e) = self.check_block(name.clone(), block, &mut ctx.scope_manager) {
+                errs.append(&mut e);
+            }
         }
 
-        Ok(())
+        if errs.is_empty() {
+            Ok(())
+        } else {
+            Err(errs)
+        }
     }
 
     fn is_independent(&self) -> bool {

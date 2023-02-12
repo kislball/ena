@@ -1,6 +1,6 @@
+use flexstr::local_str;
 use flexstr::LocalStr;
 use flexstr::ToLocalStr;
-use flexstr::local_str;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -13,7 +13,7 @@ pub enum IRError {
 pub struct IR {
     pub blocks: HashMap<LocalStr, Block>,
     pub annotations: HashMap<LocalStr, LocalStr>,
-    pub source_map: HashMap<LocalStr, Position>
+    pub source_map: HashMap<LocalStr, Position>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
