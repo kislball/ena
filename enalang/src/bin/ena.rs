@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
-use colored::Colorize;
-use std::time;
+use enalang::EnaError;
+use enalang_vm::machine::VMOptions;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -18,6 +18,8 @@ enum Commands {
     Run(Run),
     /// Combines several IR files into one
     Link(Link),
+    /// Checks **linked** IR
+    Check(Check),
 }
 
 #[derive(Args)]
@@ -27,6 +29,15 @@ struct Link {
     /// Output file
     #[arg(short, long)]
     output: Option<String>,
+    /// Whether to save source map
+    #[arg(short, long, default_value_t = true)]
+    source_map: bool,
+}
+
+#[derive(Args)]
+struct Check {
+    /// Files to check
+    files: Vec<String>,
 }
 
 #[derive(Args)]
@@ -39,6 +50,9 @@ struct Compile {
     /// Prints ir before exit
     #[arg(short, long, default_value_t = false)]
     print_ir: bool,
+    /// Whether to save source map
+    #[arg(short, long, default_value_t = true)]
+    source_map: bool,
 }
 
 #[derive(Args)]
@@ -62,49 +76,40 @@ struct Run {
     debug_calls: bool,
 }
 
-fn compile(c: Compile) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions::default());
-    if let Err(e) = ena.read_files(&c.files[..]) {
-        ena.report_error_and_exit(e);
-    }
-    if let Err(e) = ena.parse_files() {
-        ena.report_error_and_exit(e);
-    }
-    if let Err(e) = ena.compile_files() {
-        ena.report_error_and_exit(e);
-    }
-    if let Err(e) = ena.link_files() {
-        ena.report_error_and_exit(e);
-    }
-    if let Err(e) = ena.save(&c.output.unwrap_or("output.enair".to_string())) {
-        ena.report_error_and_exit(e);
-    }
+fn compile(c: Compile, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    ena.read_files(&c.files[..])?;
+    ena.parse_files()?;
+    ena.compile_files()?;
+    ena.link_files()?;
+    ena.save(
+        &c.output.unwrap_or("output.enair".to_string()),
+        c.source_map,
+    )?;
 
     if c.print_ir {
-        println!("{:#?}", ena.ir.unwrap());
+        println!("{:#?}", ena.ir.as_ref().unwrap());
     }
+    Ok(())
 }
 
-fn link(l: Link) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions::default());
-    if let Err(e) = ena.load_irs(&l.files[..]) {
-        ena.report_error_and_exit(e);
-    }
-    // if let Err(e) = ena.link_files() {
-    //     ena.report_error_and_exit(e);
-    // }
-    if let Err(e) = ena.save(&l.output.unwrap_or("output.enair".to_string())) {
-        ena.report_error_and_exit(e);
-    }
+fn check(l: Check, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    ena.load_irs(&l.files[..])?;
+    ena.check()?;
+    // ena.save(&l.output.unwrap_or("output.enair".to_string()), l.source_map)?;
+    Ok(())
 }
 
-fn run(r: Run) {
-    let mut ena = enalang::Ena::new(enalang::EnaOptions {
-        debug_gc: r.debug_gc,
-        gc: r.gc,
-        debug_stack: r.debug_stack,
-        debug_calls: r.debug_calls,
-    });
+fn link(l: Link, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    ena.load_irs(&l.files[..])?;
+    ena.check()?;
+    ena.save(
+        &l.output.unwrap_or("output.enair".to_string()),
+        l.source_map,
+    )?;
+    Ok(())
+}
+
+fn run(r: Run, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     match ena.load_ir(&r.file) {
         Err(e) => {
             ena.report_error_and_exit(e);
@@ -113,33 +118,30 @@ fn run(r: Run) {
             ena.ir = Some(e);
         }
     }
-    if let Err(e) = ena.run(&r.main_word.unwrap_or("main".to_string())) {
-        ena.report_error_and_exit(e);
-    }
+    ena.run(
+        &r.main_word.unwrap_or("main".to_string()),
+        VMOptions {
+            debug_stack: r.debug_stack,
+            enable_gc: r.gc,
+            debug_gc: r.debug_gc,
+            debug_calls: r.debug_calls,
+        },
+    )?;
+    Ok(())
 }
 
 fn main() {
     let args = Cli::parse();
+    let mut ena = enalang::Ena::new();
 
-    match args.command {
-        Commands::Compile(c) => {
-            let begin = time::Instant::now();
-            compile(c);
-            println!(
-                "Compilation {} in {:?}",
-                "successful".bold().green(),
-                begin.elapsed()
-            );
-        }
-        Commands::Link(l) => {
-            let begin = time::Instant::now();
-            link(l);
-            println!(
-                "Linking {} in {:?}",
-                "successful".bold().green(),
-                begin.elapsed()
-            );
-        }
-        Commands::Run(r) => run(r),
+    let res = match args.command {
+        Commands::Compile(c) => compile(c, &mut ena),
+        Commands::Link(l) => link(l, &mut ena),
+        Commands::Check(c) => check(c, &mut ena),
+        Commands::Run(r) => run(r, &mut ena),
     };
+
+    if let Err(e) = res {
+        ena.report_error_and_exit(e);
+    }
 }

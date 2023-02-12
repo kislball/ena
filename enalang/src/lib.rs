@@ -1,4 +1,6 @@
 use colored::Colorize;
+use compiler::ir::Position;
+use enalang_checker::checker::{CheckError, Checker};
 use flexstr::ToLocalStr;
 use glob::glob;
 use std::{
@@ -8,7 +10,9 @@ use std::{
     path::PathBuf,
     process,
 };
+use vm::machine::VMOptions;
 
+pub use enalang_checker as checker;
 pub use enalang_compiler as compiler;
 pub use enalang_vm as vm;
 
@@ -22,6 +26,8 @@ pub enum EnaError {
     IRError(compiler::ir::IRError),
     SerializationError(compiler::ir::SerializationError),
     VMError(vm::machine::VMError),
+    CheckerError(Box<dyn CheckError>),
+    CheckerErrors(Vec<Box<dyn CheckError>>),
     FailedToReadGlobPattern(String),
     FSError(String),
     NotYetParsed(String),
@@ -51,29 +57,67 @@ pub struct Ena {
     tokenizer: compiler::tok::Tokenizer,
     ast: compiler::ast::ASTBuilder,
     compiler: compiler::irgen::IRGen,
-    vm: vm::machine::VM,
+    vm: Option<vm::machine::VM>,
     files: HashMap<String, String>,
     astified_files: HashMap<String, compiler::ast::ASTNode>,
     compiled_files: HashMap<String, compiler::ir::IR>,
+    checker: Checker,
     pub ir: Option<compiler::ir::IR>,
 }
 
+impl Default for Ena {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Ena {
-    pub fn new(options: EnaOptions) -> Self {
+    pub fn new() -> Self {
         Self {
             tokenizer: compiler::tok::Tokenizer::new(),
+            checker: Checker::default(),
             ast: compiler::ast::ASTBuilder::new(),
             compiler: compiler::irgen::IRGen::new(),
-            vm: vm::machine::VM::new(vm::machine::VMOptions {
-                debug_gc: options.debug_gc,
-                enable_gc: options.gc,
-                debug_stack: options.debug_stack,
-                debug_calls: options.debug_calls,
-            }),
+            vm: None,
             files: HashMap::new(),
             astified_files: HashMap::new(),
             compiled_files: HashMap::new(),
             ir: None,
+        }
+    }
+
+    pub fn check(&self) -> Result<(), EnaError> {
+        let vec = self.checker.run_checks(false);
+        if !vec.is_empty() {
+            Err(EnaError::CheckerErrors(vec))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn print_error(
+        &self,
+        data: &str,
+        file: &str,
+        line: usize,
+        col: usize,
+        file_data: &str,
+        print_line: bool,
+    ) {
+        eprintln!(
+            "{} in {}:{}:{}: {:?}",
+            "error".red().bold(),
+            file,
+            line,
+            col,
+            data,
+        );
+        if print_line {
+            eprintln!(
+                "\t {} {}",
+                format!("{line} |").dimmed(),
+                Self::highlight_char_in_string(file_data.lines().nth(line - 1).unwrap(), col - 1)
+            );
         }
     }
 
@@ -82,71 +126,72 @@ impl Ena {
             EnaError::TokenizerError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(file_data, data.0);
-                eprintln!(
-                    "{} in {}:{}:{}: {:?}",
-                    "error".red().bold(),
-                    file,
-                    line,
-                    col,
-                    data.1,
-                );
-                eprintln!(
-                    "\t {} {}",
-                    format!("{line} |").dimmed(),
-                    Self::highlight_char_in_string(
-                        file_data.lines().nth(line - 1).unwrap(),
-                        col - 1
-                    )
-                );
+                self.print_error(&format!("{:?}", data.1), &file, line, col, file_data, true);
             }
             EnaError::ASTError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let token = self.tokenizer.tokens.get(data.0).unwrap();
                 let (line, col) = util::get_line(file_data, token.0);
-                eprintln!(
-                    "{} in {}:{}:{}: {:?}",
-                    "error".red().bold(),
-                    file,
-                    line,
-                    col,
-                    data.1,
-                );
-                eprintln!(
-                    "\t {} {}",
-                    format!("{line} |").dimmed(),
-                    Self::highlight_char_in_string(
-                        file_data.lines().nth(line - 1).unwrap(),
-                        col - 1
-                    )
-                );
+                self.print_error(&format!("{:?}", data.1), &file, line, col, file_data, true);
             }
             EnaError::IRGenError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(file_data, data.0 .0);
-                eprintln!(
-                    "{} in {}:{}:{}: {:?}",
-                    "error".red().bold(),
-                    file,
-                    line,
-                    col,
-                    data.1,
-                );
-                eprintln!(
-                    "\t {} {}",
-                    format!("{line} |").dimmed(),
-                    Self::highlight_char_in_string(
-                        file_data.lines().nth(line - 1).unwrap(),
-                        col - 1
-                    )
-                );
+                self.print_error(&format!("{:?}", data.1), &file, line, col, file_data, true);
             }
             EnaError::VMError(err) => {
-                eprintln!("{}: {:?}\n\tcall stack:", "error".red().bold(), err);
-                for call in &self.vm.call_stack {
+                let pos = self.get_position();
+                self.print_error(
+                    &format!("{:?}", err),
+                    &pos.file,
+                    pos.line,
+                    pos.col,
+                    "",
+                    true,
+                );
+                for call in &self.vm.as_ref().unwrap().call_stack {
                     eprintln!("{}", format!("\t\t- {call}").dimmed());
                 }
             }
+            EnaError::CheckerErrors(errs) => {
+                for err in errs {
+                    self.report_error(EnaError::CheckerError(err));
+                }
+            }
+            EnaError::CheckerError(err) => {
+                let pos = match err.from() {
+                    Some(i) => match &self.ir {
+                        Some(ir) => ir.source_map.get(&i.to_local_str()).cloned().unwrap_or_default(),
+                        None => Position::default(),
+                    },
+                    None => Position::default(),
+                };
+                self.print_error(
+                    &format!("{:?}", err),
+                    &pos.file,
+                    pos.line,
+                    pos.col,
+                    "",
+                    true,
+                );
+            }
             other => eprintln!("{}: {other:?}", "error".red().bold()),
+        }
+    }
+
+    fn get_position(&self) -> Position {
+        match &self.ir {
+            Some(ir) => match &self.vm {
+                Some(vm) => {
+                    let top_call = vm.call_stack.last();
+                    match top_call {
+                        Some(i) => ir.source_map.get(i).cloned().unwrap_or(Position::default()),
+                        None => Position::default(),
+                    }
+                }
+                None => Position::default(),
+            },
+            None => Position::default(),
         }
     }
 
@@ -262,11 +307,11 @@ impl Ena {
         Ok(())
     }
 
-    pub fn save(&self, output: &str) -> Result<(), EnaError> {
+    pub fn save(&self, output: &str, source_map: bool) -> Result<(), EnaError> {
         match &self.ir {
             Some(i) => {
                 let u8vec = i
-                    .into_serializable()
+                    .into_serializable(source_map)
                     .into_vec()
                     .map_err(EnaError::SerializationError)?;
                 let mut file = OpenOptions::new()
@@ -310,7 +355,8 @@ impl Ena {
         serial.into_ir().map_err(EnaError::SerializationError)
     }
 
-    pub fn run(&mut self, main: &str) -> Result<(), EnaError> {
+    pub fn run(&mut self, main: &str, options: vm::machine::VMOptions) -> Result<(), EnaError> {
+        self.vm = Some(vm::machine::VM::new(options));
         let ir = match self.ir {
             Some(ref mut i) => i,
             None => {
@@ -327,19 +373,21 @@ impl Ena {
         };
 
         self.vm
+            .as_mut()
+            .unwrap()
             .run(&main.to_local_str(), blocks)
             .map_err(EnaError::VMError)
             .map(|_| ())
     }
 
-    pub fn run_main(&mut self) -> Result<(), EnaError> {
-        self.run("main")
+    pub fn run_main(&mut self, options: VMOptions) -> Result<(), EnaError> {
+        self.run("main", options)
     }
 
     pub fn clean(&mut self) {
         self.tokenizer.clean();
         self.ast.clean();
-        self.vm.clean();
+        self.vm = None;
         self.files = HashMap::new();
         self.astified_files = HashMap::new();
         self.compiled_files = HashMap::new();
