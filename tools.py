@@ -8,6 +8,7 @@ program = argparse.ArgumentParser()
 program.add_argument("--dry", type=bool, help="Only print what is going to be done", default=False)
 program.add_argument("--set-version", type=bool, default=False, help="Sets version")
 program.add_argument("--publish", type=bool, default=False, help="Publishes packages")
+program.add_argument("--tag", type=bool, default=False, help="Creates a tag with current version in git")
 
 parsed = program.parse_args()
 
@@ -16,6 +17,10 @@ PUBLISHING_ORDER = open("./publish-order.txt").read().splitlines()
 
 if parsed.dry:
     print("running in dry mode")
+
+def tag():
+    run(f"""git commit -a -m "v{VERSION}" """)
+    run(f"git tag v{VERSION}")
 
 def run(command):
     print(f"running {command}")
@@ -54,6 +59,9 @@ def main():
     if parsed.set_version:
         set_versions()
     
+    if parsed.tag:
+        tag()
+
     if parsed.publish:
         publish()
     
