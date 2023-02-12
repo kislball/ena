@@ -4,6 +4,8 @@ use enalang_vm::{
 };
 use std::fmt::Debug;
 
+use crate::checks::blocks::BlocksChecker;
+
 pub struct Checker {
     pub checks: Vec<Box<dyn Check>>,
     pub blocks: Option<blocks::Blocks>,
@@ -52,23 +54,17 @@ impl Default for Checker {
     fn default() -> Self {
         Self {
             blocks: None,
-            checks: Vec::new(),
+            checks: vec![
+                Box::new(BlocksChecker::new()),
+            ],
         }
     }
 }
 
+#[derive(Default)]
 pub struct CheckContext {
     pub scope_manager: machine::ScopeManager,
     pub blocks: Blocks,
-}
-
-impl Default for CheckContext {
-    fn default() -> Self {
-        Self {
-            scope_manager: machine::ScopeManager::default(),
-            blocks: Blocks::default(),
-        }
-    }
 }
 
 pub trait Check {
@@ -78,6 +74,7 @@ pub trait Check {
 
 pub trait CheckError: Debug {
     fn explain(&self) -> String;
+    fn from(&self) -> Option<String>;
 }
 
 impl<T: CheckError + 'static> From<Box<T>> for Box<dyn CheckError> {

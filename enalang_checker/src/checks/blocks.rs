@@ -14,6 +14,14 @@ pub enum BlocksCheckerError {
 }
 
 impl CheckError for BlocksCheckerError {
+    fn from(&self) -> Option<String> {
+        match self {
+            Self::UnknownBlock(_, b) => Some(b.to_string()),
+            Self::CannotShadowBlocksInLocalScope(_, b) => Some(b.to_string()),
+            Self::VM(_) => None,
+        }
+    } 
+
     fn explain(&self) -> String {
         match self {
             Self::UnknownBlock(a, b) => format!("unknown block {a} in {b}"),
@@ -24,6 +32,12 @@ impl CheckError for BlocksCheckerError {
 }
 
 pub struct BlocksChecker {}
+
+impl Default for BlocksChecker {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 impl BlocksChecker {
     pub fn new() -> Self {
@@ -74,10 +88,10 @@ impl BlocksChecker {
                     continue;
                 }
             };
-            if let None = scope_manager.blocks().get_block(sub) {
+            if scope_manager.blocks().get_block(sub).is_none() {
                 return Err(Box::new(BlocksCheckerError::UnknownBlock(
                     sub.clone(),
-                    name.clone(),
+                    name,
                 )));
             }
         }
