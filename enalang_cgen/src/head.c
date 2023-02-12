@@ -33,6 +33,12 @@ struct ena_value {
     union ena_value_inner value;
 };
 
+struct ena_value null = {
+    .type = ena_null,
+    .value = {
+        .null = NULL,
+    },
+};
 struct ena_value * stack_begin = NULL;
 size_t stack_capacity = STACK_PREALLOC;
 size_t stack_size = 0;
@@ -66,12 +72,11 @@ void alloc() {
         exit(1);
     }
     
-    union ena_value_inner inner = {
-        .pointer = new_mem,
-    };
     struct ena_value val = {
         .type = ena_pointer,
-        .value = inner
+        .value = {
+            .pointer = new_mem,
+        }
     };
     push_stack(val);
 }
