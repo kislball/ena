@@ -14,3 +14,4 @@ flexstr = { version = "0.9.2", features = [ "serde",] }
 serde = { version = "1.0.152", features = [ "derive",] }
 enalang_vm = { path = "../enalang_vm", version = "0.3.0" }
 enalang_compiler = { path = "../enalang_compiler", version = "0.3.0" }
+thiserror = "1.0.38"

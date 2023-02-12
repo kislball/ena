@@ -4,8 +4,9 @@ use flexstr::ToLocalStr;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum IRError {
+    #[error("block already exists")]
     BlockAlreadyExists,
 }
 
@@ -133,11 +134,15 @@ pub enum IRSerializable<'a> {
     SourceMap(LocalStr, Position),
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum SerializationError {
+    #[error("expected root")]
     ExpectedRoot,
+    #[error("expected block")]
     ExpectedBlock,
+    #[error("bincode error - `{0}`")]
     BincodeErr(bincode::ErrorKind),
+    #[error("ir error - `{0}`")]
     IRError(IRError),
 }
 

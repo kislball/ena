@@ -22,20 +22,33 @@ pub use enalang_vm as vm;
 
 pub mod util;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum EnaError {
+    #[error("tokenizer error in file `{0}` - `{1}`")]
     TokenizerError(String, compiler::tok::TokenizerError),
+    #[error("ast error in file `{0}` - `{1}`")]
     ASTError(String, compiler::ast::ASTError),
+    #[error("irgen error in file `{0}` - `{1}`")]
     IRGenError(String, compiler::irgen::IRGenError),
+    #[error("irgen error - `{0}`")]
     IRError(compiler::ir::IRError),
+    #[error("serialization error - `{0}`")]
     SerializationError(compiler::ir::SerializationError),
+    #[error("VM error - `{0}`")]
     VMError(vm::machine::VMError),
+    #[error("checker error - `{0}`")]
     CheckerError(Box<dyn CheckError>),
+    #[error("checker errors(output not supported)")]
     CheckerErrors(Vec<Box<dyn CheckError>>),
+    #[error("failed to read glob pattern `{0}`")]
     FailedToReadGlobPattern(String),
+    #[error("fs error `{0}`")]
     FSError(String),
+    #[error("blocks error - `{0}`")]
     BlocksError(BlocksError),
+    #[error("not yet parsed `{0}`")]
     NotYetParsed(String),
+    #[error("files have not been linked")]
     NotLinked,
 }
 
@@ -134,28 +147,28 @@ impl Ena {
             EnaError::TokenizerError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(file_data, data.0);
-                self.print_error(&format!("{:?}", data.1), &file, line, col, file_data, true);
+                self.print_error(&format!("{}", data.1), &file, line, col, file_data, true);
             }
             EnaError::ASTError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let token = self.tokenizer.tokens.get(data.0).unwrap();
                 let (line, col) = util::get_line(file_data, token.0);
-                self.print_error(&format!("{:?}", data.1), &file, line, col, file_data, true);
+                self.print_error(&format!("{}", data.1), &file, line, col, file_data, true);
             }
             EnaError::IRGenError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(file_data, data.0 .0);
-                self.print_error(&format!("{:?}", data.1), &file, line, col, file_data, true);
+                self.print_error(&format!("{}", data.1), &file, line, col, file_data, true);
             }
             EnaError::VMError(err) => {
                 let pos = self.get_position();
                 self.print_error(
-                    &format!("{:?}", err),
+                    &format!("{}", err),
                     &pos.file,
                     pos.line,
                     pos.col,
                     "",
-                    true,
+                    false,
                 );
                 for call in &self.vm.as_ref().unwrap().call_stack {
                     eprintln!("{}", format!("\t\t- {call}").dimmed());
@@ -180,7 +193,7 @@ impl Ena {
                 };
 
                 self.print_error(
-                    &err.explain(),
+                    &format!("{err}"),
                     &pos.file,
                     pos.line,
                     pos.col,

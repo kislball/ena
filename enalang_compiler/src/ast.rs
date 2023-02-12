@@ -33,14 +33,18 @@ impl Default for ASTBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum ASTErrorInner {
+    #[error("unexpected end")]
     UnexpectedEnd,
+    #[error("unknown token")]
     UnknownToken,
+    #[error("unexpected token")]
     UnexpectedToken,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("at {0} - `{1}`")]
 pub struct ASTError(pub usize, pub ASTErrorInner);
 
 impl ASTBuilder {

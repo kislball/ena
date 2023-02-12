@@ -2,7 +2,7 @@ use enalang_vm::{
     blocks::{self, Blocks},
     machine::{self, ScopeManager},
 };
-use std::fmt::Debug;
+use std::{fmt::Debug, error::Error};
 
 use crate::checks::blocks::BlocksChecker;
 
@@ -70,8 +70,7 @@ pub trait Check {
     fn is_independent(&self) -> bool;
 }
 
-pub trait CheckError: Debug {
-    fn explain(&self) -> String;
+pub trait CheckError: Debug + Error {
     fn from(&self) -> Option<String>;
 }
 

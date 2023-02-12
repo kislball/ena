@@ -6,10 +6,13 @@ use enalang_vm::{
 };
 use flexstr::LocalStr;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum BlocksCheckerError {
+    #[error("unknown block `{0}` in `{1}`")]
     UnknownBlock(LocalStr, LocalStr),
+    #[error("cannot shadow `{0}` in `{1}`")]
     CannotShadowBlocksInLocalScope(LocalStr, LocalStr),
+    #[error("vm error - `{0}`")]
     VM(VMError),
 }
 
@@ -19,14 +22,6 @@ impl CheckError for BlocksCheckerError {
             Self::UnknownBlock(_, b) => Some(b.to_string()),
             Self::CannotShadowBlocksInLocalScope(_, b) => Some(b.to_string()),
             Self::VM(_) => None,
-        }
-    }
-
-    fn explain(&self) -> String {
-        match self {
-            Self::UnknownBlock(a, b) => format!("unknown block {a} in {b}"),
-            Self::CannotShadowBlocksInLocalScope(a, b) => format!("cannot shadow {a} in {b}"),
-            Self::VM(e) => format!("{e:?}"),
         }
     }
 }

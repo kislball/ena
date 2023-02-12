@@ -4,9 +4,11 @@ use std::collections::HashMap;
 
 use super::machine;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub enum HeapError {
+    #[error("block not allocated `{0}`")]
     BlockNotAllocated(usize),
+    #[error("bad pointer `{0}`")]
     BadPointer(usize),
 }
 
