@@ -4,26 +4,45 @@ use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub enum VMError {
+    #[error("unknown block `{0}`")]
     UnknownBlock(LocalStr),
+    #[error("no ir was provided")]
     NoIR,
+    #[error("stack has ended")]
     StackEnded,
+    #[error("expected boolean")]
     ExpectedBoolean,
+    #[error("expected string")]
     ExpectedString,
+    #[error("expected number")]
     ExpectedNumber,
+    #[error("expected integer")]
     ExpectedInteger,
+    #[error("expected block")]
     ExpectedBlock,
+    #[error("expected pointer")]
     ExpectedPointer,
+    #[error("expected value")]
     ExpectedValue,
+    #[error("expected exception")]
     ExpectedException,
+    #[error("cannot shadow blocks in local scope `{0}`")]
     CannotShadowBlocksInLocalScope(LocalStr),
+    #[error("cannot compare {0:?} to {1:?}")]
     CannotCompare(ir::Value, ir::Value),
+    #[error("cannot convert {0:?}")]
     CannotConvert(ir::Value),
+    #[error("heap error - `{0}`")]
     HeapError(heap::HeapError),
+    #[error("bad pointer - `{0}`")]
     BadPointer(usize),
+    #[error("runtime exception - {0:?}")]
     RuntimeException(ir::Value),
+    #[error("no scope")]
     NoScope,
+    #[error("no single eval")]
     NoSingleEval,
 }
 

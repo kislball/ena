@@ -16,19 +16,28 @@ fn is_id_beginning(ch: char) -> bool {
         && ch != ATOM_CHAR
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum TokenizerErrorInner {
+    #[error("unknown token {0}")]
     UnknownToken(char),
+    #[error("unclosed string")]
     UnclosedString,
+    #[error("unexpected eof")]
     UnexpectedEOF,
+    #[error("too many dots in a number")]
     TooManyDotsInNumber,
+    #[error("cannot escape non-regular id")]
     CannotEscapeNonRegularId,
+    #[error("unexpected escape char")]
     UnexpectedEscapeChar,
+    #[error("unexpected atom char")]
     UnexpectedAtomChar,
+    #[error("invalid escape")]
     InvalidEscape,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("at {0} - `{1}`")]
 pub struct TokenizerError(pub usize, pub TokenizerErrorInner);
 
 #[derive(Debug)]

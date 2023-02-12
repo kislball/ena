@@ -4,8 +4,9 @@ use enalang_compiler::ir;
 use flexstr::LocalStr;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum BlocksError {
+    #[error("block already exists")]
     BlockAlreadyExists,
 }
 

@@ -5,20 +5,30 @@ use rand::distributions::{Alphanumeric, DistString};
 
 pub struct IRGen {}
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum IRGenErrorInner {
+    #[error("expected program node as root")]
     ExpectedProgramAsRoot,
+    #[error("unexpected block")]
     UnexpectedBlock,
+    #[error("unexpected node")]
     UnexpectedNode,
+    #[error("expected block")]
     ExpectedBlock,
+    #[error("unexpected anonymous block")]
     UnexpectedAnonymousBlock,
+    #[error("expected unescaped block")]
     ExpectedUnescapedBlock,
+    #[error("expected unique eval block after if/while")]
     ExpectedUniqueEvalBlockAfterIf,
+    #[error("block already exists")]
     BlockAlreadyExists,
+    #[error("cannot put local block on stack")]
     CannotPutLocalBlockOnStack,
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("in node `{0:?}` - `{1}`")]
 pub struct IRGenError(pub ast::ASTNode, pub IRGenErrorInner);
 
 impl Default for IRGen {
