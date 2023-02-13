@@ -1,6 +1,6 @@
 # this is a comment for some block
-# ahahfaw
-# fwrgfewfcw
+#!ahahfaw
+#!fwrgfewfcw
 some_block {
     'some_block ena.vm.get_annotation ena.vm.io.print "\n" ena.vm.io.print
 }
