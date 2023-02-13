@@ -106,7 +106,9 @@ impl BlocksChecker {
             let block_sub = block_sub.cloned().unwrap();
             let block_sub = match block_sub {
                 VMBlock::IR(b) => b,
-                _ => { continue; }
+                _ => {
+                    continue;
+                }
             };
 
             if let Err(mut e) = self.check_block(sub.clone(), &block_sub, scope_manager) {
@@ -133,7 +135,8 @@ impl Check for BlocksChecker {
                 continue;
             }
 
-            let err = ctx.scope_manager
+            let err = ctx
+                .scope_manager
                 .root(ctx.blocks.clone(), name.clone())
                 .map_err(|x| Box::new(BlocksCheckerError::VM(x)));
             if let Err(e) = err {

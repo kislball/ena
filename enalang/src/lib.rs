@@ -162,14 +162,7 @@ impl Ena {
             }
             EnaError::VMError(err) => {
                 let pos = self.get_position();
-                self.print_error(
-                    &format!("{}", err),
-                    &pos.file,
-                    pos.line,
-                    pos.col,
-                    "",
-                    false,
-                );
+                self.print_error(&format!("{}", err), &pos.file, pos.line, pos.col, "", false);
                 for call in &self.vm.as_ref().unwrap().call_stack {
                     eprintln!("{}", format!("\t\t- {call}").dimmed());
                 }
@@ -192,14 +185,7 @@ impl Ena {
                     None => Position::default(),
                 };
 
-                self.print_error(
-                    &format!("{err}"),
-                    &pos.file,
-                    pos.line,
-                    pos.col,
-                    "",
-                    false,
-                );
+                self.print_error(&format!("{err}"), &pos.file, pos.line, pos.col, "", false);
             }
             other => eprintln!("{}: {other:?}", "error".red().bold()),
         }

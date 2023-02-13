@@ -409,10 +409,10 @@ impl VM {
                             self.call_stack.pop().unwrap();
 
                             return Ok(true);
-                        },
+                        }
                         ir::IRCode::ReturnLocal => {
                             break;
-                        },
+                        }
                         ir::IRCode::Call(name) => self.run_block(&name).map(|_| ()),
                         ir::IRCode::LocalBlock(name, typ, vec) => {
                             self.scope_manager.add_local(name.clone())?;

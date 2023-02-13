@@ -2,7 +2,7 @@ use enalang_vm::{
     blocks::{self, Blocks},
     machine::{self, ScopeManager},
 };
-use std::{fmt::Debug, error::Error};
+use std::{error::Error, fmt::Debug};
 
 use crate::checks::blocks::BlocksChecker;
 
