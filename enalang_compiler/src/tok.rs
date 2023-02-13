@@ -77,6 +77,7 @@ pub enum KeywordType {
     If,
     While,
     Return,
+    ReturnLocal,
     True,
     False,
     Null,
@@ -97,6 +98,8 @@ impl From<&str> for KeywordType {
             KeywordType::False
         } else if value == "null" {
             KeywordType::Null
+        } else if value == "return_local" {
+            KeywordType::ReturnLocal
         } else {
             KeywordType::None
         }

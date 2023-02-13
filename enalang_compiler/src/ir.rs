@@ -204,4 +204,5 @@ pub enum IRCode {
     While(LocalStr),
     If(LocalStr),
     Return,
+    ReturnLocal,
 }
