@@ -61,8 +61,14 @@ impl<'a> IRGen {
                         if let Some(ast::ASTNode(_, ast::ASTNodeInner::Identifier(id))) =
                             nodes.get(i + 1)
                         {
+                            let filtered = data
+                                .split('\n')
+                                .filter(|x| x.starts_with('!'))
+                                .map(|x| x.chars().skip(1).collect::<String>())
+                                .collect::<Vec<String>>()
+                                .join("\n");
                             ir.annotations
-                                .insert(id.to_local_str(), data.to_local_str());
+                                .insert(id.to_local_str(), filtered.to_local_str());
                         }
                     }
                     ast::ASTNodeInner::Identifier(id) => {

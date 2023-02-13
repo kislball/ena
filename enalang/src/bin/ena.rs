@@ -75,9 +75,7 @@ fn compile(c: Compile, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     ena.parse_files()?;
     ena.compile_files()?;
     ena.link_files()?;
-    ena.save(
-        &c.output.unwrap_or("output.enair".to_string()),
-    )?;
+    ena.save(&c.output.unwrap_or("output.enair".to_string()))?;
 
     if c.print_ir {
         println!("{:#?}", ena.ir.as_ref().unwrap());
@@ -95,9 +93,7 @@ fn check(l: Check, ena: &mut enalang::Ena) -> Result<(), EnaError> {
 fn link(l: Link, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     ena.load_irs(&l.files[..])?;
     ena.check()?;
-    ena.save(
-        &l.output.unwrap_or("output.enair".to_string()),
-    )?;
+    ena.save(&l.output.unwrap_or("output.enair".to_string()))?;
     Ok(())
 }
 

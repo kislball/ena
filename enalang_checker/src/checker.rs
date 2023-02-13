@@ -1,9 +1,9 @@
+use crate::checks::blocks::BlocksChecker;
 use enalang_vm::{
     blocks::{self, Blocks},
     machine::{self, ScopeManager},
 };
 use std::{error::Error, fmt::Debug};
-use crate::checks::blocks::BlocksChecker;
 
 pub struct Checker {
     pub checks: Vec<Box<dyn Check>>,
