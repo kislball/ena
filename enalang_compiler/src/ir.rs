@@ -1,4 +1,3 @@
-use flexstr::local_str;
 use flexstr::LocalStr;
 use flexstr::ToLocalStr;
 use serde::{Deserialize, Serialize};
@@ -14,24 +13,6 @@ pub enum IRError {
 pub struct IR {
     pub blocks: HashMap<LocalStr, Block>,
     pub annotations: HashMap<LocalStr, LocalStr>,
-    pub source_map: HashMap<LocalStr, Position>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Position {
-    pub line: usize,
-    pub col: usize,
-    pub file: LocalStr,
-}
-
-impl Default for Position {
-    fn default() -> Self {
-        Self {
-            line: 0,
-            col: 0,
-            file: local_str!("unknown"),
-        }
-    }
 }
 
 impl Default for IR {
@@ -45,11 +26,10 @@ impl IR {
         IR {
             blocks: HashMap::new(),
             annotations: HashMap::new(),
-            source_map: HashMap::new(),
         }
     }
 
-    pub fn into_serializable(&self, source_map: bool) -> IRSerializable {
+    pub fn into_serializable(&self) -> IRSerializable {
         let mut blocks: Vec<IRSerializable> = Vec::new();
 
         for (name, block) in &self.blocks {
@@ -59,12 +39,6 @@ impl IR {
                 block.run_type,
                 block.code.clone(),
             ));
-        }
-
-        if source_map {
-            for (name, pos) in &self.source_map {
-                blocks.push(IRSerializable::SourceMap(name.clone(), pos.clone()));
-            }
         }
 
         for (block, content) in &self.annotations {
@@ -131,7 +105,6 @@ pub enum IRSerializable<'a> {
     Block(&'a str, bool, BlockRunType, Vec<IRCode>),
     Root(Vec<IRSerializable<'a>>),
     Annotation(LocalStr, LocalStr),
-    SourceMap(LocalStr, Position),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -170,8 +143,6 @@ impl<'a> IRSerializable<'a> {
                         .map_err(SerializationError::IRError)?;
                 } else if let IRSerializable::Annotation(name, data) = ser_block {
                     ir.annotations.insert(name, data);
-                } else if let IRSerializable::SourceMap(name, pos) = ser_block {
-                    ir.source_map.insert(name, pos);
                 } else {
                     return Err(SerializationError::ExpectedBlock);
                 }

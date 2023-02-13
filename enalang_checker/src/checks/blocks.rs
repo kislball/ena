@@ -26,25 +26,36 @@ impl CheckError for BlocksCheckerError {
     }
 }
 
-pub struct BlocksChecker {}
+pub struct BlocksChecker {
+    checked: Vec<LocalStr>,
+}
 
 impl Default for BlocksChecker {
     fn default() -> Self {
-        Self {}
+        Self {
+            checked: Vec::new(),
+        }
     }
 }
 
 impl BlocksChecker {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            checked: Vec::new(),
+        }
     }
 
     fn check_block(
-        &self,
+        &mut self,
         name: LocalStr,
         block: &Block,
         scope_manager: &mut ScopeManager,
     ) -> Result<(), Vec<Box<dyn CheckError>>> {
+        if self.checked.contains(&name) {
+            return Ok(());
+        } else {
+            self.checked.push(name.clone());
+        }
         let mut errs: Vec<Box<dyn CheckError>> = Default::default();
         for op in &block.code {
             if let IRCode::LocalBlock(sub_name, typ, data) = op {
@@ -124,7 +135,7 @@ impl BlocksChecker {
 }
 
 impl Check for BlocksChecker {
-    fn check(&self, mut ctx: CheckContext) -> Result<(), Vec<Box<dyn CheckError>>> {
+    fn check(&mut self, mut ctx: CheckContext) -> Result<(), Vec<Box<dyn CheckError>>> {
         let mut errs: Vec<Box<dyn CheckError>> = vec![];
         for (name, block) in &ctx.blocks.blocks {
             if !block.is_global() {

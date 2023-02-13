@@ -29,9 +29,6 @@ struct Link {
     /// Output file
     #[arg(short, long)]
     output: Option<String>,
-    /// Whether to save source map
-    #[arg(short, long, default_value_t = true)]
-    source_map: bool,
 }
 
 #[derive(Args)]
@@ -50,9 +47,6 @@ struct Compile {
     /// Prints ir before exit
     #[arg(short, long, default_value_t = false)]
     print_ir: bool,
-    /// Whether to save source map
-    #[arg(short, long, default_value_t = true)]
-    source_map: bool,
 }
 
 #[derive(Args)]
@@ -83,7 +77,6 @@ fn compile(c: Compile, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     ena.link_files()?;
     ena.save(
         &c.output.unwrap_or("output.enair".to_string()),
-        c.source_map,
     )?;
 
     if c.print_ir {
@@ -104,7 +97,6 @@ fn link(l: Link, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     ena.check()?;
     ena.save(
         &l.output.unwrap_or("output.enair".to_string()),
-        l.source_map,
     )?;
     Ok(())
 }

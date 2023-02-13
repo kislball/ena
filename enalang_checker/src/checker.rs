@@ -3,7 +3,6 @@ use enalang_vm::{
     machine::{self, ScopeManager},
 };
 use std::{error::Error, fmt::Debug};
-
 use crate::checks::blocks::BlocksChecker;
 
 pub struct Checker {
@@ -19,25 +18,21 @@ impl Checker {
         }
     }
 
-    fn create_check_context(&self) -> CheckContext {
-        CheckContext {
-            scope_manager: ScopeManager::new(),
-            blocks: self.blocks.as_ref().unwrap().clone(),
-        }
-    }
-
     pub fn set_blocks(&mut self, blocks: blocks::Blocks) {
         self.blocks = Some(blocks);
     }
 
-    pub fn run_checks(&self, independent: bool) -> Vec<Box<dyn CheckError>> {
+    pub fn run_checks(&mut self, independent: bool) -> Vec<Box<dyn CheckError>> {
         let mut errs = Vec::new();
 
-        for check in &self.checks {
+        for check in &mut self.checks {
             if independent && !check.is_independent() {
                 continue;
             }
-            if let Err(err) = check.check(self.create_check_context()) {
+            if let Err(err) = check.check(CheckContext {
+                scope_manager: ScopeManager::default(),
+                blocks: self.blocks.as_ref().unwrap().clone(),
+            }) {
                 errs.push(err);
             }
         }
@@ -66,7 +61,7 @@ pub struct CheckContext {
 }
 
 pub trait Check {
-    fn check(&self, ctx: CheckContext) -> Result<(), Vec<Box<dyn CheckError>>>;
+    fn check(&mut self, ctx: CheckContext) -> Result<(), Vec<Box<dyn CheckError>>>;
     fn is_independent(&self) -> bool;
 }
 

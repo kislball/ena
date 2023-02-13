@@ -1,5 +1,4 @@
 use colored::Colorize;
-use compiler::ir::Position;
 use enalang_checker::checker::{CheckError, Checker};
 use flexstr::ToLocalStr;
 use glob::glob;
@@ -161,10 +160,9 @@ impl Ena {
                 self.print_error(&format!("{}", data.1), &file, line, col, file_data, true);
             }
             EnaError::VMError(err) => {
-                let pos = self.get_position();
-                self.print_error(&format!("{}", err), &pos.file, pos.line, pos.col, "", false);
+                eprintln!("{red}: {err}", red = "error".red().bold());
                 for call in &self.vm.as_ref().unwrap().call_stack {
-                    eprintln!("{}", format!("\t\t- {call}").dimmed());
+                    eprintln!("{}", format!("\t- {call}").dimmed());
                 }
             }
             EnaError::CheckerErrors(errs) => {
@@ -173,37 +171,9 @@ impl Ena {
                 }
             }
             EnaError::CheckerError(err) => {
-                let pos = match err.from() {
-                    Some(i) => match &self.ir {
-                        Some(ir) => ir
-                            .source_map
-                            .get(&i.to_local_str())
-                            .cloned()
-                            .unwrap_or_default(),
-                        None => Position::default(),
-                    },
-                    None => Position::default(),
-                };
-
-                self.print_error(&format!("{err}"), &pos.file, pos.line, pos.col, "", false);
+                eprintln!("{red}: {err}", red = "error".red().bold());
             }
             other => eprintln!("{}: {other:?}", "error".red().bold()),
-        }
-    }
-
-    fn get_position(&self) -> Position {
-        match &self.ir {
-            Some(ir) => match &self.vm {
-                Some(vm) => {
-                    let top_call = vm.call_stack.last();
-                    match top_call {
-                        Some(i) => ir.source_map.get(i).cloned().unwrap_or(Position::default()),
-                        None => Position::default(),
-                    }
-                }
-                None => Position::default(),
-            },
-            None => Position::default(),
         }
     }
 
@@ -319,11 +289,11 @@ impl Ena {
         Ok(())
     }
 
-    pub fn save(&self, output: &str, source_map: bool) -> Result<(), EnaError> {
+    pub fn save(&self, output: &str) -> Result<(), EnaError> {
         match &self.ir {
             Some(i) => {
                 let u8vec = i
-                    .into_serializable(source_map)
+                    .into_serializable()
                     .into_vec()
                     .map_err(EnaError::SerializationError)?;
                 let mut file = OpenOptions::new()
