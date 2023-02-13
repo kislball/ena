@@ -205,10 +205,10 @@ impl<'a> IRGen {
                 }
                 ast::ASTNodeInner::Keyword(tok::KeywordType::Return) => {
                     code.push(ir::IRCode::Return);
-                },
+                }
                 ast::ASTNodeInner::Keyword(tok::KeywordType::ReturnLocal) => {
                     code.push(ir::IRCode::ReturnLocal);
-                },
+                }
                 ast::ASTNodeInner::Keyword(tok::KeywordType::True) => {
                     code.push(ir::IRCode::PutValue(ir::Value::Boolean(true)));
                 }
