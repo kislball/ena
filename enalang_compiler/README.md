@@ -2,6 +2,6 @@
 
 # Enalang compiler
 
-This crate contains the compiler for Ena and Ena's intermediate representation.
+This crate contains the compiler for Ena.
 
 See the [Github page](https://github.com/kislball/ena) for more info.

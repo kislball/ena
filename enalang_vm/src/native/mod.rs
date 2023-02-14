@@ -1,5 +1,5 @@
 use crate::machine;
-use enalang_compiler::ir;
+use enalang_ir as ir;
 use flexstr::{local_fmt, LocalStr, ToLocalStr};
 use std::collections::HashMap;
 

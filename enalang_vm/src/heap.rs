@@ -1,4 +1,4 @@
-use enalang_compiler::ir;
+use enalang_ir as ir;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

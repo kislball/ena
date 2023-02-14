@@ -1,5 +1,5 @@
 use crate::{machine, native};
-use enalang_compiler::ir;
+use enalang_ir as ir;
 
 pub fn print(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {

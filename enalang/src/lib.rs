@@ -17,6 +17,8 @@ use vm::{
 
 pub use enalang_checker as checker;
 pub use enalang_compiler as compiler;
+pub use enalang_ir as ir;
+pub use enalang_optimizer as optimizer;
 pub use enalang_vm as vm;
 
 pub mod util;
@@ -30,9 +32,9 @@ pub enum EnaError {
     #[error("irgen error in file `{0}` - `{1}`")]
     IRGenError(String, compiler::irgen::IRGenError),
     #[error("irgen error - `{0}`")]
-    IRError(compiler::ir::IRError),
+    IRError(ir::IRError),
     #[error("serialization error - `{0}`")]
-    SerializationError(compiler::ir::SerializationError),
+    SerializationError(ir::SerializationError),
     #[error("VM error - `{0}`")]
     VMError(vm::machine::VMError),
     #[error("checker error - `{0}`")]
@@ -77,9 +79,9 @@ pub struct Ena {
     vm: Option<vm::machine::VM>,
     files: HashMap<String, String>,
     astified_files: HashMap<String, compiler::ast::ASTNode>,
-    compiled_files: HashMap<String, compiler::ir::IR>,
+    compiled_files: HashMap<String, ir::IR>,
     checker: Checker,
-    pub ir: Option<compiler::ir::IR>,
+    pub ir: Option<ir::IR>,
 }
 
 impl Default for Ena {
@@ -274,13 +276,13 @@ impl Ena {
     }
 
     pub fn link_files(&mut self) -> Result<(), EnaError> {
-        let mut ir = compiler::ir::IR::new();
+        let mut ir = ir::IR::new();
 
         for sub_ir in self
             .compiled_files
             .clone()
             .into_values()
-            .collect::<Vec<compiler::ir::IR>>()
+            .collect::<Vec<ir::IR>>()
         {
             ir.add(&sub_ir).map_err(EnaError::IRError)?;
         }
@@ -311,7 +313,7 @@ impl Ena {
 
     pub fn load_irs(&mut self, paths: &[String]) -> Result<(), EnaError> {
         let paths = Self::read_paths(paths)?;
-        let mut ir = compiler::ir::IR::new();
+        let mut ir = ir::IR::new();
 
         for path in paths {
             let sub_ir = self.load_ir(path.to_str().unwrap())?;
@@ -323,7 +325,7 @@ impl Ena {
         Ok(())
     }
 
-    pub fn load_ir(&mut self, from: &str) -> Result<compiler::ir::IR, EnaError> {
+    pub fn load_ir(&mut self, from: &str) -> Result<ir::IR, EnaError> {
         let mut open_opts = OpenOptions::new()
             .read(true)
             .open(from)
@@ -333,7 +335,7 @@ impl Ena {
             .read_to_end(&mut v)
             .map_err(|x| EnaError::FSError(x.to_string()))?;
 
-        let serial = compiler::ir::from_vec(&v).map_err(EnaError::SerializationError)?;
+        let serial = ir::from_vec(&v).map_err(EnaError::SerializationError)?;
         serial.into_ir().map_err(EnaError::SerializationError)
     }
 

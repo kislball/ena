@@ -1,6 +1,6 @@
 use crate::native;
 use core::fmt::Debug;
-use enalang_compiler::ir;
+use enalang_ir as ir;
 use flexstr::LocalStr;
 use std::collections::HashMap;
 

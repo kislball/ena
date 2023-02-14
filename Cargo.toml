@@ -4,5 +4,7 @@ members = [
     "./enalang_compiler",
     "./enalang_vm",
     "./enalang_checker",
-    "./enalang_cgen"
+    "./enalang_cgen",
+    "./enalang_optimizer",
+    "./enalang_ir"
 ]
