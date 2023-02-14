@@ -1,5 +1,5 @@
 use crate::{heap, machine, native};
-use enalang_compiler::ir;
+use enalang_ir as ir;
 
 pub fn drop_value(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm.pop()?;

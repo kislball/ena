@@ -97,6 +97,8 @@ dependencies = [
  "colored",
  "enalang_checker",
  "enalang_compiler",
+ "enalang_ir",
+ "enalang_optimizer",
  "enalang_vm",
  "flexstr",
  "glob",
@@ -120,7 +122,7 @@ name = "enalang_checker"
 version = "0.3.2"
 dependencies = [
  "bincode",
- "enalang_compiler",
+ "enalang_ir",
  "enalang_vm",
  "flexstr",
  "serde",
@@ -132,6 +134,7 @@ name = "enalang_compiler"
 version = "0.3.2"
 dependencies = [
  "bincode",
+ "enalang_ir",
  "flexstr",
  "rand",
  "serde",
@@ -139,11 +142,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "enalang_ir"
+version = "0.3.2"
+dependencies = [
+ "bincode",
+ "flexstr",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "enalang_optimizer"
+version = "0.3.2"
+
+[[package]]
 name = "enalang_vm"
 version = "0.3.2"
 dependencies = [
  "bincode",
- "enalang_compiler",
+ "enalang_ir",
  "flexstr",
  "rand",
  "serde",

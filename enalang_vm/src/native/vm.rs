@@ -1,5 +1,5 @@
 use crate::{machine, native};
-use enalang_compiler::ir;
+use enalang_ir as ir;
 use rand::{self, Rng};
 
 pub fn vm_debug(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {

@@ -1,5 +1,5 @@
 use crate::{blocks, heap, native};
-use enalang_compiler::ir;
+use enalang_ir as ir;
 use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

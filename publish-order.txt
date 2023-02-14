@@ -1,4 +1,6 @@
+enalang_ir
 enalang_compiler
 enalang_vm
+enalang_optimizer
 enalang_checker
 enalang

@@ -1,5 +1,5 @@
 use crate::{machine, native};
-use enalang_compiler::ir;
+use enalang_ir as ir;
 use flexstr::{local_fmt, ToLocalStr};
 
 pub fn strlen(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {

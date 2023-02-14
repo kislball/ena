@@ -1,5 +1,5 @@
-use crate::ir;
 use crate::{ast, tok};
+use enalang_ir as ir;
 use flexstr::{local_fmt, IntoLocalStr, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
 

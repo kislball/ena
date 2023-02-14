@@ -1,5 +1,5 @@
 use crate::checker::{Check, CheckContext, CheckError};
-use enalang_compiler::ir::{Block, IRCode, Value};
+use enalang_ir::{Block, IRCode, Value};
 use enalang_vm::{
     blocks::VMBlock,
     machine::{ScopeManager, VMError},
