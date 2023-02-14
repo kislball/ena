@@ -154,6 +154,11 @@ dependencies = [
 [[package]]
 name = "enalang_optimizer"
 version = "0.3.4"
+dependencies = [
+ "enalang_ir",
+ "enalang_vm",
+ "flexstr",
+]
 
 [[package]]
 name = "enalang_vm"

@@ -29,6 +29,23 @@ impl IR {
         }
     }
 
+    pub fn has_directive(&self, block: &LocalStr, directive: &LocalStr) -> bool {
+        let annotation = match self.annotations.get(block.as_ref()) {
+            Some(i) => i,
+            None => {
+                return false;
+            }
+        };
+
+        for line in annotation.lines() {
+            if line.starts_with(directive.as_str()) {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub fn into_serializable(&self) -> IRSerializable {
         let mut blocks: Vec<IRSerializable> = Vec::new();
 
