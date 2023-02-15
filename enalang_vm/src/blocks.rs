@@ -65,6 +65,19 @@ impl Blocks {
         Ok(default)
     }
 
+    pub fn has_directive(&self, name: &LocalStr, annotation: &LocalStr) -> bool {
+        if let Some(i) = self.annotations.get(name) {
+            for line in i.lines() {
+                if line.contains(annotation.as_str()) {
+                    return true;
+                }
+            }
+            false
+        } else {
+            false
+        }
+    }
+
     pub fn get_block(&self, name: &LocalStr) -> Option<&VMBlock> {
         self.blocks.get(name)
     }
