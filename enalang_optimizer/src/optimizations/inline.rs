@@ -89,6 +89,7 @@ impl InlineOptimization {
                     self.scope_manager
                         .add_local(name.clone())
                         .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
+                    new_block.code.push(code.clone());
                 }
                 IRCode::Call(block_name) => {
                     if self.can_inline(block_name) {
