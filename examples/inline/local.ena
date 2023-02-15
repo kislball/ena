@@ -1,0 +1,10 @@
+kek {
+	"Hello, world!" println
+}
+
+main {
+	lol {
+		kek
+	}
+	lol
+}

@@ -18,17 +18,37 @@ enum Commands {
     Run(Run),
     /// Combines several IR files into one
     Link(Link),
-    /// Checks **linked** IR
+    /// Checks linked IR
     Check(Check),
+    /// Optimizes IR
+    Optimize(Optimize),
+}
+
+#[derive(Args)]
+struct Optimize {
+    /// Main
+    #[arg(short, long)]
+    main: Option<String>,
+    /// Files to optimize
+    files: Vec<String>,
+    /// Prints IR before exit
+    #[arg(short, long, default_value_t = false)]
+    print_ir: bool,
 }
 
 #[derive(Args)]
 struct Link {
+    /// Whether to optimize the resulting IR
+    #[arg(short, long, default_value_t = true)]
+    optimize: bool,
     /// Files to merge
     files: Vec<String>,
     /// Output file
     #[arg(short, long)]
     output: Option<String>,
+    /// Main
+    #[arg(short, long)]
+    main: Option<String>,
 }
 
 #[derive(Args)]
@@ -86,13 +106,26 @@ fn compile(c: Compile, ena: &mut enalang::Ena) -> Result<(), EnaError> {
 fn check(l: Check, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     ena.load_irs(&l.files[..])?;
     ena.check()?;
-    // ena.save(&l.output.unwrap_or("output.enair".to_string()), l.source_map)?;
+    Ok(())
+}
+
+fn optimize(o: Optimize, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    let main = o.main.unwrap_or(String::from("main"));
+    ena.load_irs(&o.files[..])?;
+    ena.optimize(&main)?;
+    if o.print_ir {
+        println!("{:#?}", ena.ir.as_ref().unwrap());
+    }
     Ok(())
 }
 
 fn link(l: Link, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    let main = l.main.unwrap_or(String::from("main"));
     ena.load_irs(&l.files[..])?;
     ena.check()?;
+    if l.optimize {
+        ena.optimize(&main)?;
+    }
     ena.save(&l.output.unwrap_or("output.enair".to_string()))?;
     Ok(())
 }
@@ -127,6 +160,7 @@ fn main() {
         Commands::Link(l) => link(l, &mut ena),
         Commands::Check(c) => check(c, &mut ena),
         Commands::Run(r) => run(r, &mut ena),
+        Commands::Optimize(o) => optimize(o, &mut ena),
     };
 
     if let Err(e) = res {

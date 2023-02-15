@@ -5,7 +5,8 @@ use enalang_vm::{
     machine::{ScopeManager, VMError},
     native,
 };
-use flexstr::{local_str, LocalStr, ToLocalStr};
+use flexstr::{local_fmt, local_str, IntoLocalStr, LocalStr, ToLocalStr};
+use rand::distributions::{Alphanumeric, DistString};
 
 pub struct InlineOptimization {
     ctx: OptimizationContext,
@@ -24,25 +25,25 @@ impl InlineOptimization {
 
     fn can_inline(&self, name: &LocalStr) -> bool {
         if self
-            .ctx
-            .ir
+            .scope_manager
+            .blocks()
             .has_directive(&name.clone(), &"@unsafe(inline)".to_local_str())
         {
             return true;
         }
 
         if self
-            .ctx
-            .ir
+            .scope_manager
+            .blocks()
             .has_directive(&name.clone(), &"@no-inline".to_local_str())
         {
             return false;
         }
 
-        let block = self.ctx.ir.get_block(name);
+        let block = self.scope_manager.blocks().get_block(name);
         let block = match block {
-            Some(i) => i,
-            None => {
+            Some(VMBlock::IR(i)) => i,
+            _ => {
                 return false;
             }
         };
@@ -93,10 +94,26 @@ impl InlineOptimization {
                 | IRCode::ReturnLocal => {
                     new_block.code.push(code.clone());
                 }
-                IRCode::LocalBlock(name, _, _) => {
+                IRCode::LocalBlock(name, run_type, local_code) => {
                     self.scope_manager
                         .add_local(name.clone())
                         .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
+                    let block = Block {
+                        global: false,
+                        run_type: run_type.clone(),
+                        code: local_code.clone(),
+                    };
+                    let optimized = self.optimize_block(name, &block)?;
+                    self.scope_manager
+                        .blocks_mut()
+                        .add_block(
+                            local_fmt!(
+                                "{name}_{i}",
+                                i = Alphanumeric.sample_string(&mut rand::thread_rng(), 17)
+                            ),
+                            VMBlock::IR(optimized),
+                        )
+                        .map_err(|x| Box::new(InlineOptimizationError::Blocks(x)))?;
                     new_block.code.push(code.clone());
                 }
                 IRCode::Call(block_name) => {
@@ -116,6 +133,8 @@ impl InlineOptimization {
                                 new_block.code.push(sub_code.clone());
                             }
                         }
+                    } else {
+                        new_block.code.push(IRCode::Call(block_name.clone()));
                     }
                 }
             };

@@ -1,0 +1,7 @@
+inline_me {
+	"hello, world!" println
+}
+
+main {
+	inline_me
+}

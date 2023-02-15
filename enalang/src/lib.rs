@@ -49,8 +49,12 @@ pub enum EnaError {
     BlocksError(BlocksError),
     #[error("not yet parsed `{0}`")]
     NotYetParsed(String),
+    #[error("optimizer error - `{0}`")]
+    OptimizerError(Box<dyn optimizer::OptimizationError>),
     #[error("files have not been linked")]
     NotLinked,
+    #[error("no ir was provided")]
+    NoIR,
 }
 
 #[derive(Copy, Clone)]
@@ -73,14 +77,15 @@ impl Default for EnaOptions {
 }
 
 pub struct Ena {
-    tokenizer: compiler::tok::Tokenizer,
-    ast: compiler::ast::ASTBuilder,
-    compiler: compiler::irgen::IRGen,
-    vm: Option<vm::machine::VM>,
-    files: HashMap<String, String>,
-    astified_files: HashMap<String, compiler::ast::ASTNode>,
-    compiled_files: HashMap<String, ir::IR>,
-    checker: Checker,
+    pub tokenizer: compiler::tok::Tokenizer,
+    pub ast: compiler::ast::ASTBuilder,
+    pub compiler: compiler::irgen::IRGen,
+    pub vm: Option<vm::machine::VM>,
+    pub files: HashMap<String, String>,
+    pub astified_files: HashMap<String, compiler::ast::ASTNode>,
+    pub compiled_files: HashMap<String, ir::IR>,
+    pub checker: Checker,
+    pub optimizer: optimizer::Optimizer,
     pub ir: Option<ir::IR>,
 }
 
@@ -93,6 +98,7 @@ impl Default for Ena {
 impl Ena {
     pub fn new() -> Self {
         Self {
+            optimizer: optimizer::Optimizer::default(),
             tokenizer: compiler::tok::Tokenizer::new(),
             checker: Checker::default(),
             ast: compiler::ast::ASTBuilder::new(),
@@ -103,6 +109,19 @@ impl Ena {
             compiled_files: HashMap::new(),
             ir: None,
         }
+    }
+
+    pub fn optimize(&mut self, main: &str) -> Result<(), EnaError> {
+        let ir = match &self.ir {
+            Some(i) => i,
+            None => return Err(EnaError::NoIR),
+        };
+        self.ir = Some(
+            self.optimizer
+                .optimize(ir.clone(), &main.to_local_str())
+                .map_err(|x| EnaError::OptimizerError(x))?,
+        );
+        Ok(())
     }
 
     pub fn check(&mut self) -> Result<(), EnaError> {
@@ -175,7 +194,7 @@ impl Ena {
             EnaError::CheckerError(err) => {
                 eprintln!("{red}: {err}", red = "error".red().bold());
             }
-            other => eprintln!("{}: {other:?}", "error".red().bold()),
+            other => eprintln!("{}: {other}", "error".red().bold()),
         }
     }
 

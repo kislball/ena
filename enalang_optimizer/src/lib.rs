@@ -1,12 +1,22 @@
-use std::{error::Error, fmt::Debug};
-
+use flexstr::{local_str, LocalStr};
 use optimizations::inline::InlineOptimization;
+use std::{error::Error, fmt::Debug};
 
 pub mod optimizations;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct OptimizationContext {
     pub ir: enalang_ir::IR,
+    pub main: LocalStr,
+}
+
+impl Default for OptimizationContext {
+    fn default() -> Self {
+        Self {
+            ir: Default::default(),
+            main: local_str!("main"),
+        }
+    }
 }
 
 pub trait Optimization {
@@ -26,26 +36,37 @@ impl<T: OptimizationError + 'static> From<Box<T>> for Box<dyn OptimizationError>
     }
 }
 
-#[derive(Default)]
 pub struct Optimizer {
     pub optimizations: Vec<Box<dyn Optimization>>,
 }
 
-impl Optimizer {
-    pub fn new() -> Self {
-        let mut opt = Self::default();
+impl Default for Optimizer {
+    fn default() -> Self {
+        let mut opt = Self::new();
 
         opt.optimizations.push(Box::new(InlineOptimization::new()));
 
         opt
     }
+}
+
+impl Optimizer {
+    pub fn new() -> Self {
+        Self {
+            optimizations: Vec::new(),
+        }
+    }
 
     pub fn optimize(
         &mut self,
         mut code: enalang_ir::IR,
+        main: &LocalStr,
     ) -> Result<enalang_ir::IR, Box<dyn OptimizationError>> {
         for optimization in &mut self.optimizations {
-            code = optimization.optimize(OptimizationContext { ir: code.clone() })?;
+            code = optimization.optimize(OptimizationContext {
+                ir: code.clone(),
+                main: main.clone(),
+            })?;
         }
         Ok(code)
     }
