@@ -14,6 +14,14 @@ pub struct InlineOptimization {
 }
 
 impl InlineOptimization {
+    pub fn new() -> Self {
+        Self {
+            ctx: OptimizationContext::default(),
+            optimized: Vec::new(),
+            scope_manager: ScopeManager::new(),
+        }
+    }
+
     fn can_inline(&self, name: &LocalStr) -> bool {
         if self
             .ctx

@@ -1,8 +1,10 @@
 use std::{error::Error, fmt::Debug};
 
+use optimizations::inline::InlineOptimization;
+
 pub mod optimizations;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct OptimizationContext {
     pub ir: enalang_ir::IR,
 }
@@ -31,7 +33,11 @@ pub struct Optimizer {
 
 impl Optimizer {
     pub fn new() -> Self {
-        Self::default()
+        let mut opt = Self::default();
+
+        opt.optimizations.push(Box::new(InlineOptimization::new()));
+
+        opt
     }
 
     pub fn optimize(
