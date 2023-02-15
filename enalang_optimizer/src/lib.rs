@@ -2,6 +2,7 @@ use std::{error::Error, fmt::Debug};
 
 pub mod optimizations;
 
+#[derive(Clone)]
 pub struct OptimizationContext {
     pub ir: enalang_ir::IR,
 }
@@ -15,6 +16,12 @@ pub trait Optimization {
 
 pub trait OptimizationError: Debug + Error {
     fn from(&self) -> Option<String>;
+}
+
+impl<T: OptimizationError + 'static> From<Box<T>> for Box<dyn OptimizationError> {
+    fn from(value: Box<T>) -> Self {
+        value
+    }
 }
 
 #[derive(Default)]

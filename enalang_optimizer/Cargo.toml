@@ -12,3 +12,4 @@ keywords = [ "programming-language",]
 enalang_ir = { version = "0.3.4", path = "../enalang_ir" }
 enalang_vm = { version = "0.3.4", path = "../enalang_vm" }
 flexstr = { version = "0.9.2", features = ["serde"] }
+thiserror = "1.0.38"
