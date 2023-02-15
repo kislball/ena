@@ -1,9 +1,16 @@
 use crate::{Optimization, OptimizationContext};
-use enalang_ir::{Block, BlockRunType, IRCode};
-use flexstr::{LocalStr, ToLocalStr};
+use enalang_ir::{Block, BlockRunType, IRCode, IRError};
+use enalang_vm::{
+    blocks::{Blocks, BlocksError, VMBlock},
+    machine::{ScopeManager, VMError},
+    native,
+};
+use flexstr::{local_str, LocalStr, ToLocalStr};
 
 pub struct InlineOptimization {
     ctx: OptimizationContext,
+    optimized: Vec<LocalStr>,
+    scope_manager: ScopeManager,
 }
 
 impl InlineOptimization {
@@ -41,21 +48,74 @@ impl InlineOptimization {
                 IRCode::LocalBlock(_, _, _) | IRCode::ReturnLocal | IRCode::Return => {
                     return false;
                 }
-                IRCode::If(if_block) => {
-                    if !self.can_inline(&if_block) {
-                        return false;
-                    }
-                }
-                IRCode::While(while_block) => {
-                    if !self.can_inline(&while_block) {
-                        return false;
-                    }
-                }
                 _ => {}
             };
         }
 
         true
+    }
+
+    fn optimize_block(
+        &mut self,
+        name: &LocalStr,
+        block: &Block,
+    ) -> Result<Block, Box<dyn crate::OptimizationError>> {
+        let mut new_block = Block {
+            global: block.global,
+            run_type: block.run_type,
+            code: Vec::new(),
+        };
+
+        if block.global {
+            self.scope_manager
+                .parent(name.clone())
+                .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
+        } else {
+            self.scope_manager
+                .child(name.clone())
+                .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
+        }
+
+        for code in &block.code {
+            match code {
+                IRCode::PutValue(_)
+                | IRCode::While(_)
+                | IRCode::If(_)
+                | IRCode::Return
+                | IRCode::ReturnLocal => {
+                    new_block.code.push(code.clone());
+                }
+                IRCode::LocalBlock(name, _, _) => {
+                    self.scope_manager
+                        .add_local(name.clone())
+                        .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
+                }
+                IRCode::Call(block_name) => {
+                    if self.can_inline(block_name) {
+                        let block_to_be_inlined = self.scope_manager.blocks().get_block(block_name);
+                        let block_to_be_inlined = match block_to_be_inlined {
+                            Some(i) => i,
+                            None => {
+                                return Err(Box::new(InlineOptimizationError::UnknownBlock(
+                                    block_name.clone(),
+                                )));
+                            }
+                        };
+
+                        if let VMBlock::IR(ir_block) = block_to_be_inlined {
+                            for sub_code in &ir_block.code {
+                                new_block.code.push(sub_code.clone());
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        self.scope_manager
+            .pop_scope()
+            .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
+        Ok(new_block)
     }
 }
 
@@ -64,15 +124,47 @@ impl Optimization for InlineOptimization {
         &mut self,
         ctx: OptimizationContext,
     ) -> Result<enalang_ir::IR, Box<dyn crate::OptimizationError>> {
-        let mut new_ir = enalang_ir::IR::new();
-        let mut scope_manager = enalang_vm::machine::ScopeManager::new();
-        new_ir.annotations = ctx.ir.annotations.clone();
         self.ctx = ctx;
+        self.optimized = vec![];
+        self.scope_manager = ScopeManager::new();
+        self.scope_manager
+            .root(
+                Blocks::new(native::group(), self.ctx.ir.clone())
+                    .map_err(|x| Box::new(InlineOptimizationError::Blocks(x)))?,
+                local_str!("root"),
+            )
+            .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
 
-        for block in &self.ctx.ir.blocks {
-            // TODO: implement inlining
+        let mut new_ir = enalang_ir::IR::new();
+        for block in &self.ctx.clone().ir.blocks {
+            if self.optimized.contains(&block.0.clone()) {
+                continue;
+            }
+            let opt_block = self.optimize_block(block.0, block.1)?;
+            self.optimized.push(block.0.clone());
+            new_ir
+                .add_block(block.0.clone(), opt_block, true)
+                .map_err(|x| Box::new(InlineOptimizationError::IR(x)))?;
         }
 
         Ok(new_ir)
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum InlineOptimizationError {
+    #[error("blocks error - `{0}`")]
+    Blocks(BlocksError),
+    #[error("vm error - `{0}`")]
+    VM(VMError),
+    #[error("ir error - `{0}`")]
+    IR(IRError),
+    #[error("unknown block `{0}`")]
+    UnknownBlock(LocalStr),
+}
+
+impl crate::OptimizationError for InlineOptimizationError {
+    fn from(&self) -> Option<String> {
+        Some(String::from("inline"))
     }
 }

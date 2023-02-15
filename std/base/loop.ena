@@ -1,0 +1,7 @@
+break {
+	false return_local
+}
+
+continue {
+	true return_local
+}
