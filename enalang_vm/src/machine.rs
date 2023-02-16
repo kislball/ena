@@ -396,14 +396,16 @@ impl VM {
 
         self.call_stack.push(block_name.clone());
 
-        let v = match block {
-            blocks::VMBlock::NativeHandler(f) => f(native::NativeHandlerCtx { vm: self }),
+        let v: Result<bool, VMError> = match block {
+            blocks::VMBlock::NativeHandler(f) => {
+                f(native::NativeHandlerCtx { vm: self }).map(|_| false)
+            }
             blocks::VMBlock::IR(block) => {
                 let typ = block.run_type;
                 let vec = block.code;
                 for code in vec {
                     let result = match code {
-                        ir::IRCode::PutValue(val) => self.push(val.clone()),
+                        ir::IRCode::PutValue(val) => self.push(val.clone()).map(|_| false),
                         ir::IRCode::Return => {
                             self.pop_scope().unwrap();
                             self.call_stack.pop().unwrap();
@@ -413,7 +415,7 @@ impl VM {
                         ir::IRCode::ReturnLocal => {
                             break;
                         }
-                        ir::IRCode::Call(name) => self.run_block(&name).map(|_| ()),
+                        ir::IRCode::Call(name) => self.run_block(&name),
                         ir::IRCode::LocalBlock(name, typ, vec) => {
                             self.scope_manager.add_local(name.clone())?;
                             self.scope_manager
@@ -426,6 +428,7 @@ impl VM {
                                         code: vec,
                                     }),
                                 )
+                                .map(|_| false)
                                 .map_err(|_| VMError::CannotShadowBlocksInLocalScope(name.clone()))
                         }
                         ir::IRCode::If(block) => {
@@ -435,9 +438,11 @@ impl VM {
                                     match self.run_block(&block) {
                                         Ok(b) => {
                                             if b {
-                                                break;
+                                                self.pop_scope().unwrap();
+                                                self.call_stack.pop().unwrap();
+                                                return Ok(true);
                                             } else {
-                                                Ok(())
+                                                Ok(false)
                                             }
                                         }
                                         Err(e) => Err(e),
@@ -452,10 +457,12 @@ impl VM {
                         ir::IRCode::While(block) => {
                             while let ir::Value::Boolean(true) = self.pop()? {
                                 if self.run_block(&block)? {
-                                    break;
+                                    self.pop_scope().unwrap();
+                                    self.call_stack.pop().unwrap();
+                                    return Ok(true);
                                 }
                             }
-                            Ok(())
+                            Ok(false)
                         }
                     };
                     result?;
@@ -472,16 +479,16 @@ impl VM {
                     }
                 }
 
-                Ok(())
+                Ok(false)
             }
         };
 
-        v?;
+        let v = v?;
 
         self.pop_scope().unwrap();
         self.call_stack.pop().unwrap();
 
-        Ok(false)
+        Ok(v)
     }
 }
 

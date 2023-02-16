@@ -1,3 +1,46 @@
 ena.fs.path {
     "PATH" ena.get_env
 }
+
+ena.fs.path_separator ( ":" ) # TODO: later fix for windows
+
+ena.fs.get_executable_path {
+    arg ( unit )
+    arg =
+
+    get_arg {
+        arg @
+    }
+    ":" ena.fs.path string.split
+    total ( unit )
+    total =
+    i ( unit )
+    0 i =
+
+    cond {
+        total @ i @ <
+    }
+
+    local_clear {
+        cond while {
+            cond ! if {
+                return
+            }
+            i @ 1 + i =
+            drop
+            cond
+        }
+    }
+
+    cond while {
+        i @ 1 + i =
+
+        arg @ swap "/" swap string.concat string.concat dup ena.fs.file_exists? if {
+            result ( unit )
+            result = local_clear result @ return
+        }
+        drop
+        
+        cond
+    }
+}

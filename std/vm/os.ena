@@ -1,3 +1,11 @@
 ena.get_env {
     ena.vm.os.get_env
 }
+
+ena.fs.list_files_in_dir {
+    ena.vm.io.list_files_in_dir
+}
+
+ena.fs.file_exists? {
+    ena.vm.io.file_exists?
+}

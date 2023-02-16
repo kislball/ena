@@ -1,17 +1,7 @@
-# Ena Build System
-
-# Not working, just a proposal
-
-# used for user configuration, called somewhere internally
-ena.build {
-    "./src/*.ena" ena.include
-}
-
-ena.deps {
-    ena.dep.std
-    "kislball/some_library@git_tag" ena.dep.github
-}
+ena.corgi.get_ena_path (
+    "ena" ena.fs.get_executable_path
+)
 
 main {
-    ena.build.main
+    ena.corgi.get_ena_path println
 }
