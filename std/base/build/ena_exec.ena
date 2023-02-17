@@ -1,0 +1,3 @@
+ena.corgi.ena_path (
+	"ena" ena.fs.get_executable_path
+)

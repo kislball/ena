@@ -182,8 +182,8 @@ impl Ena {
             }
             EnaError::VMError(err) => {
                 eprintln!("{red}: {err}", red = "error".red().bold());
-                for call in &self.vm.as_ref().unwrap().call_stack {
-                    eprintln!("{}", format!("\t- {call}").dimmed());
+                for call in self.vm.as_ref().unwrap().call_stack.iter().rev() {
+                    eprintln!("{}", format!("\t^ {call}").dimmed());
                 }
             }
             EnaError::CheckerErrors(errs) => {

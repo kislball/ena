@@ -1,6 +1,6 @@
 # units allocates memory with the size given.
 units {
-    unsafe_alloc
+    alloc
 }
 
 # unit allocates one unit of memory 
