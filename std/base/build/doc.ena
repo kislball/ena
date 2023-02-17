@@ -1,7 +1,0 @@
-ena.corgi.get_ena_path (
-    "ena" ena.fs.get_executable_path
-)
-
-main {
-    ena.corgi.get_ena_path println
-}

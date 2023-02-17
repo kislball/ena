@@ -1,0 +1,72 @@
+ena.vec.with_capacity {
+	capacity ( unit )
+	capacity =
+	mem ( 3 units )
+	capacity @ mem =
+
+	0 mem 1 + =
+	capacity @ units mem 2 + =
+
+	mem
+}
+
+ena.vec.cap {
+	@
+}
+
+ena.vec.size {
+	1 + @
+}
+
+ena.vec.begin {
+	2 + @
+}
+
+ena.vec.in_bounds? {
+	ena.vec.size swap <
+}
+
+ena.vec.unsafe_ptr_at {
+	vec ( unit )
+	position ( unit )
+	vec = 
+	position = 
+ 	position @ vec @ ena.vec.in_bounds? ! if {
+		null return
+	}
+	vec @ ena.vec.begin position @ +
+}
+
+ena.vec.at {
+	ena.vec.unsafe_ptr_at @
+}
+
+ena.vec.push {
+	vec ( unit )
+	vec =
+	el ( unit )
+	el =
+	vec @ ena.vec.size vec @ ena.vec.cap <= if {
+		vec @ ena.vec.realloc
+	} 
+
+	vec @ ena.vec.size  1 +
+	vec @ 1 + =
+	vec @ ena.vec.begin 1 vec @ ena.vec.size -
+	+ el @ swap =
+}
+
+ena.vec.realloc {
+	pointer ( unit )
+	pointer =
+
+	pointer @ ena.vec.cap 2 *
+	dup pointer @ =
+	pointer @ ena.vec.begin
+	unsafe_realloc
+	pointer @ 2 + =
+}
+
+ena.vec {
+	1 ena.vec.with_capacity
+}

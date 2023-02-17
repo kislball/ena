@@ -1,0 +1,13 @@
+main {
+	vector ( unit )
+	1 ena.vec.with_capacity vector =
+	5 vector @ ena.vec.push
+	7 vector @ ena.vec.push
+	6 vector @ ena.vec.push
+	0 vector @ ena.vec.at
+	ena.vm.debug
+	vector @ ena.vec.cap
+	"cap:" println ena.vm.debug
+	vector @ ena.vec.size
+	"size:" println ena.vm.debug
+}

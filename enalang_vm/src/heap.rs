@@ -191,8 +191,12 @@ impl Heap {
 
         if self.debug_gc {
             println!(
-                "GC_DEBUG: {}(in block {}) - RC:{}->{}",
-                pointer, block.pointer, current_rc, new_value
+                "GC_DEBUG: {}(in block {}, value: {value:?}) - RC:{}->{}",
+                pointer,
+                block.pointer,
+                current_rc,
+                new_value,
+                value = self.heap.get(&pointer),
             );
         }
 
@@ -238,7 +242,7 @@ impl Heap {
         let block = match block {
             Some(i) => i,
             None => {
-                return Ok(self.alloc(size)?.pointer);
+                return Err(HeapError::BlockNotAllocated(pointer));
             }
         };
 
@@ -246,18 +250,28 @@ impl Heap {
             return Ok(block.pointer);
         }
 
-        let new_ptr = self.create_block(size).pointer;
+        let new_ptr = self.alloc(size)?.pointer;
 
-        self.move_memory(pointer, new_ptr, block.size);
-        self.remove_block(pointer);
-        self.rc_reset(block.pointer);
-
+        if new_ptr != pointer {
+            if self.debug_gc {
+                println!("GC_DEBUG: reallocated {pointer}->{new_ptr}");
+            }
+            self.move_memory(pointer, new_ptr, block.size);
+            self.rc_reset(block.pointer);
+            self.remove_block(pointer);
+        }
         Ok(new_ptr)
     }
 
     pub fn alloc(&mut self, size: usize) -> Result<MemoryBlock, HeapError> {
         let block = self.create_block(size);
 
+        if self.debug_gc {
+            println!(
+                "GC_DEBUG: allocating {block_pointer} with size {size}",
+                block_pointer = block.pointer
+            );
+        }
         self.rc_plus(block.pointer)?;
 
         Ok(block)

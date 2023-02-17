@@ -1,0 +1,8 @@
+ena.corgi.main {
+    ena.corgi.ena_path println
+}
+
+ena.corgi {
+    ena.corgi.main
+}
+

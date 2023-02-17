@@ -38,18 +38,19 @@ pub fn swap(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
+fn shape_ptr_num_pair(one: ir::Value, two: ir::Value) -> Result<(usize, usize), machine::VMError> {
+    match (one, two) {
+        (ir::Value::Pointer(a), ir::Value::Number(b)) => Ok((a, b as usize)),
+        (ir::Value::Number(a), ir::Value::Pointer(b)) => Ok((a as usize, b)),
+        _ => Err(machine::VMError::ExpectedNumber),
+    }
+}
+
 pub fn plus(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let popped = (ctx.vm.pop()?, ctx.vm.pop()?);
     if let (ir::Value::Number(a), ir::Value::Number(b)) = popped {
         ctx.vm.push(ir::Value::Number(a + b))?;
-    } else if let (ir::Value::Pointer(a), ir::Value::Number(b)) = popped {
-        let old_b = b;
-        let b = b as usize;
-
-        if old_b != b as f64 {
-            return Err(machine::VMError::BadPointer(b));
-        }
-
+    } else if let Ok((a, b)) = shape_ptr_num_pair(popped.0, popped.1) {
         ctx.vm.push(ir::Value::Pointer(a + b))?;
     } else {
         return Err(machine::VMError::ExpectedNumber);
@@ -82,18 +83,7 @@ pub fn subst(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let popped = (ctx.vm.pop()?, ctx.vm.pop()?);
     if let (ir::Value::Number(a), ir::Value::Number(b)) = popped {
         ctx.vm.push(ir::Value::Number(a - b))?;
-    } else if let (ir::Value::Pointer(a), ir::Value::Number(b)) = popped {
-        let old_b = b;
-        let b = b as usize;
-
-        if old_b != b as f64 {
-            return Err(machine::VMError::BadPointer(b));
-        }
-
-        if a < b {
-            return Err(machine::VMError::BadPointer(b));
-        }
-
+    } else if let Ok((a, b)) = shape_ptr_num_pair(popped.0, popped.1) {
         ctx.vm.push(ir::Value::Pointer(a - b))?;
     } else {
         return Err(machine::VMError::ExpectedNumber);
@@ -201,13 +191,18 @@ pub fn set_ref(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     } else {
         return Err(machine::VMError::ExpectedPointer);
     };
-    let val = ctx.vm.pop()?;
+    let val = ctx.vm.stack.pop();
+    let val = match val {
+        Some(i) => i,
+        None => return Err(machine::VMError::ExpectedValue),
+    };
 
     ctx.vm
         .heap
-        .set(ptr, val)
+        .set(ptr, val.clone())
         .map_err(machine::VMError::HeapError)?;
 
+    ctx.vm.handle_minus(val)?;
     Ok(())
 }
 
@@ -350,7 +345,7 @@ pub fn group() -> native::NativeGroup {
     group.add_native("block_exists?", block_exists).unwrap();
     group.add_native("@", deref).unwrap();
     group.add_native("=", set_ref).unwrap();
-    group.add_native("unsafe_alloc", alloc).unwrap();
+    group.add_native("alloc", alloc).unwrap();
     group.add_native("unsafe_realloc", realloc).unwrap();
     group.add_native("unsafe_free", free).unwrap();
 
