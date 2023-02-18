@@ -110,10 +110,6 @@ impl Heap {
     }
 
     fn clear_memory(&mut self, pointer: usize, size: usize) -> Result<(), HeapError> {
-        if self.debug_gc {
-            println!("GC_DEBUG: heap size before cleaning: {}", self.heap.len());
-        }
-
         for i in 0..size {
             if self.debug_gc && self.heap.contains_key(&(pointer + i)) {
                 println!("GC_DEBUG: freeing pointer {}", pointer + i);
@@ -121,13 +117,6 @@ impl Heap {
             if let Some(ir::Value::Pointer(i)) = self.heap.remove(&(pointer + i)) {
                 self.rc_minus(i)?;
             }
-        }
-
-        if self.debug_gc {
-            println!(
-                "GC_DEBUG: new heap size after cleaning: {}",
-                self.heap.len()
-            );
         }
 
         Ok(())
@@ -150,12 +139,6 @@ impl Heap {
         };
 
         if let Some(i) = &self.rc.get(&block.pointer) {
-            if self.debug_gc {
-                println!(
-                    "GC_DEBUG: checking pointer {} with RC: {}",
-                    block.pointer, i
-                );
-            }
             if **i == 0 {
                 if self.debug_gc {
                     println!(
