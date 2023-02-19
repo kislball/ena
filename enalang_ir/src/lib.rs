@@ -1,7 +1,10 @@
 use flexstr::LocalStr;
 use flexstr::ToLocalStr;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::hash::Hash;
+use std::hash::Hasher;
 
 #[derive(Debug, thiserror::Error)]
 pub enum IRError {
@@ -182,6 +185,27 @@ pub enum Value {
     Exception(Box<Value>),
     Atom(LocalStr),
     Null,
+}
+
+impl Value {
+    pub fn get_hash(&self) -> Option<u64> {
+        let mut hasher = DefaultHasher::new();
+
+        match self {
+            Value::Number(_) => {
+                return None;
+            }
+            Value::String(str) => str.hash(&mut hasher),
+            Value::Boolean(b) => b.hash(&mut hasher),
+            Value::Pointer(p) => p.hash(&mut hasher),
+            Value::Block(l) => l.hash(&mut hasher),
+            Value::Exception(e) => return e.get_hash(),
+            Value::Atom(a) => a.hash(&mut hasher),
+            Value::Null => 0.hash(&mut hasher),
+        };
+
+        Some(hasher.finish())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
