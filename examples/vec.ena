@@ -1,4 +1,4 @@
-main {
+first {
 	vector ( unit )
 	1 ena.vec.with_capacity vector =
 	5 vector @ ena.vec.push
@@ -10,4 +10,21 @@ main {
 	"cap:" println ena.vm.debug
 	vector @ ena.vec.size
 	"size:" println ena.vm.debug
+}
+
+second {
+	" " "hello world this string is going to be splitted with a space yolo swag"
+	string.split
+	ena.vm.debug_stack
+	vector ( unit )
+	ena.vec.from_stack vector =
+	vector @ ena.vec.reverse vector =
+	'ena.vm.debug vector @ ena.vec.each
+}
+
+main {
+	"example one" println
+	first
+	"example two" println
+	second
 }

@@ -41,6 +41,29 @@ ena.vec.at {
 	ena.vec.unsafe_ptr_at @
 }
 
+ena.vec.reverse {
+	initial ( unit )
+	initial =
+	new_vec ( unit )
+	initial @ ena.vec.cap ena.vec.with_capacity new_vec =
+	len ( unit )
+	initial @ ena.vec.size len =
+	i ( unit )
+	0 i =
+	cond {
+		len @ i @ <
+	}
+
+	cond while {
+		1 i @ len @ - - initial @ ena.vec.at
+		new_vec @ ena.vec.push 
+		i @ 1 + i =
+		cond
+	}
+
+	new_vec @
+}
+
 ena.vec.push {
 	vec ( unit )
 	vec =
@@ -65,6 +88,70 @@ ena.vec.realloc {
 	pointer @ ena.vec.begin
 	unsafe_realloc
 	pointer @ 2 + =
+}
+
+ena.vec.each {
+	vector ( unit )
+	vector =
+	block ( unit )
+	block =
+	len ( unit )
+	vector @ ena.vec.size len =
+	i ( unit )
+	0 i =
+
+	cond {
+		len @ i @ <
+	}
+
+	cond while {
+		i @ vector @ ena.vec.at
+		block @ call
+		i @ 1 + i =
+		cond
+	}
+}
+
+ena.vec.unwrap {
+	vector ( unit )
+	vector =
+	i ( unit )
+	len ( unit )
+	vector @ ena.vec.size len =
+	0 i =
+	cond {
+		len @ i @ <
+	}
+
+	cond while {
+		i @ vector @ ena.vec.at
+		i @ 1 + i =
+		cond
+	}
+
+	len @
+}
+
+ena.vec.from_stack {
+	len ( unit )
+	vector ( unit )
+	len =
+	len @ ena.vec.with_capacity vector =
+
+	i ( unit )
+	0 i =
+
+	cond {
+		len @ i @ <
+	}
+
+	cond while {
+		vector @ ena.vec.push
+		i @ 1 + i =
+		cond
+	}
+
+	vector @
 }
 
 ena.vec {

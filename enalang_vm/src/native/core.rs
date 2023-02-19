@@ -1,6 +1,16 @@
 use crate::{heap, machine, native};
 use enalang_ir as ir;
 
+pub fn hash(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    let val = ctx.vm.pop()?;
+    ctx.vm.push(
+        val.get_hash()
+            .map(|x| ir::Value::Number(x as f64))
+            .unwrap_or(ir::Value::Null),
+    )?;
+    Ok(())
+}
+
 pub fn drop_value(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm.pop()?;
 
@@ -305,6 +315,8 @@ pub fn clear_stack(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError
     Ok(())
 }
 
+pub fn into_base(ctx: native::NativeHandlerCtx) {}
+
 // pub fn run_thread<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
 //     if let ir::Value::Block(name) = vm.pop()? {
 //         let n_name = name.clone();
@@ -329,6 +341,7 @@ pub fn group() -> native::NativeGroup {
     group.add_native("clear", clear_stack).unwrap();
     group.add_native("+", plus).unwrap();
     group.add_native("*", mul).unwrap();
+    group.add_native("hash", hash).unwrap();
     group.add_native("/", div).unwrap();
     group.add_native("-", subst).unwrap();
     group.add_native("!", neg).unwrap();

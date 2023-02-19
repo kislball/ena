@@ -198,12 +198,6 @@ impl<'a> IRGen {
                 ast::ASTNodeInner::EscapedIdentifier(i) => {
                     let i = i.to_local_str();
 
-                    if (i != name) && !ir.blocks.contains_key(&i) {
-                        return Err(IRGenError(
-                            node.clone(),
-                            IRGenErrorInner::CannotPutLocalBlockOnStack,
-                        ));
-                    }
                     code.push(ir::IRCode::PutValue(ir::Value::Block(i)));
                 }
                 ast::ASTNodeInner::Closer => {
