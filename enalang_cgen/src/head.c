@@ -26,6 +26,7 @@ union ena_value_inner {
     struct ena_value * pointer;
     struct ena_value * exception;
     char * atom;
+    char * block;
     void * null;
 };
 
@@ -40,6 +41,58 @@ struct ena_value null = {
         .null = NULL,
     },
 };
+
+#define PUSH_VALUE_NULL push_stack(null);
+#define PUSH_VALUE_NUMBER(num) do {\
+struct ena_value a = {\
+    .type = ena_number,\
+    .value = { .number = num  },\
+};\
+push_stack(a);\
+} while (0)
+#define PUSH_VALUE_STRING(string) do {\
+struct ena_value a = {\
+    .type = ena_string,\
+    .value = { .string = string  },\
+};\
+push_stack(a);\
+} while (0)
+#define PUSH_VALUE_BOOLEAN(bol) do {\
+struct ena_value a = {\
+    .type = ena_bool,\
+    .value = { .boolean = bol  },\
+};\
+push_stack(a);\
+} while (0)
+#define PUSH_VALUE_POINTER(ptr) do {\
+struct ena_value a = {\
+    .type = ena_pointer,\
+    .value = { .boolean = ptr  },\
+};\
+push_stack(a);\
+} while (0)
+#define PUSH_VALUE_BLOCK(block) do {\
+struct ena_value a = {\
+    .type = ena_block,\
+    .value = { .block = block  },\
+};\
+push_stack(a);\
+} while (0)
+#define PUSH_VALUE_EXCEPTION(ptr) do {\
+struct ena_value a = {\
+    .type = ena_ptr,\
+    .value = { .ptr = ptr  },\
+};\
+push_stack(a);\
+} while (0)
+#define PUSH_VALUE_ATOM(ptr) do {\
+struct ena_value a = {\
+    .type = ena_atom,\
+    .value = { .atom = atom  },\
+};\
+push_stack(a);\
+} while (0)
+
 struct ena_value * stack_begin = NULL;
 size_t stack_capacity = STACK_PREALLOC;
 size_t stack_size = 0;
