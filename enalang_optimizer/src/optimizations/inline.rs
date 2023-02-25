@@ -1,5 +1,5 @@
 use crate::{Optimization, OptimizationContext};
-use enalang_ir::{Block, BlockRunType, IRCode, IRError};
+use enalang_ir::{Block, BlockRunType, IRCode, IRError, Value};
 use enalang_vm::{
     blocks::{Blocks, BlocksError, VMBlock},
     machine::{ScopeManager, VMError},
@@ -87,12 +87,26 @@ impl InlineOptimization {
 
         for code in &block.code {
             match code {
-                IRCode::PutValue(_)
-                | IRCode::While(_)
-                | IRCode::If(_)
-                | IRCode::Return
-                | IRCode::ReturnLocal => {
-                    new_block.code.push(code.clone());
+                IRCode::Call(block_name) => {
+                    if self.can_inline(block_name) {
+                        let block_to_be_inlined = self.scope_manager.blocks().get_block(block_name);
+                        let block_to_be_inlined = match block_to_be_inlined {
+                            Some(i) => i,
+                            None => {
+                                return Err(Box::new(InlineOptimizationError::UnknownBlock(
+                                    block_name.clone(),
+                                )));
+                            }
+                        };
+
+                        if let VMBlock::IR(ir_block) = block_to_be_inlined {
+                            for sub_code in &ir_block.code {
+                                new_block.code.push(sub_code.clone());
+                            }
+                        }
+                    } else {
+                        new_block.code.push(IRCode::Call(block_name.clone()));
+                    }
                 }
                 IRCode::LocalBlock(name, run_type, local_code) => {
                     self.scope_manager
@@ -116,26 +130,12 @@ impl InlineOptimization {
                         .map_err(|x| Box::new(InlineOptimizationError::Blocks(x)))?;
                     new_block.code.push(code.clone());
                 }
-                IRCode::Call(block_name) => {
-                    if self.can_inline(block_name) {
-                        let block_to_be_inlined = self.scope_manager.blocks().get_block(block_name);
-                        let block_to_be_inlined = match block_to_be_inlined {
-                            Some(i) => i,
-                            None => {
-                                return Err(Box::new(InlineOptimizationError::UnknownBlock(
-                                    block_name.clone(),
-                                )));
-                            }
-                        };
-
-                        if let VMBlock::IR(ir_block) = block_to_be_inlined {
-                            for sub_code in &ir_block.code {
-                                new_block.code.push(sub_code.clone());
-                            }
-                        }
-                    } else {
-                        new_block.code.push(IRCode::Call(block_name.clone()));
-                    }
+                IRCode::PutValue(_)
+                | IRCode::While(_)
+                | IRCode::If(_)
+                | IRCode::Return
+                | IRCode::ReturnLocal => {
+                    new_block.code.push(code.clone());
                 }
             };
         }
