@@ -7,3 +7,53 @@ units {
 unit {
     1 units
 }
+
+# memcpy copies memory of size size from src to dest.
+# arguments:
+# size src dest
+memcpy {
+    dest ( unit )
+    dest =
+    src ( unit )
+    src = 
+    size ( unit )
+    size =
+
+    i ( unit )
+    0 i =
+
+    cond {
+        size @ i @ <
+    }
+
+    cond while {
+        src i + @
+        dest i + =
+        i @ 1 + i =
+        cond
+    }
+}
+
+# memfill fills dest with value size times
+# arguments:
+# size dest value
+memfill {
+    value ( unit )
+    value =
+    dest ( unit )
+    dest = 
+    size ( unit )
+    size =
+
+    i ( unit )
+    0 i =
+
+    cond {
+        size @ i @ <
+    }
+
+    cond while {
+        value @ dest =
+        cond
+    }
+}
