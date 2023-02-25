@@ -65,7 +65,7 @@ def main():
     if parsed.publish:
         publish()
     
-    if not parsed.publish and not parsed.set_version:
+    if not parsed.tag and not parsed.publish and not parsed.set_version:
         print("nothing to do :(")
 
 if __name__ == "__main__":
