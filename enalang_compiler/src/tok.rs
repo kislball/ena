@@ -145,7 +145,7 @@ impl Tokenizer {
         self.clean();
         self.str = str.to_owned();
         self.str.push(' '); // needs a whitespace for ids and numbers to work
-        let en: Vec<char> = self.str.chars().enumerate().map(|x| x.1).collect();
+        let en: Vec<char> = self.str.chars().collect();
 
         loop {
             let c = match en.get(self.at) {
