@@ -242,8 +242,23 @@ impl Tokenizer {
                 }
             } else if c.is_whitespace() {
                 self.at += 1;
-            } else if c.is_numeric() || c == NEGATIVE_NUMBER_PREFIX {
+            } else if c.is_numeric() {
                 self.parse_number(&en);
+            } else if c == NEGATIVE_NUMBER_PREFIX {
+                match en.get(self.at + 1) {
+                    Some(ch) => {
+                        if ch.is_numeric() {
+                            self.parse_number(&en);
+                        } else {
+                            if let Some(err) = self.parse_id(&en, IdentifierType::Regular) {
+                                return Err(err);
+                            }
+                        }
+                    }
+                    None => {
+                        return Err(TokenizerError(self.at, TokenizerErrorInner::UnexpectedEOF));
+                    }
+                };
             } else if c == STRING_QUOTES {
                 if let Some(err) = self.parse_str(&en) {
                     return Err(err);
