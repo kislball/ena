@@ -7,6 +7,7 @@ pub const ESCAPE_CHAR: char = '\'';
 pub const ATOM_CHAR: char = ':';
 pub const COMMENT_SYMBOL: char = '#';
 pub const STRING_ESCAPE_CHAR: char = '\\';
+pub const NEGATIVE_NUMBER_PREFIX: char = '-';
 
 fn is_id_beginning(ch: char) -> bool {
     !ch.is_numeric()
@@ -14,6 +15,7 @@ fn is_id_beginning(ch: char) -> bool {
         && ch != STRING_QUOTES
         && ch != ESCAPE_CHAR
         && ch != ATOM_CHAR
+        && ch != NEGATIVE_NUMBER_PREFIX
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -240,7 +242,7 @@ impl Tokenizer {
                 }
             } else if c.is_whitespace() {
                 self.at += 1;
-            } else if c.is_numeric() {
+            } else if c.is_numeric() || c == NEGATIVE_NUMBER_PREFIX {
                 self.parse_number(&en);
             } else if c == STRING_QUOTES {
                 if let Some(err) = self.parse_str(&en) {
