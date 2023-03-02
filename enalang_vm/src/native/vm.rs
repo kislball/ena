@@ -20,7 +20,6 @@ pub fn vm_load(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
         let ir = ir.into_ir().map_err(|x| {
             machine::VMError::RuntimeException(ir::Value::String(x.to_string().to_local_str()))
         })?;
-
         ctx.vm.load(ir)
     } else {
         Err(machine::VMError::ExpectedString)
