@@ -1,11 +1,11 @@
 use crate::{Optimization, OptimizationContext};
-use enalang_ir::{Block, BlockRunType, IRCode, IRError, Value};
+use enalang_ir::{Block, BlockRunType, IRCode, IRError};
 use enalang_vm::{
     blocks::{Blocks, BlocksError, VMBlock},
     machine::{ScopeManager, VMError},
     native,
 };
-use flexstr::{local_fmt, local_str, IntoLocalStr, LocalStr, ToLocalStr};
+use flexstr::{local_fmt, local_str, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
 
 pub struct InlineOptimization {

@@ -65,7 +65,9 @@ impl CGen {
         local_fmt!("_{}", sha256::digest(l.as_str()))
     }
 
-    pub fn compile_ir(&self) -> Result<String, CGenError> {}
+    pub fn compile_ir(&self) -> Result<String, CGenError> {
+        Ok(String::new())
+    }
 
     pub fn compile(&self) -> Result<String, CGenError> {
         Ok(format!(

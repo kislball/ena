@@ -1,0 +1,9 @@
+[[language]]
+name = "ena"
+scope = "source.ena"
+injection-regex = "^ena$"
+file-types = ["ena"]
+roots = []
+comment-token = "#"
+indent = { tab-width = 1, unit = "\t" }
+
