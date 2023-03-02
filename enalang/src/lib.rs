@@ -146,11 +146,9 @@ impl Ena {
         print_line: bool,
     ) {
         eprintln!(
-            "{} in {}:{}:{}: {}",
+            "{} {} {}",
             "error".red().bold(),
-            file,
-            line,
-            col,
+            format!("in {}:{}:{}:", file, line, col).dimmed(),
             data.bold().bright_white(),
         );
         if print_line {
