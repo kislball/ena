@@ -151,7 +151,7 @@ impl Ena {
             file,
             line,
             col,
-            data,
+            data.bold().bright_white(),
         );
         if print_line {
             eprintln!(
