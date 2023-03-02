@@ -315,7 +315,7 @@ pub fn clear_stack(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError
     Ok(())
 }
 
-pub fn into_base(ctx: native::NativeHandlerCtx) {}
+pub fn into_base(_ctx: native::NativeHandlerCtx) {}
 
 // pub fn run_thread<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
 //     if let ir::Value::Block(name) = vm.pop()? {

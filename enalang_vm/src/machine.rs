@@ -1,4 +1,7 @@
-use crate::{blocks, heap, native};
+use crate::{
+    blocks::{self, BlocksError},
+    heap, native,
+};
 use enalang_ir as ir;
 use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
@@ -8,6 +11,8 @@ use std::collections::HashMap;
 pub enum VMError {
     #[error("unknown block `{0}`")]
     UnknownBlock(LocalStr),
+    #[error("fs error `{0}``")]
+    FS(LocalStr),
     #[error("no ir was provided")]
     NoIR,
     #[error("stack has ended")]
@@ -44,6 +49,8 @@ pub enum VMError {
     NoScope,
     #[error("no single eval")]
     NoSingleEval,
+    #[error("blocks error - {0}")]
+    Blocks(BlocksError),
 }
 
 #[derive(Clone, Debug)]
@@ -297,6 +304,14 @@ impl VM {
         self.call_stack = Vec::new();
         self.heap = heap::Heap::new(self.options.enable_gc, self.options.debug_gc);
         self.stack = Vec::new();
+        self.scope_manager = ScopeManager::new();
+    }
+
+    pub fn load(&mut self, ir: ir::IR) -> Result<(), VMError> {
+        self.scope_manager
+            .blocks_mut()
+            .add_ir(ir)
+            .map_err(VMError::Blocks)
     }
 
     pub fn handle_plus(&mut self, value: ir::Value) -> Result<(), VMError> {

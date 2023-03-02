@@ -2,9 +2,10 @@ use crate::native;
 use core::fmt::Debug;
 use enalang_ir as ir;
 use flexstr::LocalStr;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Debug, thiserror::Error, Serialize, Deserialize, PartialEq)]
 pub enum BlocksError {
     #[error("block already exists")]
     BlockAlreadyExists,
