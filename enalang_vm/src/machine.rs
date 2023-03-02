@@ -308,10 +308,22 @@ impl VM {
     }
 
     pub fn load(&mut self, ir: ir::IR) -> Result<(), VMError> {
-        self.scope_manager
-            .blocks_mut()
-            .add_ir(ir)
-            .map_err(VMError::Blocks)
+        let blocks = ir.blocks.clone().into_keys().collect::<Vec<LocalStr>>();
+
+        for block in blocks {
+            self.scope_manager
+                .scopes
+                .first_mut()
+                .unwrap()
+                .locals
+                .push(block);
+        }
+
+        for scope in self.scope_manager.scopes.iter_mut() {
+            scope.blocks.add_ir(ir.clone()).map_err(VMError::Blocks)?;
+        }
+
+        Ok(())
     }
 
     pub fn handle_plus(&mut self, value: ir::Value) -> Result<(), VMError> {

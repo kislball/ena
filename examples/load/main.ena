@@ -1,0 +1,4 @@
+main {
+	"linkee.enair" ena.vm.load
+	test
+}

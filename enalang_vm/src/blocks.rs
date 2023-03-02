@@ -100,6 +100,7 @@ impl Blocks {
 
     pub fn add_ir(&mut self, ir: ir::IR) -> Result<(), BlocksError> {
         for (name, block) in ir.blocks {
+            println!("adding block");
             self.add_block(name, VMBlock::IR(block))?;
         }
 
