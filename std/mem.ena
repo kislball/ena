@@ -1,16 +1,16 @@
-# units allocates memory with the size given.
+#!units allocates memory with the size given.
 units {
     alloc
 }
 
-# unit allocates one unit of memory 
+#!unit allocates one unit of memory 
 unit {
     1 units
 }
 
-# memcpy copies memory of size size from src to dest.
-# arguments:
-# size src dest
+#!memcpy copies memory of size size from src to dest.
+#!arguments:
+#!size src dest
 memcpy {
     dest ( unit )
     dest =
@@ -34,9 +34,9 @@ memcpy {
     }
 }
 
-# memfill fills dest with value size times
-# arguments:
-# size dest value
+#!memfill fills dest with value size times
+#!arguments:
+#!size dest value
 memfill {
     value ( unit )
     value =

@@ -1,3 +1,4 @@
+#!ena.vec.with_capacity allocates a vector of given size
 ena.vec.with_capacity {
 	capacity ( unit )
 	capacity =
@@ -10,22 +11,28 @@ ena.vec.with_capacity {
 	mem
 }
 
+#!ena.vec.cap returns capacity of given vector
 ena.vec.cap {
 	@
 }
 
+#!ena.vec.size returns size of given vector
 ena.vec.size {
 	1 + @
 }
 
+#!ena.vec.begin returns the pointer to the beginning of array
 ena.vec.begin {
 	2 + @
 }
 
+#!ena.vec.in_bounds? checks if an index is in bounds
+#!arguments: vector index
 ena.vec.in_bounds? {
 	ena.vec.size swap <
 }
 
+#!ena.vec.unsafe_ptr_at returns a pointer to an element with given index
 ena.vec.unsafe_ptr_at {
 	vec ( unit )
 	position ( unit )
@@ -37,10 +44,12 @@ ena.vec.unsafe_ptr_at {
 	vec @ ena.vec.begin position @ +
 }
 
+#!ena.vec.at returns value at given index
 ena.vec.at {
 	ena.vec.unsafe_ptr_at @
 }
 
+#!ena.vec.reverse reverses the vector
 ena.vec.reverse {
 	initial ( unit )
 	initial =
@@ -64,6 +73,7 @@ ena.vec.reverse {
 	new_vec @
 }
 
+#!ena.vec.push pushes a value to the vector
 ena.vec.push {
 	vec ( unit )
 	vec =
@@ -79,6 +89,7 @@ ena.vec.push {
 	+ el @ swap =
 }
 
+#!ena.vec.realloc reallocates a vector doubling its capacity
 ena.vec.realloc {
 	pointer ( unit )
 	pointer =
@@ -90,6 +101,8 @@ ena.vec.realloc {
 	pointer @ 2 + =
 }
 
+#!ena.vec.each runs given block for each element in the vector
+#!arguments: block vector
 ena.vec.each {
 	vector ( unit )
 	vector =
@@ -112,6 +125,7 @@ ena.vec.each {
 	}
 }
 
+#!ena.vec.unwrap unwraps all elements of vector onto the stack
 ena.vec.unwrap {
 	vector ( unit )
 	vector =
@@ -132,6 +146,7 @@ ena.vec.unwrap {
 	len @
 }
 
+#!ena.vec.from_stack is the opposite of ena.vec.unwrap
 ena.vec.from_stack {
 	len ( unit )
 	vector ( unit )

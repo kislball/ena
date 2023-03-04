@@ -34,7 +34,7 @@ pub enum EnaError {
     ASTError(String, compiler::ast::ASTError),
     #[error("irgen error in file `{0}` - `{1}`")]
     IRGenError(String, compiler::irgen::IRGenError),
-    #[error("irgen error - `{0}`")]
+    #[error("ir error - `{0}`")]
     IRError(ir::IRError),
     #[error("serialization error - `{0}`")]
     SerializationError(ir::SerializationError),

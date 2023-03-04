@@ -1,0 +1,4 @@
+#!ena.load dynamically loads an .enair file into current ir
+ena.load {
+	ena.vm.load
+}

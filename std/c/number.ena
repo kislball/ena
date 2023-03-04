@@ -1,4 +1,0 @@
-# ena.random generates a random number between 0 and 1.
-ena.random {
-    ena.c.random
-}

@@ -1,0 +1,5 @@
+#!ena.get_ena gets an env variable
+ena.get_env {
+    ena.vm.os.get_env
+}
+

@@ -1,0 +1,4 @@
+#!ena.random generates a random value
+ena.random {
+	ena.vm.random
+}

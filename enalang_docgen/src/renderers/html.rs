@@ -25,7 +25,7 @@ impl DocRenderer for HtmlRenderer {
             .iter()
             .map(|x| DocEntry {
                 name: x.name.clone(),
-                comment: markdown::to_html(&x.comment),
+                comment: markdown::to_html(&x.comment.replace('\n', "\n\n")),
             })
             .collect::<Vec<DocEntry>>();
         let ctx = HtmlContext { doc };

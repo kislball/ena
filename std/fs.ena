@@ -1,9 +1,17 @@
+#!ena.fs.path returns the PATH variable
 ena.fs.path {
     "PATH" ena.get_env
 }
 
+#!ena.fs.path_separator returns the PATH variable separartor
 ena.fs.path_separator ( ":" ) # TODO: later fix for windows
 
+#!ena.fs.file_exists? checks if a file exists
+ena.fs.file_exists? {
+    ena.vm.io.file_exists?
+}
+
+#!ena.fs.get_executable_path returns the executable path
 ena.fs.get_executable_path {
     arg ( unit )
     arg =
@@ -43,4 +51,9 @@ ena.fs.get_executable_path {
         
         cond
     }
+}
+
+#!ena.fs.list_files_in_dir lists files in a directory 
+ena.fs.list_files_in_dir {
+    ena.vm.io.list_files_in_dir
 }

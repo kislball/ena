@@ -8,8 +8,8 @@ use std::hash::Hasher;
 
 #[derive(Debug, thiserror::Error)]
 pub enum IRError {
-    #[error("block already exists")]
-    BlockAlreadyExists,
+    #[error("block already exists - `{0}`")]
+    BlockAlreadyExists(LocalStr),
 }
 
 #[derive(Debug, Clone)]
@@ -90,7 +90,7 @@ impl IR {
         output_err: bool,
     ) -> Result<(), IRError> {
         if self.blocks.contains_key(&name) && output_err {
-            return Err(IRError::BlockAlreadyExists);
+            return Err(IRError::BlockAlreadyExists(name));
         }
         self.blocks.insert(name, block);
         Ok(())
