@@ -1,9 +1,11 @@
+use clap::ValueEnum;
 use colored::Colorize;
 use enalang_checker::checker::{CheckError, Checker};
 use flexstr::ToLocalStr;
 use glob::glob;
 use std::{
     collections::HashMap,
+    fmt::Display,
     fs::{self, OpenOptions},
     io::{Read, Write},
     path::PathBuf,
@@ -17,6 +19,7 @@ use vm::{
 
 pub use enalang_checker as checker;
 pub use enalang_compiler as compiler;
+pub use enalang_docgen as docgen;
 pub use enalang_ir as ir;
 pub use enalang_optimizer as optimizer;
 pub use enalang_vm as vm;
@@ -76,6 +79,23 @@ impl Default for EnaOptions {
     }
 }
 
+#[derive(ValueEnum, Debug, Clone, Copy)]
+pub enum DocGen {
+    JSON,
+    Markdown,
+    HTML,
+}
+
+impl Display for DocGen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DocGen::JSON => write!(f, "json"),
+            DocGen::Markdown => write!(f, "markdown"),
+            DocGen::HTML => write!(f, "html"),
+        }
+    }
+}
+
 pub struct Ena {
     pub tokenizer: compiler::tok::Tokenizer,
     pub ast: compiler::ast::ASTBuilder,
@@ -109,6 +129,16 @@ impl Ena {
             compiled_files: HashMap::new(),
             ir: None,
         }
+    }
+
+    pub fn generate_doc(&self, generator: DocGen) -> Result<String, EnaError> {
+        let gen: Box<dyn docgen::DocRenderer> = match generator {
+            DocGen::JSON => Box::new(docgen::renderers::json::JsonRenderer),
+            DocGen::Markdown => Box::new(docgen::renderers::md::MarkdownRenderer),
+            DocGen::HTML => Box::new(docgen::renderers::html::HtmlRenderer),
+        };
+        let documentation = docgen::Documentation::from_ir(self.ir.as_ref().unwrap().clone());
+        Ok(gen.render(documentation))
     }
 
     pub fn optimize(&mut self, main: &str) -> Result<(), EnaError> {

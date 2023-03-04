@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand};
+use enalang::docgen;
 use enalang::EnaError;
 use enalang_vm::machine::VMOptions;
 
@@ -22,6 +23,17 @@ enum Commands {
     Check(Check),
     /// Optimizes IR
     Optimize(Optimize),
+    /// Generates documentation
+    Doc(Doc),
+}
+
+#[derive(Args)]
+struct Doc {
+    /// Files to generate docs from
+    files: Vec<String>,
+    /// Renderer to use
+    #[arg(short, long, default_value_t = enalang::DocGen::JSON)]
+    generator: enalang::DocGen,
 }
 
 #[derive(Args)]
@@ -88,6 +100,13 @@ struct Run {
     /// Whether to debug calls
     #[arg(long, default_value_t = false)]
     debug_calls: bool,
+}
+
+fn doc(d: Doc, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    ena.load_irs(&d.files[..])?;
+    let result = ena.generate_doc(d.generator)?;
+    println!("{result}");
+    Ok(())
 }
 
 fn compile(c: Compile, ena: &mut enalang::Ena) -> Result<(), EnaError> {
@@ -161,6 +180,7 @@ fn main() {
         Commands::Check(c) => check(c, &mut ena),
         Commands::Run(r) => run(r, &mut ena),
         Commands::Optimize(o) => optimize(o, &mut ena),
+        Commands::Doc(d) => doc(d, &mut ena),
     };
 
     if let Err(e) = res {

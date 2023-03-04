@@ -6,5 +6,6 @@ members = [
     "./enalang_checker",
     "./enalang_cgen",
     "./enalang_optimizer",
-    "./enalang_ir"
+    "./enalang_ir",
+    "./enalang_docgen"
 ]
