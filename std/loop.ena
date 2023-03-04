@@ -1,0 +1,9 @@
+#!break breaks from a loop
+break {
+	false return_local
+}
+
+#!continue skips onto a next iteration in a loop
+continue {
+	true return_local
+}

@@ -1,3 +1,0 @@
-ena.get_env {
-    ena.c.os.get_env
-}

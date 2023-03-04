@@ -1,0 +1,4 @@
+#!ena.get_annotation gets annotation from some block
+ena.get_annotation {
+	ena.vm.get_annotation
+}

@@ -1,4 +1,0 @@
-# get_annotation gets comment for some block.
-get_annotation {
-    ena.c.get_annotation
-}

@@ -39,7 +39,7 @@ impl NativeGroup {
 
     pub fn add_native(&mut self, name: &str, f: NativeHandler) -> Result<(), ir::IRError> {
         if self.natives.contains_key(name) {
-            return Err(ir::IRError::BlockAlreadyExists);
+            return Err(ir::IRError::BlockAlreadyExists(name.to_local_str()));
         }
         self.natives.insert(name.to_local_str(), f);
         Ok(())

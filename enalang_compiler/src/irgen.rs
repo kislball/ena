@@ -21,8 +21,8 @@ pub enum IRGenErrorInner {
     ExpectedUnescapedBlock,
     #[error("expected unique eval block after if/while")]
     ExpectedUniqueEvalBlockAfterIf,
-    #[error("block already exists")]
-    BlockAlreadyExists,
+    #[error("block already exists - {0}")]
+    BlockAlreadyExists(LocalStr),
     #[error("cannot put local block on stack")]
     CannotPutLocalBlockOnStack,
 }
@@ -88,12 +88,12 @@ impl<'a> IRGen {
                                     return Err(e);
                                 }
                                 Ok(v) => {
-                                    if let Err(ir::IRError::BlockAlreadyExists) =
+                                    if let Err(ir::IRError::BlockAlreadyExists(_)) =
                                         ir.add_block(id.to_local_str(), v, true)
                                     {
                                         return Err(IRGenError(
                                             node.clone(),
-                                            IRGenErrorInner::BlockAlreadyExists,
+                                            IRGenErrorInner::BlockAlreadyExists(id.to_local_str()),
                                         ));
                                     }
                                 }
@@ -253,12 +253,14 @@ impl<'a> IRGen {
                                 }
                             }
                             _ => {
-                                if let Err(ir::IRError::BlockAlreadyExists) =
+                                if let Err(ir::IRError::BlockAlreadyExists(_)) =
                                     ir.add_block(nested_name.to_local_str(), nested_ir, true)
                                 {
                                     return Err(IRGenError(
                                         node.clone(),
-                                        IRGenErrorInner::BlockAlreadyExists,
+                                        IRGenErrorInner::BlockAlreadyExists(
+                                            nested_name.to_local_str(),
+                                        ),
                                     ));
                                 }
                                 code.push(ir::IRCode::PutValue(ir::Value::Block(Into::into(
@@ -288,12 +290,12 @@ impl<'a> IRGen {
 
                     let nested_name = Self::get_random_name(&name);
                     let nested_ir = self.compile_block(&nested_name, next, ir, false)?;
-                    if let Err(ir::IRError::BlockAlreadyExists) =
+                    if let Err(ir::IRError::BlockAlreadyExists(_)) =
                         ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
                         return Err(IRGenError(
                             node.clone(),
-                            IRGenErrorInner::BlockAlreadyExists,
+                            IRGenErrorInner::BlockAlreadyExists(nested_name.to_local_str()),
                         ));
                     }
                     code.push(ir::IRCode::If(nested_name.to_local_str()));
@@ -318,12 +320,12 @@ impl<'a> IRGen {
 
                     let nested_name = Self::get_random_name(&name);
                     let nested_ir = self.compile_block(&nested_name, next, ir, false)?;
-                    if let Err(ir::IRError::BlockAlreadyExists) =
+                    if let Err(ir::IRError::BlockAlreadyExists(_)) =
                         ir.add_block(nested_name.to_local_str(), nested_ir, true)
                     {
                         return Err(IRGenError(
                             node.clone(),
-                            IRGenErrorInner::BlockAlreadyExists,
+                            IRGenErrorInner::BlockAlreadyExists(nested_name.to_local_str()),
                         ));
                     }
                     code.push(ir::IRCode::While(nested_name.to_local_str()));

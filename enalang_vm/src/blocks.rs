@@ -1,7 +1,7 @@
 use crate::native;
 use core::fmt::Debug;
 use enalang_ir as ir;
-use flexstr::LocalStr;
+use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -14,7 +14,9 @@ pub enum BlocksError {
 impl Into<ir::IRError> for BlocksError {
     fn into(self) -> ir::IRError {
         match self {
-            BlocksError::BlockAlreadyExists => ir::IRError::BlockAlreadyExists,
+            BlocksError::BlockAlreadyExists => {
+                ir::IRError::BlockAlreadyExists(local_str!("todo: report to devs"))
+            }
         }
     }
 }
