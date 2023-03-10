@@ -1,0 +1,18 @@
+threadone {
+	true while {
+		"thread one" ena.vm.debug
+		true
+	}
+}
+
+threadtwo {
+	true while {
+		"thread two" ena.vm.debug
+		true
+	}
+}
+
+main {
+	'threadone run_thread
+	threadtwo
+}

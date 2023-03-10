@@ -1,4 +1,4 @@
-use flexstr::{local_str, LocalStr};
+use flexstr::{shared_str, SharedStr};
 use optimizations::inline::InlineOptimization;
 use std::{error::Error, fmt::Debug};
 
@@ -7,14 +7,14 @@ pub mod optimizations;
 #[derive(Clone)]
 pub struct OptimizationContext {
     pub ir: enalang_ir::IR,
-    pub main: LocalStr,
+    pub main: SharedStr,
 }
 
 impl Default for OptimizationContext {
     fn default() -> Self {
         Self {
             ir: Default::default(),
-            main: local_str!("main"),
+            main: shared_str!("main"),
         }
     }
 }
@@ -60,7 +60,7 @@ impl Optimizer {
     pub fn optimize(
         &mut self,
         mut code: enalang_ir::IR,
-        main: &LocalStr,
+        main: &SharedStr,
     ) -> Result<enalang_ir::IR, Box<dyn OptimizationError>> {
         for optimization in &mut self.optimizations {
             code = optimization.optimize(OptimizationContext {

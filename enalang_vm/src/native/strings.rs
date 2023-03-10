@@ -1,6 +1,6 @@
 use crate::{machine, native};
 use enalang_ir as ir;
-use flexstr::{local_fmt, ToLocalStr};
+use flexstr::{shared_fmt, ToSharedStr};
 
 pub fn strlen(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {
@@ -12,7 +12,7 @@ pub fn strlen(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
 
 pub fn concat(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let (ir::Value::String(a), ir::Value::String(b)) = (ctx.vm.pop()?, ctx.vm.pop()?) {
-        ctx.vm.push(ir::Value::String(local_fmt!("{a}{b}")))
+        ctx.vm.push(ir::Value::String(shared_fmt!("{a}{b}")))
     } else {
         Err(machine::VMError::ExpectedString)
     }
@@ -23,7 +23,7 @@ pub fn split(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
         let vals: Vec<&str> = a.split(b.as_str()).collect();
 
         for val in &vals {
-            ctx.vm.push(ir::Value::String(val.to_local_str()))?;
+            ctx.vm.push(ir::Value::String(val.to_shared_str()))?;
         }
 
         ctx.vm.push(ir::Value::Number(vals.len() as f64))?;
@@ -48,7 +48,7 @@ pub fn chars(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
         let chars: Vec<char> = a.chars().collect();
 
         for ch in &chars {
-            ctx.vm.push(ir::Value::String(ch.to_local_str()))?;
+            ctx.vm.push(ir::Value::String(ch.to_shared_str()))?;
         }
 
         ctx.vm.push(ir::Value::Number(chars.len() as f64))?;

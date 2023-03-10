@@ -1,6 +1,6 @@
 use crate::machine;
 use enalang_ir as ir;
-use flexstr::{local_fmt, LocalStr, ToLocalStr};
+use flexstr::{shared_fmt, SharedStr, ToSharedStr};
 use std::collections::HashMap;
 
 pub mod core;
@@ -18,15 +18,15 @@ pub struct NativeHandlerCtx<'a> {
 pub type NativeHandler = fn(ctx: NativeHandlerCtx) -> Result<(), machine::VMError>;
 
 pub struct NativeGroup {
-    pub natives: HashMap<LocalStr, NativeHandler>,
-    pub prefix: LocalStr,
+    pub natives: HashMap<SharedStr, NativeHandler>,
+    pub prefix: SharedStr,
 }
 
 impl NativeGroup {
     pub fn new(prefix: &str) -> Self {
         Self {
             natives: HashMap::new(),
-            prefix: prefix.to_local_str(),
+            prefix: prefix.to_shared_str(),
         }
     }
 
@@ -39,19 +39,19 @@ impl NativeGroup {
 
     pub fn add_native(&mut self, name: &str, f: NativeHandler) -> Result<(), ir::IRError> {
         if self.natives.contains_key(name) {
-            return Err(ir::IRError::BlockAlreadyExists(name.to_local_str()));
+            return Err(ir::IRError::BlockAlreadyExists(name.to_shared_str()));
         }
-        self.natives.insert(name.to_local_str(), f);
+        self.natives.insert(name.to_shared_str(), f);
         Ok(())
     }
 
     // pub fn apply(&self, ir: &mut ir::IR) -> Result<(), ir::IRError> {
     //     for (k, v) in &self.natives {
     //         if self.prefix.is_empty() {
-    //             ir.add_native(k.to_local_str(), *v, true)?;
+    //             ir.add_native(k.to_shared_str(), *v, true)?;
     //         } else {
     //             ir.add_native(
-    //                 Self::merge_prefix(self.prefix.as_str(), k).to_local_str(),
+    //                 Self::merge_prefix(self.prefix.as_str(), k).to_shared_str(),
     //                 *v,
     //                 true,
     //             )?;
@@ -61,11 +61,11 @@ impl NativeGroup {
     //     Ok(())
     // }
 
-    pub fn merge_prefix(prefix: &LocalStr, name: &LocalStr) -> LocalStr {
+    pub fn merge_prefix(prefix: &SharedStr, name: &SharedStr) -> SharedStr {
         if prefix.is_empty() {
             name.clone()
         } else {
-            local_fmt!("{prefix}.{name}")
+            shared_fmt!("{prefix}.{name}")
         }
     }
 }

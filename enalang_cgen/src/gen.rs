@@ -1,5 +1,5 @@
 use enalang_ir::Value;
-use flexstr::{local_fmt, LocalStr};
+use flexstr::{shared_fmt, SharedStr};
 
 use crate::chead::get_chead;
 
@@ -14,8 +14,8 @@ pub enum CGenError {}
 
 pub const NATIVE_CALL_PREFIX: &'static str = "ena.c.";
 pub enum CCall {
-    Native(LocalStr),
-    Mangled(LocalStr),
+    Native(SharedStr),
+    Mangled(SharedStr),
     PutValue(enalang_ir::Value),
 }
 
@@ -37,7 +37,7 @@ pub fn into_c(val: enalang_ir::Value) -> String {
         // exceptions can't be created at compile-time
         // since exceptions are always heap allocated,
         // it is problematic to implement them at compile-time
-        Value::Exception(_) => unreachable!(),
+        Value::Exception(_) | Value::Thread(_) => unreachable!(),
     }
 }
 
@@ -61,8 +61,8 @@ impl CGen {
         Self {}
     }
 
-    fn mangle_name(l: LocalStr) -> LocalStr {
-        local_fmt!("_{}", sha256::digest(l.as_str()))
+    fn mangle_name(l: SharedStr) -> SharedStr {
+        shared_fmt!("_{}", sha256::digest(l.as_str()))
     }
 
     pub fn compile_ir(&self) -> Result<String, CGenError> {

@@ -1,6 +1,6 @@
 use crate::{ast, tok};
 use enalang_ir as ir;
-use flexstr::{local_fmt, IntoLocalStr, LocalStr, ToLocalStr};
+use flexstr::{shared_fmt, IntoSharedStr, SharedStr, ToSharedStr};
 use rand::distributions::{Alphanumeric, DistString};
 
 pub struct IRGen {}
@@ -22,7 +22,7 @@ pub enum IRGenErrorInner {
     #[error("expected unique eval block after if/while")]
     ExpectedUniqueEvalBlockAfterIf,
     #[error("block already exists - {0}")]
-    BlockAlreadyExists(LocalStr),
+    BlockAlreadyExists(SharedStr),
     #[error("cannot put local block on stack")]
     CannotPutLocalBlockOnStack,
 }
@@ -68,7 +68,7 @@ impl<'a> IRGen {
                                 .collect::<Vec<String>>()
                                 .join("\n");
                             ir.annotations
-                                .insert(id.to_local_str(), filtered.to_local_str());
+                                .insert(id.to_shared_str(), filtered.to_shared_str());
                         }
                     }
                     ast::ASTNodeInner::Identifier(id) => {
@@ -89,11 +89,11 @@ impl<'a> IRGen {
                                 }
                                 Ok(v) => {
                                     if let Err(ir::IRError::BlockAlreadyExists(_)) =
-                                        ir.add_block(id.to_local_str(), v, true)
+                                        ir.add_block(id.to_shared_str(), v, true)
                                     {
                                         return Err(IRGenError(
                                             node.clone(),
-                                            IRGenErrorInner::BlockAlreadyExists(id.to_local_str()),
+                                            IRGenErrorInner::BlockAlreadyExists(id.to_shared_str()),
                                         ));
                                     }
                                 }
@@ -140,11 +140,11 @@ impl<'a> IRGen {
         Ok(ir)
     }
 
-    fn get_random_name(name: &LocalStr) -> LocalStr {
+    fn get_random_name(name: &SharedStr) -> SharedStr {
         let rand = Alphanumeric
             .sample_string(&mut rand::thread_rng(), 12)
-            .into_local_str();
-        local_fmt!("{name}_{rand}")
+            .into_shared_str();
+        shared_fmt!("{name}_{rand}")
     }
 
     fn compile_block(
@@ -154,7 +154,7 @@ impl<'a> IRGen {
         ir: &mut ir::IR,
         is_global: bool,
     ) -> Result<ir::Block, IRGenError> {
-        let name = name.to_local_str();
+        let name = name.to_shared_str();
         let mut code: Vec<ir::IRCode> = vec![];
         let t: ast::BlockType;
         let v: &Vec<ast::ASTNode>;
@@ -177,7 +177,7 @@ impl<'a> IRGen {
             match &node.1 {
                 ast::ASTNodeInner::Comment(_) => {}
                 ast::ASTNodeInner::Atom(i) => {
-                    code.push(ir::IRCode::PutValue(ir::Value::Atom(i.to_local_str())));
+                    code.push(ir::IRCode::PutValue(ir::Value::Atom(i.to_shared_str())));
                 }
                 ast::ASTNodeInner::Identifier(id) => {
                     let next = v.get(i + 1);
@@ -185,18 +185,18 @@ impl<'a> IRGen {
                         Some(ast::ASTNode(_, ast::ASTNodeInner::Block(_, _))) => {
                             let compiled = self.compile_block(id, next.unwrap(), ir, false)?;
                             code.push(ir::IRCode::LocalBlock(
-                                id.to_local_str(),
+                                id.to_shared_str(),
                                 compiled.run_type,
                                 compiled.code,
                             ));
                         }
                         _ => {
-                            code.push(ir::IRCode::Call(id.to_local_str()));
+                            code.push(ir::IRCode::Call(id.to_shared_str()));
                         }
                     };
                 }
                 ast::ASTNodeInner::EscapedIdentifier(i) => {
-                    let i = i.to_local_str();
+                    let i = i.to_shared_str();
 
                     code.push(ir::IRCode::PutValue(ir::Value::Block(i)));
                 }
@@ -254,12 +254,12 @@ impl<'a> IRGen {
                             }
                             _ => {
                                 if let Err(ir::IRError::BlockAlreadyExists(_)) =
-                                    ir.add_block(nested_name.to_local_str(), nested_ir, true)
+                                    ir.add_block(nested_name.to_shared_str(), nested_ir, true)
                                 {
                                     return Err(IRGenError(
                                         node.clone(),
                                         IRGenErrorInner::BlockAlreadyExists(
-                                            nested_name.to_local_str(),
+                                            nested_name.to_shared_str(),
                                         ),
                                     ));
                                 }
@@ -291,14 +291,14 @@ impl<'a> IRGen {
                     let nested_name = Self::get_random_name(&name);
                     let nested_ir = self.compile_block(&nested_name, next, ir, false)?;
                     if let Err(ir::IRError::BlockAlreadyExists(_)) =
-                        ir.add_block(nested_name.to_local_str(), nested_ir, true)
+                        ir.add_block(nested_name.to_shared_str(), nested_ir, true)
                     {
                         return Err(IRGenError(
                             node.clone(),
-                            IRGenErrorInner::BlockAlreadyExists(nested_name.to_local_str()),
+                            IRGenErrorInner::BlockAlreadyExists(nested_name.to_shared_str()),
                         ));
                     }
-                    code.push(ir::IRCode::If(nested_name.to_local_str()));
+                    code.push(ir::IRCode::If(nested_name.to_shared_str()));
                 }
                 ast::ASTNodeInner::Keyword(tok::KeywordType::While) => {
                     let next = match v.get(i + 1) {
@@ -321,14 +321,14 @@ impl<'a> IRGen {
                     let nested_name = Self::get_random_name(&name);
                     let nested_ir = self.compile_block(&nested_name, next, ir, false)?;
                     if let Err(ir::IRError::BlockAlreadyExists(_)) =
-                        ir.add_block(nested_name.to_local_str(), nested_ir, true)
+                        ir.add_block(nested_name.to_shared_str(), nested_ir, true)
                     {
                         return Err(IRGenError(
                             node.clone(),
-                            IRGenErrorInner::BlockAlreadyExists(nested_name.to_local_str()),
+                            IRGenErrorInner::BlockAlreadyExists(nested_name.to_shared_str()),
                         ));
                     }
-                    code.push(ir::IRCode::While(nested_name.to_local_str()));
+                    code.push(ir::IRCode::While(nested_name.to_shared_str()));
                 }
             }
         }

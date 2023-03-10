@@ -1,6 +1,6 @@
 use crate::{machine, native};
 use enalang_ir as ir;
-use flexstr::ToLocalStr;
+use flexstr::ToSharedStr;
 use rand::{self, Rng};
 use std::{fs::OpenOptions, io::Read};
 
@@ -9,16 +9,16 @@ pub fn vm_load(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
         let mut options = OpenOptions::new()
             .read(true)
             .open(path.as_str())
-            .map_err(|x| machine::VMError::FS(x.to_string().to_local_str()))?;
+            .map_err(|x| machine::VMError::FS(x.to_string().to_shared_str()))?;
         let mut v = Vec::<u8>::new();
         options
             .read_to_end(&mut v)
-            .map_err(|x| machine::VMError::FS(x.to_string().to_local_str()))?;
+            .map_err(|x| machine::VMError::FS(x.to_string().to_shared_str()))?;
         let ir = ir::from_vec(&v).map_err(|x| {
-            machine::VMError::RuntimeException(ir::Value::String(x.to_string().to_local_str()))
+            machine::VMError::RuntimeException(ir::Value::String(x.to_string().to_shared_str()))
         })?;
         let ir = ir.into_ir().map_err(|x| {
-            machine::VMError::RuntimeException(ir::Value::String(x.to_string().to_local_str()))
+            machine::VMError::RuntimeException(ir::Value::String(x.to_string().to_shared_str()))
         })?;
         ctx.vm.load(ir)
     } else {
