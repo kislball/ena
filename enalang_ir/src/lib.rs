@@ -1,5 +1,5 @@
-use flexstr::LocalStr;
-use flexstr::ToLocalStr;
+use flexstr::SharedStr;
+use flexstr::ToSharedStr;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
@@ -9,13 +9,13 @@ use std::hash::Hasher;
 #[derive(Debug, thiserror::Error)]
 pub enum IRError {
     #[error("block already exists - `{0}`")]
-    BlockAlreadyExists(LocalStr),
+    BlockAlreadyExists(SharedStr),
 }
 
 #[derive(Debug, Clone)]
 pub struct IR {
-    pub blocks: HashMap<LocalStr, Block>,
-    pub annotations: HashMap<LocalStr, LocalStr>,
+    pub blocks: HashMap<SharedStr, Block>,
+    pub annotations: HashMap<SharedStr, SharedStr>,
 }
 
 impl Default for IR {
@@ -32,7 +32,7 @@ impl IR {
         }
     }
 
-    pub fn has_directive(&self, block: &LocalStr, directive: &LocalStr) -> bool {
+    pub fn has_directive(&self, block: &SharedStr, directive: &SharedStr) -> bool {
         let annotation = match self.annotations.get(block.as_ref()) {
             Some(i) => i,
             None => {
@@ -79,13 +79,13 @@ impl IR {
         Ok(())
     }
 
-    pub fn get_block(&self, id: &LocalStr) -> Option<&Block> {
+    pub fn get_block(&self, id: &SharedStr) -> Option<&Block> {
         self.blocks.get(id)
     }
 
     pub fn add_block(
         &mut self,
-        name: LocalStr,
+        name: SharedStr,
         block: Block,
         output_err: bool,
     ) -> Result<(), IRError> {
@@ -124,7 +124,7 @@ impl Block {
 pub enum IRSerializable<'a> {
     Block(&'a str, bool, BlockRunType, Vec<IRCode>),
     Root(Vec<IRSerializable<'a>>),
-    Annotation(LocalStr, LocalStr),
+    Annotation(SharedStr, SharedStr),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -159,7 +159,7 @@ impl<'a> IRSerializable<'a> {
                         global,
                         run_type: typ,
                     };
-                    ir.add_block(name.to_local_str(), block, true)
+                    ir.add_block(name.to_shared_str(), block, true)
                         .map_err(SerializationError::IRError)?;
                 } else if let IRSerializable::Annotation(name, data) = ser_block {
                     ir.annotations.insert(name, data);
@@ -178,12 +178,13 @@ impl<'a> IRSerializable<'a> {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Value {
     Number(f64),
-    String(LocalStr),
+    String(SharedStr),
     Boolean(bool),
     Pointer(usize),
-    Block(LocalStr),
+    Block(SharedStr),
     Exception(Box<Value>),
-    Atom(LocalStr),
+    Atom(SharedStr),
+    Thread(u32),
     Null,
 }
 
@@ -195,6 +196,7 @@ impl Value {
             Value::Number(_) => {
                 return None;
             }
+            Value::Thread(v) => v.hash(&mut hasher),
             Value::String(str) => str.hash(&mut hasher),
             Value::Boolean(b) => b.hash(&mut hasher),
             Value::Pointer(p) => p.hash(&mut hasher),
@@ -211,10 +213,10 @@ impl Value {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IRCode {
     PutValue(Value),
-    LocalBlock(LocalStr, BlockRunType, Vec<IRCode>),
-    Call(LocalStr),
-    While(LocalStr),
-    If(LocalStr),
+    LocalBlock(SharedStr, BlockRunType, Vec<IRCode>),
+    Call(SharedStr),
+    While(SharedStr),
+    If(SharedStr),
     Return,
     ReturnLocal,
 }

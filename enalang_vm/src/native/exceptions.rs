@@ -1,6 +1,6 @@
 use crate::{machine, native};
 use enalang_ir as ir;
-use flexstr::local_fmt;
+use flexstr::shared_fmt;
 
 pub fn try_exception(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let block = if let ir::Value::Block(block_name) = ctx.vm.pop()? {
@@ -12,7 +12,7 @@ pub fn try_exception(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMErr
     if let Err(err) = ctx.vm.run_block(&block) {
         ctx.vm
             .push(ir::Value::Exception(Box::new(ir::Value::String(
-                local_fmt!("{err:?}"),
+                shared_fmt!("{err:?}"),
             ))))?;
     }
 

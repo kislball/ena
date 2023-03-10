@@ -1,18 +1,26 @@
 use crate::{
     blocks::{self, BlocksError},
     heap, native,
+    supervisor::{ThreadSupervisor, ThreadSupervisorError},
 };
 use enalang_ir as ir;
-use flexstr::{local_str, LocalStr};
+use flexstr::{shared_str, SharedStr};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
 pub enum VMError {
+    #[error("supervisor error - `{0}`")]
+    SupervisorError(ThreadSupervisorError),
+    #[error("vm instance is not supervised by thread supervisor")]
+    VmNotSupervised,
     #[error("unknown block `{0}`")]
-    UnknownBlock(LocalStr),
+    UnknownBlock(SharedStr),
     #[error("fs error `{0}``")]
-    FS(LocalStr),
+    FS(SharedStr),
     #[error("no ir was provided")]
     NoIR,
     #[error("stack has ended")]
@@ -34,7 +42,7 @@ pub enum VMError {
     #[error("expected exception")]
     ExpectedException,
     #[error("cannot shadow blocks in local scope `{0}`")]
-    CannotShadowBlocksInLocalScope(LocalStr),
+    CannotShadowBlocksInLocalScope(SharedStr),
     #[error("cannot compare {0:?} to {1:?}")]
     CannotCompare(ir::Value, ir::Value),
     #[error("cannot convert {0:?}")]
@@ -51,18 +59,20 @@ pub enum VMError {
     NoSingleEval,
     #[error("blocks error - {0}")]
     Blocks(BlocksError),
+    #[error("no messages in queue")]
+    EmptyQueue,
 }
 
 #[derive(Clone, Debug)]
 pub struct Scope {
-    pub block: LocalStr,
+    pub block: SharedStr,
     pub blocks: blocks::Blocks,
-    pub single_evals: HashMap<LocalStr, ir::Value>,
-    pub locals: Vec<LocalStr>,
+    pub single_evals: HashMap<SharedStr, ir::Value>,
+    pub locals: Vec<SharedStr>,
 }
 
 impl Scope {
-    pub fn new(blocks: blocks::Blocks, block: LocalStr) -> Self {
+    pub fn new(blocks: blocks::Blocks, block: SharedStr) -> Self {
         Self {
             blocks,
             single_evals: HashMap::new(),
@@ -71,19 +81,19 @@ impl Scope {
         }
     }
 
-    pub fn add_local(&mut self, local: LocalStr) {
+    pub fn add_local(&mut self, local: SharedStr) {
         self.locals.push(local);
     }
 
-    pub fn has_local(&self, local: &LocalStr) -> bool {
+    pub fn has_local(&self, local: &SharedStr) -> bool {
         self.locals.contains(local)
     }
 
-    pub fn add_single_eval(&mut self, local: LocalStr, value: ir::Value) {
+    pub fn add_single_eval(&mut self, local: SharedStr, value: ir::Value) {
         self.single_evals.insert(local, value);
     }
 
-    pub fn has_single_eval(&mut self, local: &LocalStr) -> bool {
+    pub fn has_single_eval(&mut self, local: &SharedStr) -> bool {
         self.single_evals.contains_key(local)
     }
 }
@@ -103,9 +113,9 @@ impl ScopeManager {
         ScopeManager { scopes: vec![] }
     }
 
-    pub fn root(&mut self, blocks: blocks::Blocks, block: LocalStr) -> Result<&Scope, VMError> {
+    pub fn root(&mut self, blocks: blocks::Blocks, block: SharedStr) -> Result<&Scope, VMError> {
         self.scopes = vec![];
-        let mut locals: Vec<LocalStr> = Vec::new();
+        let mut locals: Vec<SharedStr> = Vec::new();
 
         for (name, block) in &blocks.blocks {
             if let blocks::VMBlock::IR(st) = block {
@@ -127,7 +137,7 @@ impl ScopeManager {
         Ok(self.scopes.last().unwrap())
     }
 
-    pub fn parent(&mut self, block: LocalStr) -> Result<&Scope, VMError> {
+    pub fn parent(&mut self, block: SharedStr) -> Result<&Scope, VMError> {
         let root = match self.scopes.first() {
             Some(i) => i,
             None => {
@@ -146,7 +156,7 @@ impl ScopeManager {
         Ok(self.scopes.last().unwrap())
     }
 
-    pub fn child(&mut self, block: LocalStr) -> Result<&Scope, VMError> {
+    pub fn child(&mut self, block: SharedStr) -> Result<&Scope, VMError> {
         let parent = match self.scopes.last() {
             Some(i) => i,
             None => {
@@ -179,7 +189,7 @@ impl ScopeManager {
         }
     }
 
-    pub fn remove_single_eval(&mut self, local: LocalStr) -> Result<(), VMError> {
+    pub fn remove_single_eval(&mut self, local: SharedStr) -> Result<(), VMError> {
         let owner = match self.lookup_local_owner_mut(&local) {
             Some(i) => i,
             None => {
@@ -195,7 +205,7 @@ impl ScopeManager {
         Ok(())
     }
 
-    pub fn add_single_eval(&mut self, local: LocalStr, value: ir::Value) -> Result<(), VMError> {
+    pub fn add_single_eval(&mut self, local: SharedStr, value: ir::Value) -> Result<(), VMError> {
         let owner = match self.lookup_local_owner_mut(&local) {
             Some(i) => i,
             None => {
@@ -207,7 +217,7 @@ impl ScopeManager {
         Ok(())
     }
 
-    pub fn lookup_single_eval(&self, local: &LocalStr) -> Result<ir::Value, VMError> {
+    pub fn lookup_single_eval(&self, local: &SharedStr) -> Result<ir::Value, VMError> {
         let owner = match self.lookup_local_owner(local) {
             Some(i) => i,
             None => {
@@ -221,7 +231,7 @@ impl ScopeManager {
         }
     }
 
-    pub fn add_local(&mut self, local: LocalStr) -> Result<(), VMError> {
+    pub fn add_local(&mut self, local: SharedStr) -> Result<(), VMError> {
         let current_scope = self.scopes.last_mut();
         let current_scope = match current_scope {
             Some(i) => i,
@@ -234,7 +244,7 @@ impl ScopeManager {
         Ok(())
     }
 
-    pub fn lookup_local_owner_mut(&mut self, local: &LocalStr) -> Option<&mut Scope> {
+    pub fn lookup_local_owner_mut(&mut self, local: &SharedStr) -> Option<&mut Scope> {
         self.scopes
             .iter_mut()
             .rev()
@@ -249,7 +259,7 @@ impl ScopeManager {
         &mut self.scopes.last_mut().unwrap().blocks
     }
 
-    pub fn lookup_local_owner(&self, local: &LocalStr) -> Option<&Scope> {
+    pub fn lookup_local_owner(&self, local: &SharedStr) -> Option<&Scope> {
         self.scopes
             .iter()
             .rev()
@@ -270,12 +280,20 @@ impl VMOptions {
     }
 }
 
+pub struct Message {
+    pub from: u32,
+    pub content: ir::Value,
+}
+
 pub struct VM {
     pub stack: Vec<ir::Value>,
-    pub call_stack: Vec<LocalStr>,
+    pub call_stack: Vec<SharedStr>,
     pub heap: heap::Heap,
     pub options: VMOptions,
     pub scope_manager: ScopeManager,
+    pub thread_id: Option<u32>,
+    pub message_stack: Option<Vec<Message>>,
+    pub supervised_by: Option<Arc<Mutex<ThreadSupervisor>>>,
 }
 
 impl Default for VMOptions {
@@ -296,6 +314,9 @@ impl VM {
             heap: heap::Heap::new(options.enable_gc, options.debug_gc),
             options,
             stack: Vec::new(),
+            thread_id: None,
+            supervised_by: None,
+            message_stack: None,
             scope_manager: ScopeManager::new(),
         }
     }
@@ -307,8 +328,51 @@ impl VM {
         self.scope_manager = ScopeManager::new();
     }
 
+    pub fn get_supervisor(&self) -> Result<Arc<Mutex<ThreadSupervisor>>, VMError> {
+        match &self.supervised_by {
+            Some(i) => Ok(i.clone()),
+            None => Err(VMError::VmNotSupervised),
+        }
+    }
+
+    pub fn send_message(&mut self, message: ir::Value, to: u32) -> Result<(), VMError> {
+        let supervisor = self.get_supervisor()?;
+        let mut supervisor = match supervisor.lock() {
+            Ok(i) => i,
+            Err(e) => e.into_inner(),
+        };
+        let id = self
+            .thread_id
+            .expect("supervised thread to have a thread id");
+        supervisor
+            .send_message(message, to, id)
+            .map_err(VMError::SupervisorError)
+    }
+
+    pub fn await_receive(&mut self) -> Result<Message, VMError> {
+        loop {
+            let value = self.receive();
+            if let Err(VMError::EmptyQueue) = value {
+            } else {
+                return value;
+            }
+        }
+    }
+
+    pub fn receive(&mut self) -> Result<Message, VMError> {
+        let stack = match &mut self.message_stack {
+            Some(i) => i,
+            None => return Err(VMError::VmNotSupervised),
+        };
+        if stack.len() == 0 {
+            return Err(VMError::EmptyQueue);
+        }
+
+        Ok(stack.remove(0))
+    }
+
     pub fn load(&mut self, ir: ir::IR) -> Result<(), VMError> {
-        let blocks = ir.blocks.clone().into_keys().collect::<Vec<LocalStr>>();
+        let blocks = ir.blocks.clone().into_keys().collect::<Vec<SharedStr>>();
 
         for block in blocks {
             self.scope_manager
@@ -373,13 +437,13 @@ impl VM {
         }
     }
 
-    pub fn run(&mut self, main: &LocalStr, ir: blocks::Blocks) -> Result<bool, VMError> {
+    pub fn run(&mut self, main: &SharedStr, ir: blocks::Blocks) -> Result<bool, VMError> {
         self.new_scope(ir)?;
         self.run_block(main)
     }
 
     pub fn new_scope(&mut self, ir: blocks::Blocks) -> Result<&Scope, VMError> {
-        self.scope_manager.root(ir, local_str!("root"))
+        self.scope_manager.root(ir, shared_str!("root"))
     }
 
     pub fn pop_scope(&mut self) -> Result<(), VMError> {
@@ -390,7 +454,7 @@ impl VM {
         Ok(())
     }
 
-    pub fn run_block(&mut self, block_name: &LocalStr) -> Result<bool, VMError> {
+    pub fn run_block(&mut self, block_name: &SharedStr) -> Result<bool, VMError> {
         if self.options.debug_calls {
             println!("CALL_DEBUG: {block_name}");
         }
