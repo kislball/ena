@@ -4,14 +4,14 @@ use enalang_vm::{
     blocks::VMBlock,
     machine::{ScopeManager, VMError},
 };
-use flexstr::SharedStr;
+use flexstr::LocalStr;
 
 #[derive(Debug, thiserror::Error)]
 pub enum BlocksCheckerError {
     #[error("unknown block `{0}` in `{1}`")]
-    UnknownBlock(SharedStr, SharedStr),
+    UnknownBlock(LocalStr, LocalStr),
     #[error("cannot shadow `{0}` in `{1}`")]
-    CannotShadowBlocksInLocalScope(SharedStr, SharedStr),
+    CannotShadowBlocksInLocalScope(LocalStr, LocalStr),
     #[error("vm error - `{0}`")]
     VM(VMError),
 }
@@ -27,7 +27,7 @@ impl CheckError for BlocksCheckerError {
 }
 
 pub struct BlocksChecker {
-    checked: Vec<SharedStr>,
+    checked: Vec<LocalStr>,
 }
 
 impl Default for BlocksChecker {
@@ -47,7 +47,7 @@ impl BlocksChecker {
 
     fn check_block(
         &mut self,
-        name: SharedStr,
+        name: LocalStr,
         block: &Block,
         scope_manager: &mut ScopeManager,
     ) -> Result<(), Vec<Box<dyn CheckError>>> {

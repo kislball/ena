@@ -1,7 +1,7 @@
 use clap::ValueEnum;
 use colored::Colorize;
 use enalang_checker::checker::{CheckError, Checker};
-use flexstr::ToSharedStr;
+use flexstr::ToLocalStr;
 use glob::glob;
 use std::{
     collections::HashMap,
@@ -148,7 +148,7 @@ impl Ena {
         };
         self.ir = Some(
             self.optimizer
-                .optimize(ir.clone(), &main.to_shared_str())
+                .optimize(ir.clone(), &main.to_local_str())
                 .map_err(|x| EnaError::OptimizerError(x))?,
         );
         Ok(())
@@ -406,7 +406,7 @@ impl Ena {
         self.vm
             .as_mut()
             .unwrap()
-            .run(&main.to_shared_str(), blocks)
+            .run(&main.to_local_str(), blocks)
             .map_err(EnaError::VMError)
             .map(|_| ())
     }
