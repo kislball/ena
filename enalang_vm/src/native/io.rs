@@ -1,6 +1,6 @@
 use crate::{machine, native};
 use enalang_ir as ir;
-use flexstr::{shared_fmt, ToSharedStr};
+use flexstr::{local_fmt, ToLocalStr};
 use std::{fs, path::Path};
 
 pub fn print(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
@@ -29,7 +29,7 @@ pub fn files_in_dir(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMErro
             Ok(i) => i,
             Err(e) => {
                 return Err(machine::VMError::RuntimeException(ir::Value::String(
-                    shared_fmt!("{e:?}"),
+                    local_fmt!("{e:?}"),
                 )));
             }
         };
@@ -39,12 +39,12 @@ pub fn files_in_dir(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMErro
                 Ok(i) => i,
                 Err(e) => {
                     return Err(machine::VMError::RuntimeException(ir::Value::String(
-                        shared_fmt!("{e:?}"),
+                        local_fmt!("{e:?}"),
                     )));
                 }
             };
             ctx.vm.push(ir::Value::String(
-                file.file_name().to_str().unwrap().to_shared_str(),
+                file.file_name().to_str().unwrap().to_local_str(),
             ))?;
             total_files += 1;
         }

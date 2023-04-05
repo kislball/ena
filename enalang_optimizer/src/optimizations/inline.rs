@@ -5,12 +5,12 @@ use enalang_vm::{
     machine::{ScopeManager, VMError},
     native,
 };
-use flexstr::{shared_fmt, shared_str, SharedStr, ToSharedStr};
+use flexstr::{local_fmt, local_str, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
 
 pub struct InlineOptimization {
     ctx: OptimizationContext,
-    optimized: Vec<SharedStr>,
+    optimized: Vec<LocalStr>,
     scope_manager: ScopeManager,
 }
 
@@ -23,11 +23,11 @@ impl InlineOptimization {
         }
     }
 
-    fn can_inline(&self, name: &SharedStr) -> bool {
+    fn can_inline(&self, name: &LocalStr) -> bool {
         if self
             .scope_manager
             .blocks()
-            .has_directive(&name.clone(), &"@unsafe(inline)".to_shared_str())
+            .has_directive(&name.clone(), &"@unsafe(inline)".to_local_str())
         {
             return true;
         }
@@ -35,7 +35,7 @@ impl InlineOptimization {
         if self
             .scope_manager
             .blocks()
-            .has_directive(&name.clone(), &"@no-inline".to_shared_str())
+            .has_directive(&name.clone(), &"@no-inline".to_local_str())
         {
             return false;
         }
@@ -66,7 +66,7 @@ impl InlineOptimization {
 
     fn optimize_block(
         &mut self,
-        name: &SharedStr,
+        name: &LocalStr,
         block: &Block,
     ) -> Result<Block, Box<dyn crate::OptimizationError>> {
         let mut new_block = Block {
@@ -121,7 +121,7 @@ impl InlineOptimization {
                     self.scope_manager
                         .blocks_mut()
                         .add_block(
-                            shared_fmt!(
+                            local_fmt!(
                                 "{name}_{i}",
                                 i = Alphanumeric.sample_string(&mut rand::thread_rng(), 17)
                             ),
@@ -159,7 +159,7 @@ impl Optimization for InlineOptimization {
             .root(
                 Blocks::new(native::group(), self.ctx.ir.clone())
                     .map_err(|x| Box::new(InlineOptimizationError::Blocks(x)))?,
-                shared_str!("root"),
+                local_str!("root"),
             )
             .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
 
@@ -188,7 +188,7 @@ pub enum InlineOptimizationError {
     #[error("ir error - `{0}`")]
     IR(IRError),
     #[error("unknown block `{0}`")]
-    UnknownBlock(SharedStr),
+    UnknownBlock(LocalStr),
 }
 
 impl crate::OptimizationError for InlineOptimizationError {

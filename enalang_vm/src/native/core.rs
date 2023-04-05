@@ -1,8 +1,5 @@
-use std::thread;
-
 use crate::{heap, machine, native};
 use enalang_ir as ir;
-use flexstr::IntoSharedStr;
 
 pub fn hash(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.pop()?;
@@ -318,38 +315,6 @@ pub fn clear_stack(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError
     Ok(())
 }
 
-pub fn run_thread(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
-    let block_name = match ctx.vm.pop()? {
-        ir::Value::Block(name) => name,
-        _ => return Err(machine::VMError::ExpectedBlock),
-    };
-    let block_name = block_name.into_shared_str();
-    let vm = machine::VM::new(ctx.vm.options);
-    let supervisor = ctx.vm.get_supervisor()?;
-    let mut supervisor = match supervisor.lock() {
-        Ok(i) => i,
-        Err(e) => e.into_inner(),
-    };
-    let id = supervisor
-        .supervise(vm, ctx.vm.get_supervisor()?.clone())
-        .map_err(machine::VMError::SupervisorError)?;
-    ctx.vm.push(ir::Value::Thread(id))?;
-    let supervisor = ctx.vm.get_supervisor()?;
-    let blocks = ctx.vm.scope_manager.scopes.first().unwrap().blocks.clone();
-
-    thread::spawn(move || {
-        let mut supervisor = match supervisor.lock() {
-            Ok(i) => i,
-            Err(i) => i.into_inner(),
-        };
-        if let Err(e) = supervisor.run_blocking(id, block_name, blocks) {
-            eprintln!("ena error in thread {id}: {e}");
-        }
-    });
-
-    Ok(())
-}
-
 pub fn into_base(_ctx: native::NativeHandlerCtx) {}
 
 // pub fn run_thread<'a>(vm: &mut machine::VM, ir: &ir::IR<'a>) -> Result<(), machine::VMError> {
@@ -396,7 +361,6 @@ pub fn group() -> native::NativeGroup {
     group.add_native("alloc", alloc).unwrap();
     group.add_native("unsafe_realloc", realloc).unwrap();
     group.add_native("unsafe_free", free).unwrap();
-    group.add_native("run_thread", run_thread).unwrap();
 
     group
 }

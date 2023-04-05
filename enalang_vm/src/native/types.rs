@@ -1,21 +1,20 @@
 use crate::{machine, native};
 use enalang_ir as ir;
-use flexstr::{shared_fmt, shared_str};
+use flexstr::{local_fmt, local_str};
 
 pub fn into_string(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.pop()?;
 
     let st = match val {
-        ir::Value::Thread(id) => shared_fmt!("thread({id})"),
-        ir::Value::Boolean(true) => shared_str!("true"),
-        ir::Value::Boolean(false) => shared_str!("false"),
+        ir::Value::Boolean(true) => local_str!("true"),
+        ir::Value::Boolean(false) => local_str!("false"),
         ir::Value::String(st) => st,
-        ir::Value::Null => shared_str!("null"),
-        ir::Value::Block(block_name) => shared_fmt!("'{}", block_name),
-        ir::Value::Number(num) => shared_fmt!("{}", num),
-        ir::Value::Pointer(pointer) => shared_fmt!("{}->", pointer),
-        ir::Value::Exception(err) => shared_fmt!("{err:?}"),
-        ir::Value::Atom(atom) => shared_fmt!(":{atom}"),
+        ir::Value::Null => local_str!("null"),
+        ir::Value::Block(block_name) => local_fmt!("'{}", block_name),
+        ir::Value::Number(num) => local_fmt!("{}", num),
+        ir::Value::Pointer(pointer) => local_fmt!("{}->", pointer),
+        ir::Value::Exception(err) => local_fmt!("{err:?}"),
+        ir::Value::Atom(atom) => local_fmt!(":{atom}"),
     };
 
     ctx.vm.push(ir::Value::String(st))

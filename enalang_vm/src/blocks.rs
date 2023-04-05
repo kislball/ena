@@ -1,7 +1,7 @@
 use crate::native;
 use core::fmt::Debug;
 use enalang_ir as ir;
-use flexstr::{shared_str, SharedStr};
+use flexstr::{local_str, LocalStr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -15,7 +15,7 @@ impl Into<ir::IRError> for BlocksError {
     fn into(self) -> ir::IRError {
         match self {
             BlocksError::BlockAlreadyExists => {
-                ir::IRError::BlockAlreadyExists(shared_str!("todo: report to devs"))
+                ir::IRError::BlockAlreadyExists(local_str!("todo: report to devs"))
             }
         }
     }
@@ -54,8 +54,8 @@ impl VMBlock {
 
 #[derive(Debug, Clone, Default)]
 pub struct Blocks {
-    pub blocks: HashMap<SharedStr, VMBlock>,
-    pub annotations: HashMap<SharedStr, SharedStr>,
+    pub blocks: HashMap<LocalStr, VMBlock>,
+    pub annotations: HashMap<LocalStr, LocalStr>,
 }
 
 impl Blocks {
@@ -68,7 +68,7 @@ impl Blocks {
         Ok(default)
     }
 
-    pub fn has_directive(&self, name: &SharedStr, annotation: &SharedStr) -> bool {
+    pub fn has_directive(&self, name: &LocalStr, annotation: &LocalStr) -> bool {
         if let Some(i) = self.annotations.get(name) {
             for line in i.lines() {
                 if line.contains(annotation.as_str()) {
@@ -81,11 +81,11 @@ impl Blocks {
         }
     }
 
-    pub fn get_block(&self, name: &SharedStr) -> Option<&VMBlock> {
+    pub fn get_block(&self, name: &LocalStr) -> Option<&VMBlock> {
         self.blocks.get(name)
     }
 
-    pub fn add_block(&mut self, name: SharedStr, block: VMBlock) -> Result<(), BlocksError> {
+    pub fn add_block(&mut self, name: LocalStr, block: VMBlock) -> Result<(), BlocksError> {
         if self.blocks.contains_key(&name) {
             return Err(BlocksError::BlockAlreadyExists);
         }
