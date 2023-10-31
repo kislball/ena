@@ -249,10 +249,8 @@ impl Tokenizer {
                     Some(ch) => {
                         if ch.is_numeric() {
                             self.parse_number(&en);
-                        } else {
-                            if let Some(err) = self.parse_id(&en, IdentifierType::Regular) {
-                                return Err(err);
-                            }
+                        } else if let Some(err) = self.parse_id(&en, IdentifierType::Regular) {
+                            return Err(err);
                         }
                     }
                     None => {

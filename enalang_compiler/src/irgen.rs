@@ -335,7 +335,7 @@ impl<'a> IRGen {
 
         Ok(ir::Block {
             global: is_global,
-            code: code,
+            code,
             run_type: t,
         })
     }

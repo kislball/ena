@@ -3,7 +3,7 @@ use serde::Serialize;
 
 pub struct MarkdownRenderer;
 
-pub const TEMPLATE: &'static str = r#"
+pub const TEMPLATE: &str = r#"
 {{ for entry in doc }}
 # {entry.name}
 {entry.comment | unescaped}
