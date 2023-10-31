@@ -3,7 +3,7 @@ use serde::Serialize;
 
 pub struct HtmlRenderer;
 
-pub const TEMPLATE: &'static str = r#"
+pub const TEMPLATE: &str = r#"
 {{ for entry in doc }}
 <h1 class="enadocgen-title">{entry.name}</h1>
 <div class="enadocgen-comment">{entry.comment | unescaped}</div>

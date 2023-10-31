@@ -12,7 +12,7 @@ macro_rules! unreachable {
 #[derive(Debug, thiserror::Error)]
 pub enum CGenError {}
 
-pub const NATIVE_CALL_PREFIX: &'static str = "ena.c.";
+pub const NATIVE_CALL_PREFIX: &str = "ena.c.";
 pub enum CCall {
     Native(LocalStr),
     Mangled(LocalStr),

@@ -27,10 +27,10 @@ impl Documentation {
         for (block, data) in ir.annotations {
             let data = data
                 .lines()
-                .filter(|x| x.chars().nth(0).unwrap_or(' ') != '@')
+                .filter(|x| x.chars().next().unwrap_or(' ') != '@')
                 .collect::<Vec<&str>>()
                 .join("\n");
-            if data.len() > 0 {
+            if !data.is_empty() {
                 self.0.push(DocEntry {
                     name: block.to_string(),
                     comment: data,
