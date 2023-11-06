@@ -11,7 +11,7 @@ pub fn hash(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
-pub fn nop(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
+pub fn nop(_: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
