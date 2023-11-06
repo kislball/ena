@@ -3,4 +3,5 @@ enalang_compiler
 enalang_vm
 enalang_optimizer
 enalang_checker
+enalang_repl
 enalang

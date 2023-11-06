@@ -1,6 +1,7 @@
 use clap::ValueEnum;
 use colored::Colorize;
 use enalang_checker::checker::{CheckError, Checker};
+use enalang_repl::{Repl, ReplError};
 use flexstr::ToLocalStr;
 use glob::glob;
 use std::{
@@ -13,7 +14,7 @@ use std::{
 };
 use vm::{
     blocks::{Blocks, BlocksError},
-    machine::VMOptions,
+    machine::{VMOptions, VM},
     native,
 };
 
@@ -58,6 +59,8 @@ pub enum EnaError {
     NotLinked,
     #[error("no ir was provided")]
     NoIR,
+    #[error("repl error - `{0}`")]
+    ReplError(ReplError),
 }
 
 #[derive(Copy, Clone)]
@@ -384,6 +387,12 @@ impl Ena {
 
         let serial = ir::from_vec(&v).map_err(EnaError::SerializationError)?;
         serial.into_ir().map_err(EnaError::SerializationError)
+    }
+
+    pub fn run_repl(&mut self, options: VMOptions) -> Result<(), EnaError> {
+        let mut repl = Repl::new(VM::new(options));
+
+        repl.run_interactive();
     }
 
     pub fn run(&mut self, main: &str, options: vm::machine::VMOptions) -> Result<(), EnaError> {
