@@ -7,7 +7,7 @@ use enalang_vm::machine::VMOptions;
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -180,13 +180,13 @@ fn main() {
     let mut ena = enalang::Ena::new();
 
     let res = match args.command {
-        Commands::Compile(c) => compile(c, &mut ena),
-        Commands::Link(l) => link(l, &mut ena),
-        Commands::Check(c) => check(c, &mut ena),
-        Commands::Run(r) => run(r, &mut ena),
-        Commands::Optimize(o) => optimize(o, &mut ena),
-        Commands::Doc(d) => doc(d, &mut ena),
-        Commands::REPL => repl(&mut ena),
+        Some(Commands::Compile(c)) => compile(c, &mut ena),
+        Some(Commands::Link(l)) => link(l, &mut ena),
+        Some(Commands::Check(c)) => check(c, &mut ena),
+        Some(Commands::Run(r)) => run(r, &mut ena),
+        Some(Commands::Optimize(o)) => optimize(o, &mut ena),
+        Some(Commands::Doc(d)) => doc(d, &mut ena),
+        Some(Commands::REPL) | None => repl(&mut ena),
     };
 
     if let Err(e) = res {
