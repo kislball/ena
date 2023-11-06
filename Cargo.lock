@@ -132,7 +132,7 @@ dependencies = [
 
 [[package]]
 name = "enalang"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bincode",
  "clap",
@@ -153,7 +153,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_cgen"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bincode",
  "enalang_ir",
@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_checker"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bincode",
  "enalang_ir",
@@ -178,7 +178,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_compiler"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bincode",
  "enalang_ir",
@@ -190,7 +190,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_docgen"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "enalang_ir",
  "flexstr",
@@ -202,7 +202,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_ir"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bincode",
  "flexstr",
@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_optimizer"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "enalang_ir",
  "enalang_vm",
@@ -225,7 +225,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_repl"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "enalang_compiler",
  "enalang_ir",
@@ -237,7 +237,7 @@ dependencies = [
 
 [[package]]
 name = "enalang_vm"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bincode",
  "enalang_ir",
