@@ -256,6 +256,7 @@ impl ScopeManager {
             .find(|&scope| scope.has_local(local))
     }
 }
+
 #[derive(Clone, Copy)]
 pub struct VMOptions {
     pub debug_stack: bool,

@@ -1,14 +1,12 @@
 [package]
 name = "enalang_docgen"
-version = "0.1.0"
+version = "0.4.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 enalang_ir = { version = "0.4.0", path = "../enalang_ir" }
-flexstr = { version = "0.9.2", features = ["serde"] }
+flexstr = { version = "0.9.2", features = [ "serde",] }
 markdown = "0.3.0"
-serde = { version = "1.0.152", features = ["derive"] }
+serde = { version = "1.0.152", features = [ "derive",] }
 serde_json = "1.0.93"
 tinytemplate = "1.2.1"

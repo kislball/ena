@@ -1,6 +1,5 @@
 use clap::{Args, Parser, Subcommand};
-use enalang::docgen;
-use enalang::EnaError;
+use enalang::{Ena, EnaError};
 use enalang_vm::machine::VMOptions;
 
 #[derive(Parser)]
@@ -25,6 +24,8 @@ enum Commands {
     Optimize(Optimize),
     /// Generates documentation
     Doc(Doc),
+    /// Use ENA interactively,
+    REPL,
 }
 
 #[derive(Args)]
@@ -170,6 +171,10 @@ fn run(r: Run, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     Ok(())
 }
 
+pub fn repl(e: &mut Ena) -> Result<(), EnaError> {
+    e.run_repl(VMOptions::default())
+}
+
 fn main() {
     let args = Cli::parse();
     let mut ena = enalang::Ena::new();
@@ -181,6 +186,7 @@ fn main() {
         Commands::Run(r) => run(r, &mut ena),
         Commands::Optimize(o) => optimize(o, &mut ena),
         Commands::Doc(d) => doc(d, &mut ena),
+        Commands::REPL => repl(&mut ena),
     };
 
     if let Err(e) = res {

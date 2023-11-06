@@ -23,4 +23,5 @@ enalang_checker = { path = "../enalang_checker", version = "0.4.0" }
 thiserror = "1.0.38"
 enalang_ir = { version = "0.4.0", path = "../enalang_ir" }
 enalang_optimizer = { version = "0.4.0", path = "../enalang_optimizer" }
-enalang_docgen = { version = "0.1.0", path = "../enalang_docgen" }
+enalang_docgen = { version = "0.4.0", path = "../enalang_docgen" }
+enalang_repl = { version = "0.4.0", path = "../enalang_repl" }

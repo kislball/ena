@@ -11,6 +11,10 @@ pub fn hash(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     Ok(())
 }
 
+pub fn nop(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    Ok(())
+}
+
 pub fn drop_value(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     ctx.vm.pop()?;
 
@@ -352,6 +356,7 @@ pub fn group() -> native::NativeGroup {
     group.add_native(">=", gte).unwrap();
     group.add_native("<=", lte).unwrap();
     group.add_native("pow", pow).unwrap();
+    group.add_native("nop", nop).unwrap();
     group.add_native("root", root).unwrap();
     group.add_native("==", equal).unwrap();
     group.add_native("call", call).unwrap();
