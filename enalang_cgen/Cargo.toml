@@ -1,6 +1,6 @@
 [package]
 name = "enalang_cgen"
-version = "0.6.0\n"
+version = "0.6.0"
 authors = [ "the Ena authors",]
 edition = "2021"
 description = "Exhaustingly Notorious Algorithms - C code generator"
@@ -15,4 +15,4 @@ serde = { version = "1.0.152", features = [ "derive",] }
 rand = "0.8.5"
 thiserror = "1.0.38"
 sha256 = "1.1.2"
-enalang_ir = { version = "0.6.0\n", path = "../enalang_ir" }
+enalang_ir = { version = "0.6.0", path = "../enalang_ir" }
