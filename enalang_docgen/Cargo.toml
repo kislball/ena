@@ -1,6 +1,6 @@
 [package]
 name = "enalang_docgen"
-version = "0.5.2"
+version = "0.6.0\n"
 authors = [ "the Ena authors",]
 edition = "2021"
 description = "Exhaustingly Notorious Algorithms - docgen"
@@ -9,7 +9,7 @@ license = "GPL-3.0-only"
 keywords = [ "programming-language",]
 
 [dependencies]
-enalang_ir = { version = "0.5.2", path = "../enalang_ir" }
+enalang_ir = { version = "0.6.0\n", path = "../enalang_ir" }
 flexstr = { version = "0.9.2", features = [ "serde",] }
 markdown = "0.3.0"
 serde = { version = "1.0.152", features = [ "derive",] }
