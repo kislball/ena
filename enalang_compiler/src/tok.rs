@@ -42,7 +42,7 @@ pub enum TokenizerErrorInner {
 #[error("at {0} - `{1}`")]
 pub struct TokenizerError(pub usize, pub TokenizerErrorInner);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TokenInner {
     Identifier(String),
     EscapedIdentifier(String),
@@ -71,7 +71,7 @@ pub fn is_closer(open: &TokenInner, close: &TokenInner) -> Option<bool> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token(pub usize, pub TokenInner);
 
 #[derive(Debug, Copy, Clone)]

@@ -24,8 +24,19 @@ enum Commands {
     Optimize(Optimize),
     /// Generates documentation
     Doc(Doc),
+    /// Print the JSON structure of IR
+    JSON(JSON),
     /// Use ENA interactively,
     REPL,
+}
+
+#[derive(Args)]
+struct JSON {
+    /// Print pretty json
+    #[arg(short, long, default_value_t = false)]
+    pretty: bool,
+    /// File to display
+    file: String,
 }
 
 #[derive(Args)]
@@ -52,7 +63,7 @@ struct Optimize {
 #[derive(Args)]
 struct Link {
     /// Whether to optimize the resulting IR
-    #[arg(short, long, default_value_t = true)]
+    #[arg(long, default_value_t = true)]
     optimize: bool,
     /// Files to merge
     files: Vec<String>,
@@ -171,6 +182,18 @@ fn run(r: Run, ena: &mut enalang::Ena) -> Result<(), EnaError> {
     Ok(())
 }
 
+fn json(j: JSON, ena: &mut enalang::Ena) -> Result<(), EnaError> {
+    match ena.load_ir(&j.file) {
+        Err(e) => {
+            ena.report_error_and_exit(e);
+        }
+        Ok(e) => {
+            ena.ir = Some(e);
+        }
+    }
+    ena.display_json(j.pretty)
+}
+
 pub fn repl(e: &mut Ena) -> Result<(), EnaError> {
     e.run_repl(VMOptions::default())
 }
@@ -186,6 +209,7 @@ fn main() {
         Some(Commands::Run(r)) => run(r, &mut ena),
         Some(Commands::Optimize(o)) => optimize(o, &mut ena),
         Some(Commands::Doc(d)) => doc(d, &mut ena),
+        Some(Commands::JSON(j)) => json(j, &mut ena),
         Some(Commands::REPL) | None => repl(&mut ena),
     };
 

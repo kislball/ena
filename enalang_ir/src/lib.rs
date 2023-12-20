@@ -12,7 +12,7 @@ pub enum IRError {
     BlockAlreadyExists(LocalStr),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IR {
     pub blocks: HashMap<LocalStr, Block>,
     pub annotations: HashMap<LocalStr, LocalStr>,
@@ -103,7 +103,7 @@ pub enum BlockRunType {
     Unique,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Block {
     pub global: bool,
     pub run_type: BlockRunType,

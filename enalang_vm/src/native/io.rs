@@ -1,11 +1,27 @@
-use crate::{machine, native};
+use crate::{
+    machine::{self, VMError},
+    native,
+};
 use enalang_ir as ir;
 use flexstr::{local_fmt, ToLocalStr};
+use ir::Value;
 use std::{fs, path::Path};
 
 pub fn print(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     if let ir::Value::String(st) = ctx.vm.pop()? {
         print!("{st}");
+    } else {
+        return Err(machine::VMError::ExpectedString);
+    }
+
+    Ok(())
+}
+
+pub fn read_file(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
+    if let ir::Value::String(st) = ctx.vm.pop()? {
+        let str = fs::read_to_string::<String>(format!("{st}"))
+            .map_err(|x| VMError::FS(local_fmt!("{x}")))?;
+        ctx.vm.push(Value::String(local_fmt!("{str}")))?;
     } else {
         return Err(machine::VMError::ExpectedString);
     }
@@ -59,6 +75,7 @@ pub fn group() -> native::NativeGroup {
     let mut group = native::NativeGroup::new("ena.vm.io");
 
     group.add_native("print", print).unwrap();
+    group.add_native("read_file", read_file).unwrap();
     group.add_native("file_exists?", file_exists).unwrap();
     group.add_native("list_files_in_dir", files_in_dir).unwrap();
 

@@ -11,13 +11,19 @@ use enalang_vm::{
 };
 use flexstr::{local_fmt, local_str, IntoLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
-use std::{io::{self, stdout, Write}, process};
+use std::{
+    io::{self, stdout, Write},
+    process,
+};
 
 pub const DEFAULT_OUTPUT_LENGTH: usize = 10;
-const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION") ;
+const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 pub fn get_startup_message() -> String {
-    format!("ENA {}\nExit using :exit or ctrl+c, type \":help\" for help.", VERSION.unwrap_or("unknown"))
+    format!(
+        "ENA {}\nExit using :exit or ctrl+c, type \":help\" for help.",
+        VERSION.unwrap_or("unknown")
+    )
 }
 
 pub fn get_repl_help() -> String {
@@ -94,8 +100,9 @@ impl Repl {
             .unwrap();
         let mut s = String::new();
         loop {
-            print!("> ");
+            print!(">>> ");
             stdout().flush().unwrap();
+            s.clear();
             let r = io::stdin().read_line(&mut s);
             s = s.replace("\n", "");
             self.history.push(s.clone());
@@ -114,8 +121,6 @@ impl Repl {
             if let Err(e) = self.run_command(&cmd) {
                 println!("{e}");
             }
-
-            s.clear();
         }
     }
 

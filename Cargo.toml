@@ -8,5 +8,6 @@ members = [
     "./enalang_optimizer",
     "./enalang_ir",
     "./enalang_docgen",
-    "./enalang_repl"
+    "./enalang_repl",
+    "./enalang_macro"
 ]
