@@ -1,11 +1,12 @@
 use crate::{heap, machine, native};
 use enalang_ir as ir;
+use flexstr::local_fmt;
 
 pub fn hash(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     let val = ctx.vm.pop()?;
     ctx.vm.push(
         val.get_hash()
-            .map(|x| ir::Value::Number(x as f64))
+            .map(|x| ir::Value::String(local_fmt!("{x}")))
             .unwrap_or(ir::Value::Null),
     )?;
     Ok(())
@@ -22,7 +23,7 @@ pub fn drop_value(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError>
 }
 
 pub fn peek_value_at(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
-    let num = ctx.vm.pop_pointer()?;
+    let num = ctx.vm.stack.len() - 1 - ctx.vm.pop_pointer()?;
     match ctx.vm.stack.get(num) {
         Some(i) => ctx.vm.push(i.clone()),
         None => Err(machine::VMError::StackEnded),

@@ -5,4 +5,5 @@ enalang_optimizer
 enalang_checker
 enalang_repl
 enalang_docgen
+enalang_macro
 enalang

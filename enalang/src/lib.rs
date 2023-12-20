@@ -1,6 +1,7 @@
 use clap::ValueEnum;
 use colored::Colorize;
 use enalang_checker::checker::{CheckError, Checker};
+use enalang_macro::{MacroError, MacroUnwrapper};
 use enalang_repl::{Repl, ReplError};
 use flexstr::ToLocalStr;
 use glob::glob;
@@ -61,6 +62,8 @@ pub enum EnaError {
     NoIR,
     #[error("repl error - `{0}`")]
     ReplError(ReplError),
+    #[error("macro error in file {0} - `{1}`")]
+    MacroError(String, MacroError),
 }
 
 #[derive(Copy, Clone)]
@@ -110,6 +113,7 @@ pub struct Ena {
     pub checker: Checker,
     pub optimizer: optimizer::Optimizer,
     pub ir: Option<ir::IR>,
+    pub macro_unwrapper: MacroUnwrapper,
 }
 
 impl Default for Ena {
@@ -131,6 +135,7 @@ impl Ena {
             astified_files: HashMap::new(),
             compiled_files: HashMap::new(),
             ir: None,
+            macro_unwrapper: MacroUnwrapper::default(),
         }
     }
 
@@ -199,6 +204,11 @@ impl Ena {
                 let file_data = self.files.get(&file).unwrap();
                 let (line, col) = util::get_line(file_data, data.0);
                 self.print_error(&format!("{}", data.1), &file, line, col, file_data, true);
+            }
+            EnaError::MacroError(file, data) => {
+                let file_data = self.files.get(&file).unwrap();
+                let (line, col) = util::get_line(file_data, data.get_pos());
+                self.print_error(&format!("{}", data), &file, line, col, file_data, true);
             }
             EnaError::ASTError(file, data) => {
                 let file_data = self.files.get(&file).unwrap();
@@ -277,12 +287,17 @@ impl Ena {
             }
         };
 
-        self.tokenizer
+        let a = self
+            .tokenizer
             .parse(file)
             .map_err(|x| EnaError::TokenizerError(name.clone(), x))?;
+        let with_unwrapped_macros = self
+            .macro_unwrapper
+            .unwrap_macros(a)
+            .map_err(|x| EnaError::MacroError(name.clone(), x))?;
         let ast = self
             .ast
-            .parse(&self.tokenizer.tokens)
+            .parse(&with_unwrapped_macros)
             .map_err(|x| EnaError::ASTError(name.clone(), x))?;
 
         self.tokenizer.clean();
@@ -393,6 +408,21 @@ impl Ena {
         let mut repl = Repl::new(VM::new(options));
 
         repl.run_interactive();
+    }
+
+    pub fn display_json(&self, pretty: bool) -> Result<(), EnaError> {
+        match &self.ir {
+            Some(ir) => {
+                let res = if pretty {
+                    serde_json::to_string_pretty(ir).unwrap()
+                } else {
+                    serde_json::to_string(ir).unwrap()
+                };
+                println!("{}", res);
+                Ok(())
+            }
+            None => Err(EnaError::NotLinked),
+        }
     }
 
     pub fn run(&mut self, main: &str, options: vm::machine::VMOptions) -> Result<(), EnaError> {

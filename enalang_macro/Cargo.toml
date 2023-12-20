@@ -1,0 +1,15 @@
+[package]
+name = "enalang_macro"
+version = "0.5.2"
+authors = [ "the Ena authors",]
+edition = "2021"
+description = "Exhaustingly Notorious Algorithms - macro support"
+repository = "https://github.com/kislball/ena"
+license = "GPL-3.0-only"
+keywords = [ "programming-language",]
+
+[dependencies]
+flexstr = "0.9.2"
+enalang_compiler = { version = "0.5.2", path = "../enalang_compiler" }
+thiserror = "1.0.50"
+colored = "2.0.4"
