@@ -104,7 +104,7 @@ impl Repl {
             stdout().flush().unwrap();
             s.clear();
             let r = io::stdin().read_line(&mut s);
-            s = s.replace("\n", "");
+            s = s.replace('\n', "");
             self.history.push(s.clone());
             if let Err(e) = r {
                 println!("io error - {e}");
@@ -127,7 +127,7 @@ impl Repl {
     pub fn run_command(&mut self, cmd: &ReplCommand) -> Result<(), ReplError> {
         match cmd {
             ReplCommand::ShowStack(i) => {
-                if self.vm.stack.len() == 0 {
+                if self.vm.stack.is_empty() {
                     println!("<stack empty>");
                 } else {
                     for (n, i) in self.vm.stack.iter().rev().take(*i).enumerate() {
@@ -137,7 +137,7 @@ impl Repl {
             }
             ReplCommand::Exit => process::exit(0),
             ReplCommand::ShowHistory(i) => {
-                if self.history.len() == 0 {
+                if self.history.is_empty() {
                     println!("<history empty>");
                 } else {
                     for (n, i) in self.history.iter().take(*i).enumerate() {
@@ -180,7 +180,7 @@ impl Repl {
     }
 
     pub fn parse_command(cmd: &str) -> Result<ReplCommand, CommandParseError> {
-        if let Some(cmd_name) = cmd.replace("\n", "").strip_prefix(':') {
+        if let Some(cmd_name) = cmd.replace('\n', "").strip_prefix(':') {
             let arg = cmd_name
                 .split(' ')
                 .nth(1)

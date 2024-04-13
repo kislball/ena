@@ -157,7 +157,7 @@ impl Ena {
         self.ir = Some(
             self.optimizer
                 .optimize(ir.clone(), &main.to_local_str())
-                .map_err(|x| EnaError::OptimizerError(x))?,
+                .map_err(EnaError::OptimizerError)?,
         );
         Ok(())
     }
@@ -366,6 +366,7 @@ impl Ena {
                 let mut file = OpenOptions::new()
                     .create(true)
                     .write(true)
+                    .truncate(true)
                     .read(false)
                     .open(output)
                     .map_err(|x| EnaError::FSError(x.to_string()))?;

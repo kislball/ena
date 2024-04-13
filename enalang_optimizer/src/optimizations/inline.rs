@@ -8,6 +8,7 @@ use enalang_vm::{
 use flexstr::{local_fmt, local_str, LocalStr, ToLocalStr};
 use rand::distributions::{Alphanumeric, DistString};
 
+#[derive(Default)]
 pub struct InlineOptimization {
     ctx: OptimizationContext,
     optimized: Vec<LocalStr>,
@@ -114,7 +115,7 @@ impl InlineOptimization {
                         .map_err(|x| Box::new(InlineOptimizationError::VM(x)))?;
                     let block = Block {
                         global: false,
-                        run_type: run_type.clone(),
+                        run_type: *run_type,
                         code: local_code.clone(),
                     };
                     let optimized = self.optimize_block(name, &block)?;

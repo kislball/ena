@@ -1,4 +1,4 @@
-use crate::{machine, native};
+use crate::{define_native_group, machine, native};
 use enalang_ir as ir;
 use flexstr::{local_fmt, ToLocalStr};
 
@@ -59,14 +59,12 @@ pub fn chars(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("string");
-
-    group.add_native("len", strlen).unwrap();
-    group.add_native("concat", concat).unwrap();
-    group.add_native("split", split).unwrap();
-    group.add_native("contains", contains).unwrap();
-    group.add_native("chars", chars).unwrap();
-
-    group
+define_native_group! {
+    group,
+    "string",
+    "len" => strlen,
+    "concat" => concat,
+    "split" => split,
+    "contains" => contains,
+    "chars" => chars
 }

@@ -70,16 +70,56 @@ impl NativeGroup {
     }
 }
 
-pub fn group() -> NativeGroup {
-    let mut group = NativeGroup::new("");
+#[macro_export]
+macro_rules! define_native_group {
+    (
+        $fname:ident,
+        $group_name:literal,
+        $(
+            $name:literal => $fn:ident
+        ),*
+    ) => {
+        pub fn $fname() -> $crate::native::NativeGroup {
+            let mut group = $crate::native::NativeGroup::new($group_name);
 
-    group.add_child(&vm::group()).unwrap();
-    group.add_child(&io::group()).unwrap();
-    group.add_child(&core::group()).unwrap();
-    group.add_child(&types::group()).unwrap();
-    group.add_child(&exceptions::group()).unwrap();
-    group.add_child(&strings::group()).unwrap();
-    group.add_child(&os::group()).unwrap();
+            $(
+                group.add_native($name, $fn).unwrap();
+            )*
 
-    group
+            group
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! create_native_group_container {
+    (
+        $fname:ident,
+        $group_name:literal,
+        $(
+            $e:expr
+        ),*
+    ) => {
+        pub fn $fname() -> $crate::native::NativeGroup {
+            let mut group = $crate::native::NativeGroup::new($group_name);
+
+            $(
+                group.add_child($e).unwrap();
+            )*
+
+            group
+        }
+    };
+}
+
+create_native_group_container! {
+    group,
+    "",
+    &vm::group(),
+    &io::group(),
+    &core::group(),
+    &types::group(),
+    &exceptions::group(),
+    &strings::group(),
+    &os::group()
 }

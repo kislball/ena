@@ -1,4 +1,4 @@
-use crate::{machine, native};
+use crate::{define_native_group, machine, native};
 use enalang_ir as ir;
 use flexstr::{local_fmt, local_str};
 
@@ -81,18 +81,16 @@ pub fn into_ptr(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError> {
     }
 }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("");
-
-    group.add_native("unsafe_into_ptr", into_ptr).unwrap();
-    group.add_native("into_string", into_string).unwrap();
-    group.add_native("into_number", into_number).unwrap();
-    group.add_native("is_string", is_string).unwrap();
-    group.add_native("is_null", is_null).unwrap();
-    group.add_native("is_number", is_number).unwrap();
-    group.add_native("is_pointer", is_pointer).unwrap();
-    group.add_native("is_block", is_block).unwrap();
-    group.add_native("is_bool", is_bool).unwrap();
-
-    group
+define_native_group! {
+    group,
+    "",
+    "unsafe_into_ptr" => into_ptr,
+    "into_string" => into_string,
+    "into_number" => into_number,
+    "is_string" => is_string,
+    "is_null" => is_null,
+    "is_number" => is_number,
+    "is_pointer" => is_pointer,
+    "is_block" => is_block,
+    "is_bool" => is_bool
 }
