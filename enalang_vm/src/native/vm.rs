@@ -1,4 +1,4 @@
-use crate::{machine, native};
+use crate::{define_native_group, machine, native};
 use enalang_ir as ir;
 use flexstr::ToLocalStr;
 use rand::{self, Rng};
@@ -64,17 +64,14 @@ pub fn vm_get_annotation(ctx: native::NativeHandlerCtx) -> Result<(), machine::V
     }
 }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("ena.vm");
-
-    group.add_native("load", vm_load).unwrap();
-    group.add_native("debug", vm_debug).unwrap();
-    group.add_native("debug_stack", vm_debug_stack).unwrap();
-    group.add_native("debug_calls", vm_debug_calls).unwrap();
-    group.add_native("random", vm_get_random).unwrap();
-    group
-        .add_native("get_annotation", vm_get_annotation)
-        .unwrap();
-
-    group
+define_native_group! {
+    group,
+    "ena.vm",
+    "load" => vm_load,
+    "debug" => vm_debug,
+    "debug_stack" => vm_debug_stack,
+    "debug_calls" => vm_debug_calls,
+    "random" => vm_get_random,
+    "get_annotation" => vm_get_annotation
 }
+

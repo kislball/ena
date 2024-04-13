@@ -30,15 +30,29 @@ pub struct MacroUnwrapper {
     macros: HashMap<LocalStr, Rc<RefCell<dyn Macro>>>,
 }
 
+#[macro_export]
+macro_rules! create_unwrapper {
+    ($( $name:ident => $p:ident ),*) => {
+        {
+            let mut s = $crate::MacroUnwrapper::new();
+
+            $(
+                s.add_macro(local_str!(stringify!($name)), $p);
+            )*
+
+            s
+        }
+    };
+}
+
 impl Default for MacroUnwrapper {
     fn default() -> Self {
-        let mut s = Self::new();
-        s.add_macro(local_str!("log"), LogMacro);
-        s.add_macro(local_str!("class"), ClassMacro);
-        s.add_macro(local_str!("define"), DefineMacro);
-        s.add_macro(local_str!("id"), IdMacro);
-
-        return s;
+        create_unwrapper! {
+            log => LogMacro,
+            class => ClassMacro,
+            define => DefineMacro,
+            id => IdMacro
+        }
     }
 }
 
@@ -102,7 +116,7 @@ impl MacroUnwrapper {
             }
         }
 
-        return Ok(out);
+        Ok(out)
     }
 }
 

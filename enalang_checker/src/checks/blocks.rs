@@ -26,16 +26,9 @@ impl CheckError for BlocksCheckerError {
     }
 }
 
+#[derive(Default)]
 pub struct BlocksChecker {
     checked: Vec<LocalStr>,
-}
-
-impl Default for BlocksChecker {
-    fn default() -> Self {
-        Self {
-            checked: Vec::new(),
-        }
-    }
 }
 
 impl BlocksChecker {

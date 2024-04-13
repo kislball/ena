@@ -1,7 +1,4 @@
-use crate::{
-    machine::{self, VMError},
-    native,
-};
+use crate::{define_native_group, machine::{self, VMError}, native};
 use enalang_ir as ir;
 use flexstr::{local_fmt, ToLocalStr};
 use ir::Value;
@@ -71,13 +68,11 @@ pub fn files_in_dir(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMErro
     }
 }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("ena.vm.io");
-
-    group.add_native("print", print).unwrap();
-    group.add_native("read_file", read_file).unwrap();
-    group.add_native("file_exists?", file_exists).unwrap();
-    group.add_native("list_files_in_dir", files_in_dir).unwrap();
-
-    group
+define_native_group! {
+    group,
+    "ena.vm.io",
+    "print" => print,
+    "read_file" => read_file,
+    "file_exists?" => file_exists,
+    "list_files_in_dir" => files_in_dir
 }

@@ -1,4 +1,4 @@
-use crate::{heap, machine, native};
+use crate::{define_native_group, heap, machine, native};
 use enalang_ir as ir;
 use flexstr::local_fmt;
 
@@ -335,38 +335,36 @@ pub fn into_base(_ctx: native::NativeHandlerCtx) {}
 //     }
 // }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("");
-
-    group.add_native("drop", drop_value).unwrap();
-    group.add_native("peek", peek_value_at).unwrap();
-    group.add_native("drop_at", drop_value_at).unwrap();
-    group.add_native("swap", swap).unwrap();
-    group.add_native("dup", dup).unwrap();
-    group.add_native("clear", clear_stack).unwrap();
-    group.add_native("+", plus).unwrap();
-    group.add_native("*", mul).unwrap();
-    group.add_native("hash", hash).unwrap();
-    group.add_native("/", div).unwrap();
-    group.add_native("-", subst).unwrap();
-    group.add_native("!", neg).unwrap();
-    group.add_native("or", or).unwrap();
-    group.add_native("and", and).unwrap();
-    group.add_native(">", gt).unwrap();
-    group.add_native("<", lt).unwrap();
-    group.add_native(">=", gte).unwrap();
-    group.add_native("<=", lte).unwrap();
-    group.add_native("pow", pow).unwrap();
-    group.add_native("nop", nop).unwrap();
-    group.add_native("root", root).unwrap();
-    group.add_native("==", equal).unwrap();
-    group.add_native("call", call).unwrap();
-    group.add_native("block_exists?", block_exists).unwrap();
-    group.add_native("@", deref).unwrap();
-    group.add_native("=", set_ref).unwrap();
-    group.add_native("alloc", alloc).unwrap();
-    group.add_native("unsafe_realloc", realloc).unwrap();
-    group.add_native("unsafe_free", free).unwrap();
-
-    group
+define_native_group! {
+    group,
+    "",
+    "drop" => drop_value,
+    "peek" => peek_value_at,
+    "drop_at" => drop_value_at,
+    "swap" => swap,
+    "dup" => dup,
+    "clear" => clear_stack,
+    "+" => plus,
+    "*" => mul,
+    "hash" => hash,
+    "/" => div,
+    "-" => subst,
+    "!" => neg,
+    "or" => or,
+    "and" => and,
+    ">" => gt,
+    "<" => lt,
+    ">=" => gte,
+    "<=" => lte,
+    "pow" => pow,
+    "nop" => nop,
+    "root" => root,
+    "==" => equal,
+    "call" => call,
+    "block_exists?" => block_exists,
+    "@" => deref,
+    "=" => set_ref,
+    "alloc" => alloc,
+    "unsafe_realloc" => realloc,
+    "unsafe_free" => free
 }

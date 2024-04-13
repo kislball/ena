@@ -1,4 +1,4 @@
-use crate::{machine, native};
+use crate::{define_native_group, machine, native};
 use enalang_ir as ir;
 use flexstr::ToLocalStr;
 use std::env;
@@ -14,10 +14,8 @@ pub fn vm_get_env(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMError>
     }
 }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("ena.vm.os");
-
-    group.add_native("get_env", vm_get_env).unwrap();
-
-    group
+define_native_group! {
+    group,
+    "ena.vm.os",
+    "get_env" => vm_get_env
 }

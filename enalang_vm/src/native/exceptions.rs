@@ -1,4 +1,4 @@
-use crate::{machine, native};
+use crate::{define_native_group, machine, native};
 use enalang_ir as ir;
 use flexstr::local_fmt;
 use ir::Value;
@@ -49,16 +49,12 @@ pub fn is_exception(ctx: native::NativeHandlerCtx) -> Result<(), machine::VMErro
     }
 }
 
-pub fn group() -> native::NativeGroup {
-    let mut group = native::NativeGroup::new("");
-
-    group.add_native("into_exception", into_exception).unwrap();
-    group
-        .add_native("unwrap_exception", unwrap_exception)
-        .unwrap();
-    group.add_native("try", try_exception).unwrap();
-    group.add_native("throw", throw_exception).unwrap();
-    group.add_native("is_exception", is_exception).unwrap();
-
-    group
+define_native_group! {
+    group,
+    "",
+    "into_exception" => into_exception,
+    "unwrap_exception" => unwrap_exception,
+    "try" => try_exception,
+    "throw" => throw_exception,
+    "is_exception" => is_exception
 }
