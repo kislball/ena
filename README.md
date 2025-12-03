@@ -53,3 +53,6 @@ print_hello {
 With comments removed, the code remains concise and readable.
 
 Additional examples are available in the `examples` directory.
+
+## Learn
+You can further learn about ENA by reading (the book)[https://kislball.github.io/ena] or by inspecting examples in the corresponding folder. 
