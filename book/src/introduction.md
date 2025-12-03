@@ -58,33 +58,46 @@ main {
 
 ### Running
 
-Ena uses a VM to run code. VM cannot read Ena code directly, it reads an intermediate representation from Ena's compiler:
+Ena uses a VM to run code. The VM cannot read Ena code directly; it reads an intermediate representation (IR) from Ena's compiler.
+
+First, compile your source code to IR:
 
 ```console
 $ ena compile ./hello_world.ena -o hello_world.enair
 ```
 
-Now, let's try to run it:
+Next, compile the standard library (you only need to do this once):
 
 ```console
-$ ena run ./hello_world.enair
+$ ena compile "std/*.ena" -o std.enair
 ```
 
-We will run into an error. This is because Ena does not link standard library by default. To link it, we will first have
-to compile it.
+Link your program with the standard library:
 
 ```console
-$ ena compile ./std/vm/**/*.ena ./std/base/**/*.ena -o std.enair
-$ ena link ./std.enair ./hello_world.enair -o executable.enair
+$ ena link hello_world.enair std.enair -o executable.enair
 ```
 
-Now let's finally run it:
+Finally, run your program:
 
 ```console
 $ ena run ./executable.enair
 ```
 
-Now, you should see a "Hello, world!" message.
+You should now see a "Hello, world!" message.
+
+For convenience, you can create a shell script to automate this process. The repository includes a `run_example.sh` script:
+
+```bash
+#!/bin/sh
+# Usage: ./run_example.sh <filename_without_extension>
+
+ena compile "std/*.ena" -o ./std.enair
+ena compile ./examples/$1.ena -o ./main.enair
+ena link ./main.enair ./std.enair -o output.enair
+ena run ./output.enair
+rm output.enair main.enair std.enair
+```
 
 ## What's next?
 
