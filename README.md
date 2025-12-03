@@ -1,55 +1,55 @@
 # ena
 > exhaustingly notorious algorithms
 
-Ena is a very bad language, whose implementation was originally written in C, but was later rewritten in Rust because the main developer was tired of debugging segfaults.
+Ena is a stack-based programming language. The implementation was originally written in C and subsequently rewritten in Rust to improve memory safety and development efficiency.
 
 ## Installing
-As of now, Ena does not provide prebuilt binaries, it is your task to build it yourself.
+Currently, Ena does not provide prebuilt binaries. Users must build the project from source.
 
-Ena is written in Rust, so you should have `cargo` and `rustc` installed.
+Ena is implemented in Rust and requires `cargo` and `rustc` to be installed on your system.
 
 Build and install command: 
 
 ```sh
-# If you want a stable version
+# Install the stable version from crates.io
 $ cargo install enalang
 
-# If you have cloned the repo
+# Install from a cloned repository
 $ cargo install --path ./enalang
 ```
 
-Test if you have installed Ena:
+Verify the installation:
 
 ```sh
 $ ena --version
 ```
 
-If you see an error, check if your PATH variable is configured.
+If the command fails, ensure that your PATH environment variable is properly configured.
 
 ## Syntax
-Ena is a stack-based language. This means it works on the stack. Seems logical, doesn't it?
+Ena is a stack-based programming language that operates by manipulating values on a stack data structure.
 
-It is much easier to show than to explain.
+The language design is best understood through examples.
 
-Ena doesn't have functions, it has blocks. The only difference is that blocks do not take arguments. Instead, it takes the arguments it needs from the stack.
+Ena uses blocks rather than traditional functions. Unlike functions, blocks do not explicitly declare parameters. Instead, blocks consume their required arguments directly from the stack.
 
 ```
-# Comments are written in Python style.
+# Comments follow Python syntax conventions.
 
-# Let's print hello world.
+# Example: printing hello world.
 
-# Main is the entrypoint of any ena program.
+# The main block serves as the program entry point.
 main {
-    print_hello # Calls print_hello block.
+    print_hello # Invokes the print_hello block.
 }
 
-# Let's define another block to call from main.
+# Define a separate block that can be called from main.
 print_hello {
-    "hello world!" # A literal puts the value on top of stack.
-    println # println takes the literal on top of stack and prints it with a new line.
+    "hello world!" # String literals are pushed onto the stack.
+    println # The println operation pops the top stack value and outputs it with a newline.
 }
 ```
 
-With all the comments removed, the result is a very short and tidy piece of code.
+With comments removed, the code remains concise and readable.
 
-See more examples in the `examples` folder.
+Additional examples are available in the `examples` directory.
