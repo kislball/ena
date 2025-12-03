@@ -283,15 +283,11 @@ ena.vm.os.exec
 
 ## Best Practices
 
-1. **Import only what you need**: While the standard library is automatically linked, be mindful of which operations you use.
+1. **Error handling**: Use exception handling with VM operations that may fail (file I/O, system calls).
 
-2. **Memory management**: Always free allocated memory when no longer needed to prevent leaks.
+2. **Stack discipline**: VM debug operations don't consume stack values, making them useful for debugging without disrupting flow.
 
-3. **Error handling**: Use exception handling with VM operations that may fail (file I/O, system calls).
-
-4. **Stack discipline**: VM debug operations don't consume stack values, making them useful for debugging without disrupting flow.
-
-5. **String operations**: Most string operations return new values rather than modifying in place.
+3. **String operations**: Most string operations return new values rather than modifying in place.
 
 ## Extending the Standard Library
 
