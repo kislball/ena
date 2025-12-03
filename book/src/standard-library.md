@@ -280,15 +280,3 @@ ena.vm.os.env
 # Arguments: command
 ena.vm.os.exec
 ```
-
-## Best Practices
-
-1. **Error handling**: Use exception handling with VM operations that may fail (file I/O, system calls).
-
-2. **Stack discipline**: VM debug operations don't consume stack values, making them useful for debugging without disrupting flow.
-
-3. **String operations**: Most string operations return new values rather than modifying in place.
-
-## Extending the Standard Library
-
-You can create your own standard library modules by placing `.ena` files in the `std/` directory and compiling them with your standard library compilation command.
