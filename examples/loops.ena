@@ -1,0 +1,76 @@
+# Demonstrates loop control with while, break, and continue
+
+count_up {
+    n ( unit )
+    n =
+    i ( unit )
+    0 i =
+    
+    n @ i @ > while {
+        i @ ena.vm.io.print " " ena.vm.io.print
+        i @ 1 + i =
+        n @ i @ >
+    }
+    "\n" ena.vm.io.print
+}
+
+skip_multiples {
+    "Printing numbers skipping multiples of 3 (0 to 10):" println
+    j ( unit )
+    0 j =
+    
+    10 j @ > while {
+        # Skip 3, 6, 9
+        j @ 3 == if {
+            j @ 1 + j =
+            10 j @ >
+            continue
+        }
+        
+        j @ 6 == if {
+            j @ 1 + j =
+            10 j @ >
+            continue
+        }
+        
+        j @ 9 == if {
+            j @ 1 + j =
+            10 j @ >
+            continue
+        }
+        
+        j @ ena.vm.io.print " " ena.vm.io.print
+        j @ 1 + j =
+        10 j @ >
+    }
+    "\n" ena.vm.io.print
+}
+
+early_exit {
+    "Counting until we find 8:" println
+    k ( unit )
+    0 k =
+    
+    10 k @ > while {
+        k @ ena.vm.io.print " " ena.vm.io.print
+        
+        k @ 8 == if {
+            "\nFound 8, exiting" println
+            return
+        }
+        
+        k @ 1 + k =
+        10 k @ >
+    }
+}
+
+main {
+    "Counting up to 5:" println
+    5 count_up
+    
+    "\n" ena.vm.io.print
+    skip_multiples
+    
+    "\n" ena.vm.io.print
+    early_exit
+}

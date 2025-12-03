@@ -1,0 +1,47 @@
+# Demonstrates conditional execution with if blocks
+
+compare_numbers {
+    a ( unit )
+    b ( unit )
+    b =
+    a =
+    
+    b @ a @ > if {
+        a @ ena.vm.debug " is greater than " ena.vm.io.print b @ ena.vm.debug
+        return
+    }
+    
+    b @ a @ < if {
+        a @ ena.vm.debug " is less than " ena.vm.io.print b @ ena.vm.debug
+        return
+    }
+    
+    "Numbers are equal" println
+}
+
+check_positive {
+    n ( unit )
+    n =
+    
+    0 n @ > if {
+        n @ ena.vm.debug " is positive" println
+        return
+    }
+    
+    n @ ena.vm.debug " is not positive" println
+}
+
+main {
+    "Comparing 10 and 5:" println
+    10 5 compare_numbers
+    
+    "\nComparing 3 and 8:" println
+    3 8 compare_numbers
+    
+    "\nComparing 7 and 7:" println
+    7 7 compare_numbers
+    
+    "\nChecking if numbers are positive:" println
+    4 check_positive
+    -9 check_positive
+}

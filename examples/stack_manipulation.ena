@@ -1,0 +1,52 @@
+# Demonstrates stack manipulation operations
+
+dup_example {
+    "Duplicate operation:" println
+    5 
+    dup
+    "Top two values (both should be 5):" println
+    ena.vm.debug
+    ena.vm.debug
+}
+
+swap_example {
+    "\nSwap operation:" println
+    "First: " ena.vm.io.print
+    10 20 swap
+    "After swap, top value: " ena.vm.io.print ena.vm.debug
+    "Second value: " ena.vm.io.print ena.vm.debug
+}
+
+drop_example {
+    "\nDrop operation:" println
+    "Pushing 1, 2, 3 onto stack" println
+    1 2 3
+    "Stack state:" println
+    ena.vm.debug_stack
+    
+    "Dropping top value" println
+    drop
+    "Stack state after drop:" println
+    ena.vm.debug_stack
+    clear
+}
+
+complex_manipulation {
+    "\nComplex stack manipulation:" println
+    "Calculating: (5 + 3) * 2" println
+    
+    5 3 +    # Stack: [8]
+    dup      # Stack: [8, 8]
+    2 *      # Stack: [8, 16]
+    swap     # Stack: [16, 8]
+    
+    "First result: " ena.vm.io.print ena.vm.debug
+    "Second result: " ena.vm.io.print ena.vm.debug
+}
+
+main {
+    dup_example
+    swap_example
+    drop_example
+    complex_manipulation
+}

@@ -1,0 +1,107 @@
+# Demonstrates atoms and type operations
+
+atom_basics {
+    "Atom examples:" println
+    
+    :success
+    :error
+    :pending
+    
+    "Stack with atoms:" println
+    ena.vm.debug_stack
+    clear
+}
+
+atom_comparison {
+    "\nComparing atoms:" println
+    
+    status1 ( unit )
+    status2 ( unit )
+    
+    :active status1 =
+    :active status2 =
+    
+    status1 @ status2 @ == if {
+        "Status atoms are equal" println
+    }
+    
+    :inactive status2 =
+    
+    status1 @ status2 @ == if {
+        "This won't print" println
+        return
+    }
+    
+    "Status atoms are different" println
+}
+
+type_demonstration {
+    "\nType demonstration:" println
+    
+    num ( unit )
+    str ( unit )
+    bool ( unit )
+    
+    42 num =
+    "Hello" str =
+    true bool =
+    
+    "Number: " ena.vm.io.print num @ ena.vm.debug
+    "String: " ena.vm.io.print str @ ena.vm.debug
+    "Boolean: " ena.vm.io.print bool @ ena.vm.debug
+}
+
+null_and_boolean {
+    "\nNull and boolean values:" println
+    
+    val1 ( unit )
+    val2 ( unit )
+    val3 ( unit )
+    
+    true val1 =
+    false val2 =
+    null val3 =
+    
+    "True value: " ena.vm.io.print val1 @ ena.vm.debug
+    "False value: " ena.vm.io.print val2 @ ena.vm.debug
+    "Null value: " ena.vm.io.print val3 @ ena.vm.debug
+}
+
+boolean_logic {
+    "\nBoolean operations:" println
+    
+    val1 ( unit )
+    val2 ( unit )
+    res1 ( unit )
+    res2 ( unit )
+    result ( unit )
+    
+    true val1 =
+    false val2 =
+    
+    val1 @ val2 @ and res1 =
+    res1 @ if {
+        "This won't print" println
+    }
+    
+    val1 @ val2 @ or res2 =
+    res2 @ if {
+        "OR operation: true" println
+    }
+    
+    val1 @ ! result =
+    result @ if {
+        "This won't print" println
+        return
+    }
+    
+    "NOT true = false" println
+}
+
+main {
+    atom_basics
+    atom_comparison
+    type_demonstration
+    null_and_boolean
+    boolean_logic
+}

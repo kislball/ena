@@ -1,0 +1,71 @@
+# Demonstrates string manipulation operations
+
+string_basics {
+    "String operations demonstration:" println
+    
+    str ( unit )
+    "Hello, Ena!" str =
+    
+    "Original string: " ena.vm.io.print str @ ena.vm.debug
+    "String length: " ena.vm.io.print str @ string.len ena.vm.debug
+}
+
+string_concatenation {
+    "\nString concatenation:" println
+    
+    first ( unit )
+    second ( unit )
+    "Hello, " first =
+    "World!" second =
+    
+    result ( unit )
+    first @ second @ string.concat result =
+    
+    "Concatenated: " ena.vm.io.print result @ ena.vm.debug
+}
+
+string_splitting {
+    "\nString splitting:" println
+    
+    sentence ( unit )
+    "The quick brown fox" sentence =
+    
+    "Original: " ena.vm.io.print sentence @ ena.vm.debug
+    "Split by spaces:" println
+    " " sentence @ string.split
+    ena.vm.debug_stack
+    clear
+}
+
+string_contains {
+    "\nString contains check:" println
+    
+    text ( unit )
+    "Programming in Ena" text =
+    
+    "Checking if text contains 'Ena': " ena.vm.io.print
+    "Ena" text @ string.contains ena.vm.debug
+    
+    "Checking if text contains 'Python': " ena.vm.io.print
+    "Python" text @ string.contains ena.vm.debug
+}
+
+string_characters {
+    "\nString characters:" println
+    
+    word ( unit )
+    "ABC" word =
+    
+    "Characters in '" ena.vm.io.print word @ ena.vm.io.print "':" println
+    word @ string.chars
+    ena.vm.debug_stack
+    clear
+}
+
+main {
+    string_basics
+    string_concatenation
+    string_splitting
+    string_contains
+    string_characters
+}

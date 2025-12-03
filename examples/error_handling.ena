@@ -1,0 +1,42 @@
+# Demonstrates exception handling with try blocks
+
+safe_division {
+    divisor ( unit )
+    dividend ( unit )
+    divisor =
+    dividend =
+    
+    divisor @ 0 == if {
+        "Cannot divide by zero" into_exception
+        return
+    }
+    
+    dividend @ divisor @ /
+}
+
+division_example {
+    "\nDividing 10 by 2:" println
+    10 2 safe_division ena.vm.debug
+    
+    "\nDividing 15 by 3:" println
+    15 3 safe_division ena.vm.debug
+    
+    "\nAttempting to divide by 0:" println
+    'risky_division try
+    
+    is_exception if {
+        "Caught exception: " ena.vm.io.print
+        ena.vm.debug
+        return
+    }
+    
+    "Result: " ena.vm.io.print ena.vm.debug
+}
+
+risky_division {
+    20 0 safe_division
+}
+
+main {
+    division_example
+}

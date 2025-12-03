@@ -1,0 +1,72 @@
+# Demonstrates memory allocation and pointer operations
+
+array_example {
+    "Creating array with 5 elements:" println
+    
+    # Allocate memory for 5 numbers
+    arr ( unit )
+    5 units arr =
+    
+    # Fill array with values
+    0 arr @ 0 + =
+    10 arr @ 1 + =
+    20 arr @ 2 + =
+    30 arr @ 3 + =
+    40 arr @ 4 + =
+    
+    # Read and print values
+    "Array contents:" println
+    arr @ 0 + @ ena.vm.debug
+    arr @ 1 + @ ena.vm.debug
+    arr @ 2 + @ ena.vm.debug
+    arr @ 3 + @ ena.vm.debug
+    arr @ 4 + @ ena.vm.debug
+}
+
+pointer_arithmetic {
+    "Pointer arithmetic example:" println
+    
+    ptr ( unit )
+    3 units ptr =
+    
+    100 ptr @ 0 + =
+    200 ptr @ 1 + =
+    300 ptr @ 2 + =
+    
+    "Values at offsets:" println
+    "Offset 0: " ena.vm.io.print ptr @ 0 + @ ena.vm.debug
+    "Offset 1: " ena.vm.io.print ptr @ 1 + @ ena.vm.debug
+    "Offset 2: " ena.vm.io.print ptr @ 2 + @ ena.vm.debug
+}
+
+swap_in_memory {
+    "Swapping values in memory:" println
+    
+    a ( unit )
+    b ( unit )
+    1 units a =
+    1 units b =
+    
+    42 a =
+    99 b =
+    
+    "Before swap - a: " ena.vm.io.print a @ ena.vm.debug
+    "Before swap - b: " ena.vm.io.print b @ ena.vm.debug
+    
+    # Swap values
+    temp ( unit )
+    a @ temp =
+    b @ a =
+    temp b =
+    
+    "After swap - a: " ena.vm.io.print a @ ena.vm.debug
+    "After swap - b: " ena.vm.io.print b @ ena.vm.debug
+}
+
+main {
+    array_example
+    "\n" ena.vm.io.print
+    pointer_arithmetic
+    "\n" ena.vm.io.print
+    swap_in_memory
+}

@@ -1,0 +1,120 @@
+# Demonstrates advanced block features including recursion and composition
+
+fibonacci {
+    n ( unit )
+    n =
+    
+    n @ 0 == if {
+        0 return
+    }
+    
+    n @ 1 == if {
+        1 return
+    }
+    
+    # fib(n-1) + fib(n-2)
+    n @ 1 - fibonacci
+    n @ 2 - fibonacci
+    +
+}
+
+sum_range {
+    start ( unit )
+    end ( unit )
+    end =
+    start =
+    
+    start @ end @ == if {
+        start @ return
+    }
+    
+    end @ start @ > if {
+        0 return
+    }
+    
+    start @ start @ 1 + end @ sum_range +
+}
+
+map_square {
+    "Mapping square function over values:" println
+    
+    # Push values
+    1 2 3 4 5
+    
+    # Square each
+    square square square square square
+    
+    "Squared values:" println
+    ena.vm.debug_stack
+    clear
+}
+
+square {
+    dup *
+}
+
+compose_functions {
+    "\nFunction composition:" println
+    
+    10
+    increment
+    double
+    decrement
+    
+    "Result of dec(double(inc(10))): " ena.vm.io.print
+    ena.vm.debug
+}
+
+increment {
+    1 +
+}
+
+decrement {
+    1 -
+}
+
+double {
+    2 *
+}
+
+higher_order {
+    "\nHigher-order block pattern:" println
+    
+    5 'square apply_twice
+    "5 squared twice (5^4): " ena.vm.io.print ena.vm.debug
+    
+    3 'increment apply_twice
+    "3 incremented twice: " ena.vm.io.print ena.vm.debug
+}
+
+apply_twice {
+    func ( unit )
+    value ( unit )
+    func =
+    value =
+    
+    value @ func @ call
+    func @ call
+}
+
+main {
+    "Fibonacci sequence (first 10):" println
+    i ( unit )
+    0 i =
+    
+    10 i @ > while {
+        "fib(" ena.vm.io.print i @ ena.vm.io.print ") = " ena.vm.io.print
+        i @ fibonacci ena.vm.debug
+        i @ 1 + i =
+        10 i @ >
+    }
+    
+    "\nSum of range [1, 10]:" println
+    1 10 sum_range ena.vm.debug
+    
+    "\n" ena.vm.io.print
+    map_square
+    
+    compose_functions
+    higher_order
+}
